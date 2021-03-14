@@ -57,12 +57,19 @@ public class PIDTest extends LinearOpMode {
         while (opModeIsActive()) {
             currentVelocity = (frontShoot.getCurrentPosition() - lastPos) / (System.nanoTime() - lastTime);
             setFrontShoot(currentVelocity, .5);
+
             //frontShootPidArr = pidTest(currentVelocity, 39041, frontShootPidArr[1], frontShootPidArr[2]);
             //frontShoot.setPower(frontShootPidArr[0]);
+
             currentVelocity2 = (backShoot.getCurrentPosition() - lastPos2) / (System.nanoTime() - lastTime);
             setBackShoot(currentVelocity2, .5);
+
             //backShootPidArr = pidTest(currentVelocity2, 39041, backShootPidArr[1], backShootPidArr[2]);
             //backShoot.setPower(backShootPidArr[0]);
+
+            lastPos = frontShoot.getCurrentPosition();
+            lastPos2 = backShoot.getCurrentPosition();
+            lastTime = System.nanoTime();
         }
 
     }
