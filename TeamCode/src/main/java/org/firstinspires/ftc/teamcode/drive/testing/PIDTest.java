@@ -105,7 +105,7 @@ public class PIDTest extends LinearOpMode {
         double lastError = 0;
 
         while (runShooterMotor) {
-            double changeInError = lastError - error;
+            double changeInError = error - lastError;
             integral += changeInError * PIDTimer.time();
             double derivative = changeInError / PIDTimer.time();
 
