@@ -41,22 +41,19 @@ public class PIDTest extends LinearOpMode {
         backShoot.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         backShoot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        frontShoot.setVelocityPIDFCoefficients(1.26, 0.126, 0, 12.6);
-        backShoot.setVelocityPIDFCoefficients(1.26, 0.126, 0, 12.6);
-
         dashboard = FtcDashboard.getInstance();
 
         waitForStart();
 
         while (opModeIsActive()) {
             //runShooterMotors(1400);
-            frontShoot.setVelocityPIDFCoefficients(1.26, 0.126, 0, 12.6);
+            frontShoot.setVelocityPIDFCoefficients(1.45, .25, .4, 14);
             frontShoot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            frontShoot.setVelocity(1400);
+            frontShoot.setVelocity(1220);
 
-            backShoot.setVelocityPIDFCoefficients(1.26, 0.126, 0, 12.6);
+            backShoot.setVelocityPIDFCoefficients(1.45, .25, .4, 14);
             backShoot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            backShoot.setVelocity(1400);
+            backShoot.setVelocity(1220);
 
             telemetry.addData("frontShoot current velocity", frontShoot.getVelocity());
             telemetry.addData("backShoot current velocity", backShoot.getVelocity());
