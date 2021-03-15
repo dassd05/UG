@@ -46,14 +46,14 @@ public class PIDTest extends LinearOpMode {
         waitForStart();
 
         while (opModeIsActive()) {
-            //runShooterMotors(1400);
-            frontShoot.setVelocityPIDFCoefficients(1.45, .25, .4, 14);
+            runShooterMotors(1220);
+            /*frontShoot.setVelocityPIDFCoefficients(1.45, .25, .4, 14);
             frontShoot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             frontShoot.setVelocity(1220);
 
             backShoot.setVelocityPIDFCoefficients(1.45, .25, .4, 14);
             backShoot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            backShoot.setVelocity(1220);
+            backShoot.setVelocity(1220);*/
 
             telemetry.addData("frontShoot current velocity", frontShoot.getVelocity());
             telemetry.addData("backShoot current velocity", backShoot.getVelocity());
