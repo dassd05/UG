@@ -5,6 +5,8 @@ import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.PIDCoefficients;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -12,64 +14,54 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 @Autonomous
 public class PIDTest extends LinearOpMode {
 
-    DcMotor frontShoot;
-    DcMotor backShoot;
+    DcMotorEx frontShoot;
+    DcMotorEx backShoot;
 
-    double integral = 0;
-    //double repetitions;
-    //0 is placeholder all ps is and ds
-    public static PIDCoefficients pidVars = new PIDCoefficients(0, 0, 0);
+    double integralf = 0;
+    double integralb = 0;
+
     public static PIDCoefficients pidConsts = new PIDCoefficients(0, 0, 0);
 
     FtcDashboard dashboard;
 
-    public static double TARGET_POS = 100;
-
-    boolean runShooterMotor = true;
+    boolean runShooterMotors = true;
 
     ElapsedTime PIDTimer = new ElapsedTime(ElapsedTime.Resolution.MILLISECONDS);
 
     @Override
     public void runOpMode() {
-        backShoot = hardwareMap.dcMotor.get("backShoot");
-        frontShoot = hardwareMap.dcMotor.get("frontShoot");
+        backShoot = hardwareMap.get(DcMotorEx.class, "backShoot");
+        frontShoot = hardwareMap.get(DcMotorEx.class, "frontShoot");
 
-//        frontShoot.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        backShoot.setDirection(DcMotorSimple.Direction.REVERSE);
+        frontShoot.setDirection(DcMotorSimple.Direction.REVERSE);
 
         frontShoot.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         frontShoot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         backShoot.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         backShoot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
+        frontShoot.setVelocityPIDFCoefficients(1.26, 0.126, 0, 12.6);
+        backShoot.setVelocityPIDFCoefficients(1.26, 0.126, 0, 12.6);
+
         dashboard = FtcDashboard.getInstance();
 
         waitForStart();
 
-        double lastTime = System.nanoTime();
-        double lastPos = frontShoot.getCurrentPosition();
-        double lastPos2 = backShoot.getCurrentPosition();
-        double currentVelocity;
-        double currentVelocity2;
-
-        double[] frontShootPidArr = {0, 0, 0};
-        double[] backShootPidArr = {0, 0, 0};
-
         while (opModeIsActive()) {
-            currentVelocity = (frontShoot.getCurrentPosition() - lastPos) / (System.nanoTime() - lastTime);
-            setFrontShoot(currentVelocity, .5);
+            //runShooterMotors(1400);
+            frontShoot.setVelocityPIDFCoefficients(1.26, 0.126, 0, 12.6);
+            frontShoot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            frontShoot.setVelocity(1400);
 
-            //frontShootPidArr = pidTest(currentVelocity, 39041, frontShootPidArr[1], frontShootPidArr[2]);
-            //frontShoot.setPower(frontShootPidArr[0]);
+            backShoot.setVelocityPIDFCoefficients(1.26, 0.126, 0, 12.6);
+            backShoot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            backShoot.setVelocity(1400);
 
-            currentVelocity2 = (backShoot.getCurrentPosition() - lastPos2) / (System.nanoTime() - lastTime);
-            setBackShoot(currentVelocity2, .5);
+            telemetry.addData("frontShoot current velocity", frontShoot.getVelocity());
+            telemetry.addData("backShoot current velocity", backShoot.getVelocity());
+            telemetry.update();
 
-            //backShootPidArr = pidTest(currentVelocity2, 39041, backShootPidArr[1], backShootPidArr[2]);
-            //backShoot.setPower(backShootPidArr[0]);
-
-            lastPos = frontShoot.getCurrentPosition();
-            lastPos2 = backShoot.getCurrentPosition();
-            lastTime = System.nanoTime();
         }
 
     }
@@ -107,41 +99,46 @@ public class PIDTest extends LinearOpMode {
         pidVars.d = pidConsts.d * derivative;
         return new double[] {pidVars.p + pidVars.i + pidVars.d, error, lastIntegral}; // returns the new motor power, last error, and last integral
     }*/
-    public void setFrontShoot(double currentVelocity, double targetVelocity) {
-        double error = targetVelocity - currentVelocity;
-        double lastError = 0;
+    public void runShooterMotors(double targetVelocity) {
+        PIDTimer.reset();
 
-        while (runShooterMotor) {
-            double changeInError = error - lastError;
-            integral += changeInError * PIDTimer.time();
-            double derivative = changeInError / PIDTimer.time();
+        double lastErrorf = 0;
 
-            double P = pidConsts.p * error;
-            double I = pidConsts.i * integral;
-            double D = pidConsts.d * derivative;
+        double lastErrorb = 0;
 
-            frontShoot.setPower(P + I + D);
+        while (runShooterMotors) {
+            double currentVelocityf = frontShoot.getVelocity();
 
-            lastError = error;
-            PIDTimer.reset();
-        }
-    }
-    public void setBackShoot(double currentVelocity, double targetVelocity) {
-        double error = targetVelocity - currentVelocity;
-        double lastError = 0;
+            double errorf = currentVelocityf - targetVelocity;
 
-        while (runShooterMotor) {
-            double changeInError = error - lastError;
-            integral += changeInError * PIDTimer.time();
-            double derivative = changeInError / PIDTimer.time();
+            double changeInError1 = lastErrorf - errorf;
+            integralf += changeInError1 * PIDTimer.time();
+            double derivativef = changeInError1 / PIDTimer.time();
 
-            double P = pidConsts.p * error;
-            double I = pidConsts.i * integral;
-            double D = pidConsts.d * derivative;
+            double Pf = pidConsts.p * errorf;
+            double If = pidConsts.i * integralf;
+            double Df = pidConsts.d * derivativef;
 
-            backShoot.setPower(P + I + D);
+            frontShoot.setVelocity(Pf + If + Df + targetVelocity);
 
-            lastError = error;
+            lastErrorf = errorf;
+
+            double currentVelocityb = backShoot.getVelocity();
+
+            double errorb = currentVelocityb - targetVelocity;
+
+            double changeInErrorb = lastErrorb - errorb;
+            integralb += changeInErrorb * PIDTimer.time();
+            double derivativeb = changeInErrorb / PIDTimer.time();
+
+            double Pb = pidConsts.p * errorb;
+            double Ib = pidConsts.i * integralb;
+            double Db = pidConsts.d * derivativeb;
+
+            backShoot.setVelocity(Pb + Ib + Db + targetVelocity);
+
+            lastErrorb = errorb;
+
             PIDTimer.reset();
         }
     }
