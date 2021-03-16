@@ -6,7 +6,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 
-@TeleOp(name = "IntakeTest", group = "testing")
+@TeleOp(name = "ShootingTest", group = "testing")
 public class ShootingTest extends LinearOpMode {
 
     private DcMotor intake1, intake2;

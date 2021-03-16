@@ -38,11 +38,12 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 public class TeleOpAugmentedDriving extends LinearOpMode {
     // Define 2 states, drive control or automatic control
     enum Mode {
-        DRIVER_CONTROL,
-        AUTOMATIC_CONTROL
+        INTAKING,
+        TELEOP_SHOOTING,
+        ENDGAME
     }
 
-    Mode currentMode = Mode.DRIVER_CONTROL;
+    Mode currentMode = Mode.INTAKING;
 
     // The coordinates we want the bot to automatically go to when we press the A button
     Vector2d targetAVector = new Vector2d(45, 45);
@@ -79,6 +80,21 @@ public class TeleOpAugmentedDriving extends LinearOpMode {
             // Read pose
             Pose2d poseEstimate = drive.getPoseEstimate();
 
+            Vector2d input = new Vector2d(
+                    -gamepad1.left_stick_y,
+                    -gamepad1.left_stick_x
+            ).rotated(-poseEstimate.getHeading());
+
+            // Pass in the rotated input + right stick value for rotation
+            // Rotation is not part of the rotated input thus must be passed in separately
+            drive.setWeightedDrivePower(
+                    new Pose2d(
+                            input.getX(),
+                            input.getY(),
+                            -gamepad1.right_stick_x
+                    )
+            );
+
             // Print pose to telemetry
             telemetry.addData("mode", currentMode);
             telemetry.addData("x", poseEstimate.getX());
@@ -86,22 +102,21 @@ public class TeleOpAugmentedDriving extends LinearOpMode {
             telemetry.addData("heading", poseEstimate.getHeading());
             telemetry.update();
 
-            // We follow different logic based on whether we are in manual driver control or switch
-            // control to the automatic mode
             switch (currentMode) {
-                case DRIVER_CONTROL:
-                    drive.setWeightedDrivePower(
-                            new Pose2d(
-                                    -gamepad1.left_stick_y,
-                                    -gamepad1.left_stick_x,
-                                    -gamepad1.right_stick_x
-                            )
-                    );
+                case INTAKING:
+                    currentMode = Mode.INTAKING;
 
+                    if(gamepad1.y) {
+                        currentMode = Mode.TELEOP_SHOOTING;
+                    }
                     if (gamepad1.a) {
+                        currentMode = Mode.ENDGAME;
+                    }
+
+                    /*if (gamepad1.a) {
                         // If the A button is pressed on gamepad1, we generate a splineTo()
                         // trajectory on the fly and follow it
-                        // We switch the state to AUTOMATIC_CONTROL
+                        // We switch the state to TELEOP_SHOOTING
 
                         Trajectory traj1 = drive.trajectoryBuilder(poseEstimate)
                                 .splineTo(targetAVector, targetAHeading)
@@ -109,11 +124,11 @@ public class TeleOpAugmentedDriving extends LinearOpMode {
 
                         drive.followTrajectoryAsync(traj1);
 
-                        currentMode = Mode.AUTOMATIC_CONTROL;
+                        currentMode = Mode.TELEOP_SHOOTING;
                     } else if (gamepad1.b) {
                         // If the B button is pressed on gamepad1, we generate a lineTo()
                         // trajectory on the fly and follow it
-                        // We switch the state to AUTOMATIC_CONTROL
+                        // We switch the state to TELEOP_SHOOTING
 
                         Trajectory traj1 = drive.trajectoryBuilder(poseEstimate)
                                 .lineTo(targetBVector)
@@ -121,27 +136,49 @@ public class TeleOpAugmentedDriving extends LinearOpMode {
 
                         drive.followTrajectoryAsync(traj1);
 
-                        currentMode = Mode.AUTOMATIC_CONTROL;
+                        currentMode = Mode.TELEOP_SHOOTING;
                     } else if (gamepad1.y) {
                         // If Y is pressed, we turn the bot to the specified angle to reach
                         // targetAngle (by default, 45 degrees)
 
                         drive.turnAsync(Angle.normDelta(targetAngle - poseEstimate.getHeading()));
 
-                        currentMode = Mode.AUTOMATIC_CONTROL;
-                    }
+                        currentMode = Mode.TELEOP_SHOOTING;
+                    }*/
                     break;
-                case AUTOMATIC_CONTROL:
-                    // If x is pressed, we break out of the automatic following
-                    if (gamepad1.x) {
+                case TELEOP_SHOOTING:
+                    currentMode = Mode.TELEOP_SHOOTING;
+
+                    if (gamepad1.x && drive.isBusy()) {
                         drive.cancelFollowing();
-                        currentMode = Mode.DRIVER_CONTROL;
+                        currentMode = Mode.INTAKING;
+                    } else if (gamepad1.x && !drive.isBusy()) {
+                        currentMode = Mode.INTAKING;
+                    }
+                    if (gamepad1.a && drive.isBusy()) {
+                        drive.cancelFollowing();
+                        currentMode = Mode.ENDGAME;
+                    } else if (gamepad1.a && !drive.isBusy()) {
+                        currentMode = Mode.ENDGAME;
                     }
 
-                    // If drive finishes its task, cede control to the driver
-                    if (!drive.isBusy()) {
-                        currentMode = Mode.DRIVER_CONTROL;
+                    break;
+                case ENDGAME:
+                    currentMode = Mode.ENDGAME;
+
+                    if (gamepad1.x && drive.isBusy()) {
+                        drive.cancelFollowing();
+                        currentMode = Mode.INTAKING;
+                    } else if (gamepad1.x && !drive.isBusy()) {
+                        currentMode = Mode.INTAKING;
                     }
+                    if (gamepad1.y && drive.isBusy()) {
+                        drive.cancelFollowing();
+                        currentMode = Mode.TELEOP_SHOOTING;
+                    } else if (gamepad1.y && !drive.isBusy()) {
+                        currentMode = Mode.TELEOP_SHOOTING;
+                    }
+
                     break;
             }
         }

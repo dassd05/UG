@@ -14,17 +14,18 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 @Autonomous
 public class PIDTest extends LinearOpMode {
 
-    DcMotorEx frontShoot;
-    DcMotorEx backShoot;
+    private DcMotorEx frontShoot, backShoot;
 
     double integralf = 0;
     double integralb = 0;
 
-    public static PIDCoefficients pidConsts = new PIDCoefficients(0, 0, 0);
+    public static PIDCoefficients pidConsts = new PIDCoefficients(.04, 0.004, .01);
 
     FtcDashboard dashboard;
 
     boolean runShooterMotors = true;
+
+    double speed = 1290;
 
     ElapsedTime PIDTimer = new ElapsedTime(ElapsedTime.Resolution.MILLISECONDS);
 
@@ -46,56 +47,11 @@ public class PIDTest extends LinearOpMode {
         waitForStart();
 
         while (opModeIsActive()) {
-            runShooterMotors(1220);
-            /*frontShoot.setVelocityPIDFCoefficients(1.45, .25, .4, 14);
-            frontShoot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            frontShoot.setVelocity(1220);
-
-            backShoot.setVelocityPIDFCoefficients(1.45, .25, .4, 14);
-            backShoot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            backShoot.setVelocity(1220);*/
-
-            telemetry.addData("frontShoot current velocity", frontShoot.getVelocity());
-            telemetry.addData("backShoot current velocity", backShoot.getVelocity());
-            telemetry.update();
-
+            runShooterMotors(speed);
         }
 
     }
 
-    /*void moveTestMotor(double targetPosition){
-        double error = frontShoot.getCurrentPosition();
-        double lastError = 0;
-        double Kp = 0;
-        double Ki = 0;
-        double Kd = 0;
-        //replace ten with motor tick count
-        //30 is a place holder
-        while (Math.abs(error) <= 10 && repetitions <30){
-            error = frontShoot.getCurrentPosition() - targetPosition;
-            double changeInError = lastError - error;
-            integral += changeInError* PIDTimer.time();
-            double derivative = changeInError / PIDTimer.time();
-            double P = pidConsts.p * error;
-            double I = pidConsts.i * integral;
-            double D = pidConsts.d * derivative;
-            frontShoot.setPower(P + I + D);
-            lastError = error;
-            repetitions++;
-            PIDTimer.reset();
-        }
-    }*/
-
-    /*public double[] pidTest(double currentVelocity, double targetVelocity, double lastError, double lastIntegral) {
-        double error = targetVelocity - currentVelocity;
-        double changeInError = lastError - error;
-        lastIntegral += changeInError * PIDTimer.time();
-        double derivative = changeInError / PIDTimer.time();
-        pidVars.p = pidConsts.p * error;
-        pidVars.i = pidConsts.i * lastIntegral;
-        pidVars.d = pidConsts.d * derivative;
-        return new double[] {pidVars.p + pidVars.i + pidVars.d, error, lastIntegral}; // returns the new motor power, last error, and last integral
-    }*/
     public void runShooterMotors(double targetVelocity) {
         PIDTimer.reset();
 
@@ -108,11 +64,11 @@ public class PIDTest extends LinearOpMode {
 
             double errorf = currentVelocityf - targetVelocity;
 
-            double changeInError1 = lastErrorf - errorf;
-            integralf += changeInError1 * PIDTimer.time();
-            double derivativef = changeInError1 / PIDTimer.time();
+            double changeInErrorf = lastErrorf - errorf;
+            integralf += -errorf * PIDTimer.time();
+            double derivativef = changeInErrorf / PIDTimer.time();
 
-            double Pf = pidConsts.p * errorf;
+            double Pf = pidConsts.p * -errorf;
             double If = pidConsts.i * integralf;
             double Df = pidConsts.d * derivativef;
 
@@ -125,10 +81,10 @@ public class PIDTest extends LinearOpMode {
             double errorb = currentVelocityb - targetVelocity;
 
             double changeInErrorb = lastErrorb - errorb;
-            integralb += changeInErrorb * PIDTimer.time();
+            integralb += -errorb * PIDTimer.time();
             double derivativeb = changeInErrorb / PIDTimer.time();
 
-            double Pb = pidConsts.p * errorb;
+            double Pb = pidConsts.p * -errorb;
             double Ib = pidConsts.i * integralb;
             double Db = pidConsts.d * derivativeb;
 
@@ -137,6 +93,18 @@ public class PIDTest extends LinearOpMode {
             lastErrorb = errorb;
 
             PIDTimer.reset();
+
+            telemetry.addData("frontShoot current velocity", frontShoot.getVelocity());
+            telemetry.addData("backShoot current velocity", backShoot.getVelocity());
+            telemetry.addData("PID", Pb + Ib + Db);
+
+            if (frontShoot.getVelocity() + backShoot.getVelocity() < (2 * speed + 35) && frontShoot.getVelocity() + backShoot.getVelocity() > (2 * speed - 35)) {
+                telemetry.addData("GOOD", frontShoot.getVelocity() + backShoot.getVelocity());
+            } else if (frontShoot.getVelocity() + backShoot.getVelocity() > (2 * speed + 35) || frontShoot.getVelocity() + backShoot.getVelocity() < (2 * speed - 35)) {
+                telemetry.addData("BAD", frontShoot.getVelocity() + backShoot.getVelocity());
+            }
+
+            telemetry.update();
         }
     }
 }
