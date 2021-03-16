@@ -36,7 +36,6 @@ import com.qualcomm.robotcore.hardware.DcMotor;
  */
 @TeleOp(group = "advanced")
 public class TeleOpAugmentedDriving extends LinearOpMode {
-    // Define 2 states, drive control or automatic control
     enum Mode {
         INTAKING,
         TELEOP_SHOOTING,

@@ -1,14 +1,20 @@
 package org.firstinspires.ftc.teamcode.drive.testing;
 
+import android.util.Log;
+
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.PIDCoefficients;
+import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.util.ElapsedTime;
+
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 
 @Config
 @Autonomous
@@ -19,13 +25,13 @@ public class PIDTest extends LinearOpMode {
     double integralf = 0;
     double integralb = 0;
 
-    public static PIDCoefficients pidConsts = new PIDCoefficients(.04, 0.004, .01);
+    public static PIDCoefficients pidConsts = new PIDCoefficients(.1, .01, .1);
 
     FtcDashboard dashboard;
 
     boolean runShooterMotors = true;
 
-    double speed = 1290;
+    public static double speed = 1290;
 
     ElapsedTime PIDTimer = new ElapsedTime(ElapsedTime.Resolution.MILLISECONDS);
 
@@ -43,11 +49,19 @@ public class PIDTest extends LinearOpMode {
         backShoot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         dashboard = FtcDashboard.getInstance();
+        Telemetry dashboardTelemetry = dashboard.getTelemetry();
+
+        telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
+
 
         waitForStart();
 
         while (opModeIsActive()) {
             runShooterMotors(speed);
+
+            dashboardTelemetry.addData("backShoot velocity", backShoot.getVelocity());
+            dashboardTelemetry.addData("frontShoot velocity", frontShoot.getVelocity());
+            dashboardTelemetry.update();
         }
 
     }
@@ -103,6 +117,15 @@ public class PIDTest extends LinearOpMode {
             } else if (frontShoot.getVelocity() + backShoot.getVelocity() > (2 * speed + 35) || frontShoot.getVelocity() + backShoot.getVelocity() < (2 * speed - 35)) {
                 telemetry.addData("BAD", frontShoot.getVelocity() + backShoot.getVelocity());
             }
+
+            dashboard = FtcDashboard.getInstance();
+            Telemetry dashboardTelemetry = dashboard.getTelemetry();
+
+            telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
+
+            dashboardTelemetry.addData("backShoot velocity", backShoot.getVelocity());
+            dashboardTelemetry.addData("frontShoot velocity", frontShoot.getVelocity());
+            dashboardTelemetry.update();
 
             telemetry.update();
         }
