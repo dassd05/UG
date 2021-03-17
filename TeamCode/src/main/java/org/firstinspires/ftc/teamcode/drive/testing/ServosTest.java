@@ -19,11 +19,29 @@ public class ServosTest extends LinearOpMode {
 
         waitForStart();
 
+        int s = -1;
+        boolean aPressed = false;
+        boolean stickMoved = false;
+        float lastStickPos;
+
         while (opModeIsActive()) {
-            servos[0].setPosition(0);
-            sleep(2000);
-            servos[0].setPosition(1);
-            sleep(2000);
+
+            if (gamepad1.a) aPressed = true;
+            else if (aPressed) s ++; stickMoved = false;
+            lastStickPos = gamepad1.right_stick_y;
+            if (lastStickPos != gamepad1.right_stick_y) stickMoved = true;
+
+
+            for (Servo servo : servos) {
+                servo.setPosition(servo.getPosition());
+            }
+            if (s != -1 && stickMoved) servos[s].setPosition(gamepad1.right_stick_y);
+
+            telemetry.addData("liftServo", liftServo.getPosition());
+            telemetry.addData("wobbleClawServo", wobbleClawServo.getPosition());
+            telemetry.addData("wobbleArmServo", wobbleArmServo.getPosition());
+            telemetry.addData("shootFlicker", shootFlicker.getPosition());
+            telemetry.update();
         }
     }
 }

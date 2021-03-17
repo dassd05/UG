@@ -2,8 +2,6 @@ package org.firstinspires.ftc.teamcode.drive.advanced;
 
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.geometry.Vector2d;
-import com.acmerobotics.roadrunner.trajectory.Trajectory;
-import com.acmerobotics.roadrunner.util.Angle;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -82,6 +80,7 @@ public class TeleOpAugmentedDriving extends LinearOpMode {
         waitForStart();
         if (isStopRequested()) return;
 
+        // fps calculations
         long timeElapsed = System.currentTimeMillis();
         int frameCount = 0;
         int fps = 0;
