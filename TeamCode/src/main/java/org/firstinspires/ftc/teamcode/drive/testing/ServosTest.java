@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.drive.testing;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.Range;
 
 @TeleOp(group = "testing")
 public class ServosTest extends LinearOpMode {
@@ -22,21 +23,25 @@ public class ServosTest extends LinearOpMode {
         int s = -1;
         boolean aPressed = false;
         boolean stickMoved = false;
-        float lastStickPos;
 
         while (opModeIsActive()) {
 
             if (gamepad1.a) aPressed = true;
-            else if (aPressed) s ++; stickMoved = false;
-            lastStickPos = gamepad1.right_stick_y;
-            if (lastStickPos != gamepad1.right_stick_y) stickMoved = true;
+            else if (aPressed) {
+                s ++;
+                aPressed = false;
+                stickMoved = false;
+                while (gamepad1.right_stick_y != 0) { sleep(100); }
+            }
+            if (s >= 4) s -= 4;
+            if (gamepad1.right_stick_y > 0.015) stickMoved = true;
 
-
+            if (s >= 0 & s < 4 && stickMoved) servos[s].setPosition(Range.clip(gamepad1.right_stick_y, 0, 1));
             for (Servo servo : servos) {
                 servo.setPosition(servo.getPosition());
             }
-            if (s != -1 && stickMoved) servos[s].setPosition(gamepad1.right_stick_y);
 
+            telemetry.addData("s", s);
             telemetry.addData("liftServo", liftServo.getPosition());
             telemetry.addData("wobbleClawServo", wobbleClawServo.getPosition());
             telemetry.addData("wobbleArmServo", wobbleArmServo.getPosition());
