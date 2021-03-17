@@ -4,9 +4,12 @@ import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.geometry.Vector2d;
 import com.acmerobotics.roadrunner.trajectory.Trajectory;
 import com.acmerobotics.roadrunner.util.Angle;
+import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
+
+import java.util.*;
 
 /**
  * This opmode demonstrates how one can augment driver control by following Road Runner arbitrary
@@ -34,6 +37,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
  * <p>
  * This sample utilizes the SampleMecanumDriveCancelable.java class.
  */
+
 @TeleOp(group = "advanced")
 public class TeleOpAugmentedDriving extends LinearOpMode {
     enum Mode {
@@ -57,6 +61,13 @@ public class TeleOpAugmentedDriving extends LinearOpMode {
 
     @Override
     public void runOpMode() throws InterruptedException {
+
+        // Sets hardware bulk read mode
+        List<LynxModule> allHubs = hardwareMap.getAll(LynxModule.class);
+        for (LynxModule hub : allHubs) {
+            hub.setBulkCachingMode(LynxModule.BulkCachingMode.MANUAL);
+        }
+
         // Initialize custom cancelable SampleMecanumDrive class
         SampleMecanumDriveCancelable drive = new SampleMecanumDriveCancelable(hardwareMap);
 
@@ -69,10 +80,21 @@ public class TeleOpAugmentedDriving extends LinearOpMode {
         drive.setPoseEstimate(PoseStorage.currentPose);
 
         waitForStart();
-
         if (isStopRequested()) return;
 
+        long timeElapsed = System.currentTimeMillis();
+        int frameCount = 0;
+        int fps = 0;
+        long lastFrame = System.nanoTime();
+        long timeBetweenFrames;
+
         while (opModeIsActive() && !isStopRequested()) {
+
+            // manually clears all bulk read cache
+            for (LynxModule hub : allHubs) {
+                hub.clearBulkCache();
+            }
+
             // Update the drive class
             drive.update();
 
@@ -99,87 +121,40 @@ public class TeleOpAugmentedDriving extends LinearOpMode {
             telemetry.addData("x", poseEstimate.getX());
             telemetry.addData("y", poseEstimate.getY());
             telemetry.addData("heading", poseEstimate.getHeading());
-            telemetry.update();
 
             switch (currentMode) {
                 case INTAKING:
-                    currentMode = Mode.INTAKING;
-
-                    if(gamepad1.y) {
-                        currentMode = Mode.TELEOP_SHOOTING;
-                    }
-                    if (gamepad1.a) {
-                        currentMode = Mode.ENDGAME;
-                    }
-
-                    /*if (gamepad1.a) {
-                        // If the A button is pressed on gamepad1, we generate a splineTo()
-                        // trajectory on the fly and follow it
-                        // We switch the state to TELEOP_SHOOTING
-
-                        Trajectory traj1 = drive.trajectoryBuilder(poseEstimate)
-                                .splineTo(targetAVector, targetAHeading)
-                                .build();
-
-                        drive.followTrajectoryAsync(traj1);
-
-                        currentMode = Mode.TELEOP_SHOOTING;
-                    } else if (gamepad1.b) {
-                        // If the B button is pressed on gamepad1, we generate a lineTo()
-                        // trajectory on the fly and follow it
-                        // We switch the state to TELEOP_SHOOTING
-
-                        Trajectory traj1 = drive.trajectoryBuilder(poseEstimate)
-                                .lineTo(targetBVector)
-                                .build();
-
-                        drive.followTrajectoryAsync(traj1);
-
-                        currentMode = Mode.TELEOP_SHOOTING;
-                    } else if (gamepad1.y) {
-                        // If Y is pressed, we turn the bot to the specified angle to reach
-                        // targetAngle (by default, 45 degrees)
-
-                        drive.turnAsync(Angle.normDelta(targetAngle - poseEstimate.getHeading()));
-
-                        currentMode = Mode.TELEOP_SHOOTING;
-                    }*/
                     break;
                 case TELEOP_SHOOTING:
-                    currentMode = Mode.TELEOP_SHOOTING;
-
-                    if (gamepad1.x && drive.isBusy()) {
-                        drive.cancelFollowing();
-                        currentMode = Mode.INTAKING;
-                    } else if (gamepad1.x && !drive.isBusy()) {
-                        currentMode = Mode.INTAKING;
-                    }
-                    if (gamepad1.a && drive.isBusy()) {
-                        drive.cancelFollowing();
-                        currentMode = Mode.ENDGAME;
-                    } else if (gamepad1.a && !drive.isBusy()) {
-                        currentMode = Mode.ENDGAME;
-                    }
-
+                    if (gamepad1.x || gamepad1.a) drive.cancelFollowing();
                     break;
                 case ENDGAME:
-                    currentMode = Mode.ENDGAME;
-
-                    if (gamepad1.x && drive.isBusy()) {
-                        drive.cancelFollowing();
-                        currentMode = Mode.INTAKING;
-                    } else if (gamepad1.x && !drive.isBusy()) {
-                        currentMode = Mode.INTAKING;
-                    }
-                    if (gamepad1.y && drive.isBusy()) {
-                        drive.cancelFollowing();
-                        currentMode = Mode.TELEOP_SHOOTING;
-                    } else if (gamepad1.y && !drive.isBusy()) {
-                        currentMode = Mode.TELEOP_SHOOTING;
-                    }
-
+                    if (gamepad1.x || gamepad1.y) drive.cancelFollowing();
                     break;
+                default:
+                    // this should *NEVER* happen
+                    String errMsg = "LINE 49, 126, 135, switch statement on currentMode reached default case somehow";
+                    telemetry.addData("ERROR", errMsg);
+                    telemetry.update();
+                    throw new InternalError(errMsg);
             }
+
+            if (gamepad1.x) currentMode = Mode.INTAKING;
+            if (gamepad1.y) currentMode = Mode.TELEOP_SHOOTING;
+            if (gamepad1.a) currentMode = Mode.ENDGAME;
+
+            frameCount++;
+            if (System.currentTimeMillis() - timeElapsed > 1000) {
+                fps = frameCount;
+                frameCount = 0;
+                timeElapsed = System.currentTimeMillis();
+            }
+//            timeBetweenFrames = System.nanoTime() - lastFrame;
+//            lastFrame = System.nanoTime();
+            telemetry.addData("fps", fps);
+
+
+            telemetry.update();
         }
     }
 }

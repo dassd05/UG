@@ -1,7 +1,5 @@
 package org.firstinspires.ftc.teamcode.drive.testing;
 
-import android.util.Log;
-
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
@@ -11,7 +9,6 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.PIDCoefficients;
-import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
@@ -56,8 +53,10 @@ public class PIDTest extends LinearOpMode {
 
         waitForStart();
 
+        PIDTimer.reset();
         while (opModeIsActive()) {
-            runShooterMotors(speed);
+            runShooterMotorsPerLoop(speed);
+
 
             dashboardTelemetry.addData("backShoot velocity", backShoot.getVelocity());
             dashboardTelemetry.addData("frontShoot velocity", frontShoot.getVelocity());
@@ -66,68 +65,63 @@ public class PIDTest extends LinearOpMode {
 
     }
 
-    public void runShooterMotors(double targetVelocity) {
+
+    double lastErrorf = 0;
+    double lastErrorb = 0;
+    public void runShooterMotorsPerLoop(double targetVelocity) {
         PIDTimer.reset();
 
-        double lastErrorf = 0;
+        double currentVelocityf = frontShoot.getVelocity();
 
-        double lastErrorb = 0;
+        double errorf = currentVelocityf - targetVelocity;
 
-        while (runShooterMotors) {
-            double currentVelocityf = frontShoot.getVelocity();
+        double changeInErrorf = lastErrorf - errorf;
+        integralf += -errorf * PIDTimer.time();
+        double derivativef = changeInErrorf / PIDTimer.time();
 
-            double errorf = currentVelocityf - targetVelocity;
+        double Pf = pidConsts.p * -errorf;
+        double If = pidConsts.i * integralf;
+        double Df = pidConsts.d * derivativef;
 
-            double changeInErrorf = lastErrorf - errorf;
-            integralf += -errorf * PIDTimer.time();
-            double derivativef = changeInErrorf / PIDTimer.time();
+        frontShoot.setVelocity(Pf + If + Df + targetVelocity);
 
-            double Pf = pidConsts.p * -errorf;
-            double If = pidConsts.i * integralf;
-            double Df = pidConsts.d * derivativef;
+        lastErrorf = errorf;
 
-            frontShoot.setVelocity(Pf + If + Df + targetVelocity);
+        double currentVelocityb = backShoot.getVelocity();
 
-            lastErrorf = errorf;
+        double errorb = currentVelocityb - targetVelocity;
 
-            double currentVelocityb = backShoot.getVelocity();
+        double changeInErrorb = lastErrorb - errorb;
+        integralb += -errorb * PIDTimer.time();
+        double derivativeb = changeInErrorb / PIDTimer.time();
 
-            double errorb = currentVelocityb - targetVelocity;
+        double Pb = pidConsts.p * -errorb;
+        double Ib = pidConsts.i * integralb;
+        double Db = pidConsts.d * derivativeb;
 
-            double changeInErrorb = lastErrorb - errorb;
-            integralb += -errorb * PIDTimer.time();
-            double derivativeb = changeInErrorb / PIDTimer.time();
+        backShoot.setVelocity(Pb + Ib + Db + targetVelocity);
 
-            double Pb = pidConsts.p * -errorb;
-            double Ib = pidConsts.i * integralb;
-            double Db = pidConsts.d * derivativeb;
+        lastErrorb = errorb;
 
-            backShoot.setVelocity(Pb + Ib + Db + targetVelocity);
+        telemetry.addData("frontShoot current velocity", frontShoot.getVelocity());
+        telemetry.addData("backShoot current velocity", backShoot.getVelocity());
+        telemetry.addData("PID", Pb + Ib + Db);
 
-            lastErrorb = errorb;
-
-            PIDTimer.reset();
-
-            telemetry.addData("frontShoot current velocity", frontShoot.getVelocity());
-            telemetry.addData("backShoot current velocity", backShoot.getVelocity());
-            telemetry.addData("PID", Pb + Ib + Db);
-
-            if (frontShoot.getVelocity() + backShoot.getVelocity() < (2 * speed + 35) && frontShoot.getVelocity() + backShoot.getVelocity() > (2 * speed - 35)) {
-                telemetry.addData("GOOD", frontShoot.getVelocity() + backShoot.getVelocity());
-            } else if (frontShoot.getVelocity() + backShoot.getVelocity() > (2 * speed + 35) || frontShoot.getVelocity() + backShoot.getVelocity() < (2 * speed - 35)) {
-                telemetry.addData("BAD", frontShoot.getVelocity() + backShoot.getVelocity());
-            }
-
-            dashboard = FtcDashboard.getInstance();
-            Telemetry dashboardTelemetry = dashboard.getTelemetry();
-
-            telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
-
-            dashboardTelemetry.addData("backShoot velocity", backShoot.getVelocity());
-            dashboardTelemetry.addData("frontShoot velocity", frontShoot.getVelocity());
-            dashboardTelemetry.update();
-
-            telemetry.update();
+        if (frontShoot.getVelocity() + backShoot.getVelocity() < (2 * speed + 35) && frontShoot.getVelocity() + backShoot.getVelocity() > (2 * speed - 35)) {
+            telemetry.addData("GOOD", frontShoot.getVelocity() + backShoot.getVelocity());
+        } else if (frontShoot.getVelocity() + backShoot.getVelocity() > (2 * speed + 35) || frontShoot.getVelocity() + backShoot.getVelocity() < (2 * speed - 35)) {
+            telemetry.addData("BAD", frontShoot.getVelocity() + backShoot.getVelocity());
         }
+
+        dashboard = FtcDashboard.getInstance();
+        Telemetry dashboardTelemetry = dashboard.getTelemetry();
+
+        telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
+
+        dashboardTelemetry.addData("backShoot velocity", backShoot.getVelocity());
+        dashboardTelemetry.addData("frontShoot velocity", frontShoot.getVelocity());
+        dashboardTelemetry.update();
+
+        telemetry.update();
     }
 }
