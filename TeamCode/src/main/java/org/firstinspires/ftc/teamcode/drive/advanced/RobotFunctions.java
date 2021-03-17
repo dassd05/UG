@@ -48,16 +48,24 @@ public class RobotFunctions {
     }
 
     public void grabWobbleGoal() {
-        wobbleClawServo.setPosition(0.5); // dk position yet
+        wobbleClawServo.setPosition(0.8);
+        sleep(700);
     }
     public void releaseWobbleGoal() {
-        wobbleClawServo.setPosition(0); // dk position yet
+        wobbleClawServo.setPosition(0.3);
+        sleep(700);
     }
     public void raiseWobbleArm() {
-        wobbleArmServo.setPosition(1); // dk position yet
+        wobbleArmServo.setPosition(0.8);
+        sleep(1400);
+    }
+    public void dropOffWobbleArm() {
+        wobbleArmServo.setPosition(0.5);
+        sleep(700);
     }
     public void lowerWobbleArm() {
-        wobbleArmServo.setPosition(1); // dk position yet
+        wobbleArmServo.setPosition(0.3);
+        sleep(700);
     }
 
     public void prepareShooter() {
@@ -66,6 +74,17 @@ public class RobotFunctions {
     }
     public void shoot() {
         // MUST MAKE ASYNCHRONOUSLY TO MAIN PROGRAM
+        shootFlicker.setPosition(0.45);
+        shootFlicker.setPosition(0.1);
+    }
+
+    public void raiseLift() {
+        liftServo.setPosition(0.08);
+        sleep(1500);
+    }
+    public void lowerLift() {
+        liftServo.setPosition(0.58);
+        sleep(1500);
     }
 
     public void startIntake() {
@@ -91,4 +110,12 @@ public class RobotFunctions {
 //    public Pose2d getPosition() {
 //
 //    }
+
+    public void sleep(int milliseconds) {
+        try {
+            Thread.sleep(milliseconds);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+    }
 }
