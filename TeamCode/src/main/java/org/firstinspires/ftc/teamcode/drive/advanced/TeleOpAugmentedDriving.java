@@ -1,11 +1,22 @@
 package org.firstinspires.ftc.teamcode.drive.advanced;
 
+import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.geometry.Vector2d;
+import com.acmerobotics.roadrunner.trajectory.Trajectory;
+import com.acmerobotics.roadrunner.util.Angle;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.PIDCoefficients;
+import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.ElapsedTime;
+
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 
 import java.util.*;
 
@@ -46,31 +57,44 @@ public class TeleOpAugmentedDriving extends LinearOpMode {
 
     Mode currentMode = Mode.INTAKING;
 
-    // The coordinates we want the bot to automatically go to when we press the A button
-    Vector2d targetAVector = new Vector2d(45, 45);
-    // The heading we want the bot to end on for targetA
-    double targetAHeading = Math.toRadians(90);
+    private DcMotorEx frontShoot, backShoot;
+    private Servo wobbleClawServo, wobbleArmServo;
+    private Servo liftServo, shootFlicker;
+    private DcMotor intake1, intake2;
 
-    // The location we want the bot to automatically go to when we press the B button
-    Vector2d targetBVector = new Vector2d(-15, 25);
+    double integralf = 0;
+    double integralb = 0;
 
-    // The angle we want to align to when we press Y
-    double targetAngle = Math.toRadians(45);
+    public static PIDCoefficients pidConstsf = new PIDCoefficients(0.5, 0, 25.0);
+    public static PIDCoefficients pidConstsb = new PIDCoefficients(0.45, 0, 35.0);
+
+    ElapsedTime PIDTimer = new ElapsedTime(ElapsedTime.Resolution.MILLISECONDS);
 
     @Override
     public void runOpMode() throws InterruptedException {
+        intake1 = hardwareMap.dcMotor.get("intake1");
+        intake2 = hardwareMap.dcMotor.get("intake2");
 
-        // Sets hardware bulk read mode
-        List<LynxModule> allHubs = hardwareMap.getAll(LynxModule.class);
-        for (LynxModule hub : allHubs) {
-            hub.setBulkCachingMode(LynxModule.BulkCachingMode.MANUAL);
-        }
+        backShoot = hardwareMap.get(DcMotorEx.class, "backShoot");
+        frontShoot = hardwareMap.get(DcMotorEx.class, "frontShoot");
 
-        // Initialize custom cancelable SampleMecanumDrive class
+        frontShoot.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        frontShoot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        backShoot.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        backShoot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        liftServo = hardwareMap.servo.get("liftServo");
+        wobbleClawServo = hardwareMap.servo.get("wobbleClawServo");
+        wobbleArmServo = hardwareMap.servo.get("wobbleArmServo");
+        shootFlicker = hardwareMap.servo.get("shootFlicker");
+
+        intake1.setDirection(DcMotorSimple.Direction.REVERSE);
+        intake2.setDirection(DcMotorSimple.Direction.REVERSE);
+        backShoot.setDirection(DcMotorSimple.Direction.REVERSE);
+        frontShoot.setDirection(DcMotorSimple.Direction.REVERSE);
+
         SampleMecanumDriveCancelable drive = new SampleMecanumDriveCancelable(hardwareMap);
 
-        // We want to turn off velocity control for teleop
-        // Velocity control per wheel is not necessary outside of motion profiled auto
         drive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         // Retrieve our pose from the PoseStorage.currentPose static field
@@ -78,57 +102,105 @@ public class TeleOpAugmentedDriving extends LinearOpMode {
         drive.setPoseEstimate(PoseStorage.currentPose);
 
         waitForStart();
-        if (isStopRequested()) return;
 
-        // fps calculations
-        long timeElapsed = System.currentTimeMillis();
-        int frameCount = 0;
-        int fps = 0;
-        long lastFrame = System.nanoTime();
-        long timeBetweenFrames;
+        if (isStopRequested()) return;
 
         while (opModeIsActive() && !isStopRequested()) {
 
-            // manually clears all bulk read cache
-            for (LynxModule hub : allHubs) {
-                hub.clearBulkCache();
-            }
-
-            // Update the drive class
             drive.update();
 
-            // Read pose
             Pose2d poseEstimate = drive.getPoseEstimate();
 
             Vector2d input = new Vector2d(
                     -gamepad1.left_stick_y,
                     -gamepad1.left_stick_x
-            ).rotated(-poseEstimate.getHeading());
+            ).rotated(-poseEstimate.getHeading() - Math.toRadians(90));
 
-            // Pass in the rotated input + right stick value for rotation
-            // Rotation is not part of the rotated input thus must be passed in separately
             drive.setWeightedDrivePower(
                     new Pose2d(
-                            input.getX(),
-                            input.getY(),
-                            -gamepad1.right_stick_x
+                            input.getX() * .7,
+                            input.getY() * .7,
+                            (-gamepad1.right_stick_x * .7)
                     )
             );
 
-            // Print pose to telemetry
             telemetry.addData("mode", currentMode);
             telemetry.addData("x", poseEstimate.getX());
             telemetry.addData("y", poseEstimate.getY());
-            telemetry.addData("heading", poseEstimate.getHeading());
+            telemetry.addData("heading", Math.toDegrees(poseEstimate.getHeading()));
 
             switch (currentMode) {
                 case INTAKING:
+                    frontShoot.setPower(0);
+                    backShoot.setPower(0);
+
+                    liftServo.setPosition(.58);
+
+                    intake1.setPower(.65);
+                    intake2.setPower(.65);
                     break;
                 case TELEOP_SHOOTING:
-                    if (gamepad1.x || gamepad1.a) drive.cancelFollowing();
+
+                    Trajectory shooting = drive.trajectoryBuilder(poseEstimate)
+                            .lineToLinearHeading(new Pose2d(20, 20, Math.toRadians(0))) // need to fix coordinate
+                            .addTemporalMarker(0, () -> {
+                                intake1.setPower(0);
+                                intake2.setPower(0);
+                                liftServo.setPosition(.08);
+
+                                runShooterMotors(1200); //need to test shooter power stuff
+                            })
+                            .build(); //need to fix the coordinates
+
+                    drive.followTrajectory(shooting);
+                    //runShooterMotors(1200);
+
+                    if (gamepad1.x && drive.isBusy() || gamepad1.a && drive.isBusy())
+                        drive.cancelFollowing();
                     break;
                 case ENDGAME:
-                    if (gamepad1.x || gamepad1.y) drive.cancelFollowing();
+                    Trajectory endgame1 = drive.trajectoryBuilder(poseEstimate)
+                            .strafeRight(24) // need to fix coordinate
+                            .addTemporalMarker(0, () -> {
+                                intake1.setPower(0);
+                                intake2.setPower(0);
+                                liftServo.setPosition(.08);
+
+                                runShooterMotors(1200); //need to test shooter power stuff
+                            })
+                            .build(); //need to fix the coordinates
+
+                    Trajectory endgame2 = drive.trajectoryBuilder(endgame1.end())
+                            .strafeRight(10) // need to fix coordinate
+                            .addTemporalMarker(0, () -> {
+                            })
+                            .build(); //need to fix the coordinates
+
+                    Trajectory endgame3 = drive.trajectoryBuilder(endgame2.end())
+                            .strafeRight(10) // need to fix coordinate
+                            .addTemporalMarker(0, () -> {
+                            })
+                            .build(); //need to fix the coordinates
+
+                    drive.followTrajectory(endgame1);
+                    sleep(100);
+                    shoot();
+                    sleep(200);
+
+                    drive.followTrajectory(endgame2);
+                    sleep(100);
+                    shoot();
+                    sleep(200);
+
+                    drive.followTrajectory(endgame3);
+                    sleep(100);
+                    shoot();
+                    sleep(200);
+
+                    currentMode = Mode.INTAKING;
+
+                    if (gamepad1.x && drive.isBusy() || gamepad1.y && drive.isBusy())
+                        drive.cancelFollowing();
                     break;
                 default:
                     // this should *NEVER* happen
@@ -142,18 +214,77 @@ public class TeleOpAugmentedDriving extends LinearOpMode {
             if (gamepad1.y) currentMode = Mode.TELEOP_SHOOTING;
             if (gamepad1.a) currentMode = Mode.ENDGAME;
 
-            frameCount++;
-            if (System.currentTimeMillis() - timeElapsed > 1000) {
-                fps = frameCount;
-                frameCount = 0;
-                timeElapsed = System.currentTimeMillis();
+            if (gamepad1.b) {
+                shoot();
             }
-//            timeBetweenFrames = System.nanoTime() - lastFrame;
-//            lastFrame = System.nanoTime();
-            telemetry.addData("fps", fps);
 
+            // lifting wobble goal
+            if (gamepad1.dpad_up) {
+                wobbleClawServo.setPosition(.8);
+                sleep(700);
+                wobbleArmServo.setPosition(.8);
+            }
+
+            // setting arm down
+            if (gamepad1.dpad_down) {
+                wobbleArmServo.setPosition(.3);
+                wobbleClawServo.setPosition(.3);
+            }
+
+            // dropping off wobble goal
+            if (gamepad1.dpad_right) {
+                wobbleArmServo.setPosition(.5);
+                sleep(1000);
+                wobbleClawServo.setPosition(.3);
+            }
 
             telemetry.update();
         }
+    }
+
+    double lastErrorf = 0;
+    double lastErrorb = 0;
+
+    public void runShooterMotors(double targetVelocity) {
+        PIDTimer.reset();
+
+        double currentVelocityf = frontShoot.getVelocity();
+
+        double errorf = currentVelocityf - targetVelocity;
+
+        double changeInErrorf = lastErrorf - errorf;
+        integralf += -errorf * PIDTimer.time();
+        double derivativef = changeInErrorf / PIDTimer.time();
+
+        double Pf = pidConstsf.p * -errorf;
+        double If = pidConstsf.i * integralf;
+        double Df = pidConstsf.d * derivativef;
+
+        frontShoot.setVelocity(Pf + If + Df + targetVelocity);
+
+        lastErrorf = errorf;
+
+        double currentVelocityb = backShoot.getVelocity();
+
+        double errorb = currentVelocityb - targetVelocity;
+
+        double changeInErrorb = lastErrorb - errorb;
+        integralb += -errorb * PIDTimer.time();
+        double derivativeb = changeInErrorb / PIDTimer.time();
+
+        double Pb = pidConstsb.p * -errorb;
+        double Ib = pidConstsb.i * integralb;
+        double Db = pidConstsb.d * derivativeb;
+
+        backShoot.setVelocity(Pb + Ib + Db + targetVelocity);
+
+        lastErrorb = errorb;
+    }
+
+    public void shoot() {
+        sleep(100);
+        shootFlicker.setPosition(0.1);
+        sleep(100);
+        shootFlicker.setPosition(0.45);
     }
 }

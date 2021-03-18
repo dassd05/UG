@@ -34,10 +34,10 @@ public class IntakeTest extends LinearOpMode {
                 frontShoot.setPower(0);
                 backShoot.setPower(0);
 
-                liftServo.setPosition(0);
+                liftServo.setPosition(.58);
 
-                intake1.setPower(.5);
-                intake2.setPower(.5);
+                intake1.setPower(.65);
+                intake2.setPower(.65);
 
                 telemetry.update();
             }
