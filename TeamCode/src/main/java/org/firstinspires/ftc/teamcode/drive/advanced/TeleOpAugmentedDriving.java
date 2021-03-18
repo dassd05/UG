@@ -93,11 +93,8 @@ public class TeleOpAugmentedDriving extends LinearOpMode {
         backShoot.setDirection(DcMotorSimple.Direction.REVERSE);
         frontShoot.setDirection(DcMotorSimple.Direction.REVERSE);
 
-        // Initialize custom cancelable SampleMecanumDrive class
         SampleMecanumDriveCancelable drive = new SampleMecanumDriveCancelable(hardwareMap);
 
-        // We want to turn off velocity control for teleop
-        // Velocity control per wheel is not necessary outside of motion profiled auto
         drive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         // Retrieve our pose from the PoseStorage.currentPose static field
@@ -110,10 +107,8 @@ public class TeleOpAugmentedDriving extends LinearOpMode {
 
         while (opModeIsActive() && !isStopRequested()) {
 
-            // Update the drive class
             drive.update();
 
-            // Read pose
             Pose2d poseEstimate = drive.getPoseEstimate();
 
             Vector2d input = new Vector2d(
@@ -121,8 +116,6 @@ public class TeleOpAugmentedDriving extends LinearOpMode {
                     -gamepad1.left_stick_x
             ).rotated(-poseEstimate.getHeading() - Math.toRadians(90));
 
-            // Pass in the rotated input + right stick value for rotation
-            // Rotation is not part of the rotated input thus must be passed in separately
             drive.setWeightedDrivePower(
                     new Pose2d(
                             input.getX() * .7,
@@ -131,7 +124,6 @@ public class TeleOpAugmentedDriving extends LinearOpMode {
                     )
             );
 
-            // Print pose to telemetry
             telemetry.addData("mode", currentMode);
             telemetry.addData("x", poseEstimate.getX());
             telemetry.addData("y", poseEstimate.getY());
