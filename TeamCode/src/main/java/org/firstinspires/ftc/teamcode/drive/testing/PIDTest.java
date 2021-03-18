@@ -25,8 +25,8 @@ public class PIDTest extends LinearOpMode {
     double integralf = 0;
     double integralb = 0;
 
-    public static PIDCoefficients pidConstsf = new PIDCoefficients(0.5, 0, 25.0);
-    public static PIDCoefficients pidConstsb = new PIDCoefficients(0.45, 0, 35.0);
+    public static PIDCoefficients pidConstsf = new PIDCoefficients(0.4, 0, 83);
+    public static PIDCoefficients pidConstsb = new PIDCoefficients(0.4, 0, 181);
 
 
     FtcDashboard dashboard;
@@ -67,9 +67,9 @@ public class PIDTest extends LinearOpMode {
                 backShoot.setPower(0);
             }
 
-            dashboardTelemetry.addData("backShoot velocity", backShoot.getVelocity());
+            /*dashboardTelemetry.addData("backShoot velocity", backShoot.getVelocity());
             dashboardTelemetry.addData("frontShoot velocity", frontShoot.getVelocity());
-            dashboardTelemetry.update();
+            dashboardTelemetry.update();*/
         }
 
     }
@@ -112,7 +112,7 @@ public class PIDTest extends LinearOpMode {
 
             lastErrorb = errorb;
 
-            telemetry.addData("frontShoot current velocity", frontShoot.getVelocity());
+           /* telemetry.addData("frontShoot current velocity", frontShoot.getVelocity());
             telemetry.addData("backShoot current velocity", backShoot.getVelocity());
             telemetry.addData("D", Db);
             telemetry.addData("time", PIDTimer.time());
@@ -121,7 +121,7 @@ public class PIDTest extends LinearOpMode {
                 telemetry.addData("GOOD", frontShoot.getVelocity() + backShoot.getVelocity());
             } else if (frontShoot.getVelocity() + backShoot.getVelocity() > (2 * speed + 35) || frontShoot.getVelocity() + backShoot.getVelocity() < (2 * speed - 35)) {
                 telemetry.addData("BAD", frontShoot.getVelocity() + backShoot.getVelocity());
-            }
+            }*/
 
             dashboard = FtcDashboard.getInstance();
             Telemetry dashboardTelemetry = dashboard.getTelemetry();

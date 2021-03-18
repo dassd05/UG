@@ -36,12 +36,11 @@ public class ShootingTest extends LinearOpMode {
                 frontShoot.setPower(.65);
                 backShoot.setPower(.65); //change to PID thing
 
-                liftServo.setPosition(1);
+                liftServo.setPosition(.08);
 
                 if (gamepad1.b) {
-                    shootFlicker.setPosition(1);
-                    sleep(50);
-                    shootFlicker.setPosition(0);
+                    shootFlicker.setPosition(.1);
+                    shootFlicker.setPosition(.45);
                 }
 
                 telemetry.update();

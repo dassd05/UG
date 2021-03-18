@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.drive.auton;
 
+import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.geometry.Vector2d;
 import com.acmerobotics.roadrunner.trajectory.Trajectory;
@@ -38,7 +39,7 @@ import org.firstinspires.ftc.teamcode.drive.advanced.PoseStorage;
  * something disastrous occurs. Such a sample has not been included.
  */
 @Autonomous(group = "advanced")
-public class FourRing extends LinearOpMode {
+public class ShootingVelocityPositionTest extends LinearOpMode {
 
     private DcMotorEx frontShoot, backShoot;
     private Servo wobbleClawServo, wobbleArmServo;
@@ -50,6 +51,8 @@ public class FourRing extends LinearOpMode {
 
     public static PIDCoefficients pidConstsf = new PIDCoefficients(0.4, 0, 83);
     public static PIDCoefficients pidConstsb = new PIDCoefficients(0.4, 0, 181);
+
+    public static double targetVelocity = 1270;
 
     ElapsedTime PIDTimer = new ElapsedTime(ElapsedTime.Resolution.MILLISECONDS);
     @Override
@@ -82,38 +85,19 @@ public class FourRing extends LinearOpMode {
 
         drive.setPoseEstimate(startPose);
 
-        wobbleArmServo.setPosition(1);
-        sleep(5000);
-        wobbleClawServo.setPosition(.9);
-
-        liftServo.setPosition(.08);
 
         waitForStart();
 
         if (isStopRequested()) return;
         while (opModeIsActive() && !isStopRequested()) {
 
-            // Update the drive class
-            drive.update();
 
-            // Read pose
-            Pose2d poseEstimate = drive.getPoseEstimate();
 
-            // Print pose to telemetry
-            telemetry.addData("x", poseEstimate.getX());
-            telemetry.addData("y", poseEstimate.getY());
-            telemetry.addData("heading", Math.toDegrees(poseEstimate.getHeading()));
+            runShooterMotors(targetVelocity);
 
-            // Example spline path from SplineTest.java
-            // Make sure the start pose matches with the localizer's start pose
-            Trajectory traj = drive.trajectoryBuilder(startPose)
-                    .splineTo(new Vector2d(45, 45), 0)
-                    .build();
-
-            drive.followTrajectory(traj);
-
-            // Transfer the current pose to PoseStorage so we can use it in TeleOp
-            PoseStorage.currentPose = drive.getPoseEstimate();
+            if (gamepad1.b) {
+                shoot();
+            }
         }
     }
     double lastErrorf = 0;
@@ -124,7 +108,7 @@ public class FourRing extends LinearOpMode {
 
         double currentVelocityf = frontShoot.getVelocity();
 
-        double errorf = currentVelocityf - targetVelocity;
+        double errorf = currentVelocityf - targetVelocity; //target - current
 
         double changeInErrorf = lastErrorf - errorf;
         integralf += -errorf * PIDTimer.time();
@@ -156,9 +140,9 @@ public class FourRing extends LinearOpMode {
     }
 
     public void shoot() {
-        sleep(100);
+        sleep(150);
         shootFlicker.setPosition(0.1);
-        sleep(100);
+        sleep(150);
         shootFlicker.setPosition(0.45);
     }
     public void wobbleUp () {

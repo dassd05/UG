@@ -36,16 +36,24 @@ public class WobbleArmTest extends LinearOpMode {
                 backShoot.setPower(0);
 
                 if (gamepad1.dpad_up) {
-                    wobbleClawServo.setPosition(1);
-                    sleep(500);
-                    wobbleArmServo.setPosition(1);
+                    wobbleClawServo.setPosition(.8);
+                    sleep(300);
+                    wobbleArmServo.setPosition(.8);
                 }
+                //lifting wobble goal
 
                 if (gamepad1.dpad_down) {
-                    wobbleArmServo.setPosition(.5);
-                    wobbleClawServo.setPosition(0);
-                    wobbleArmServo.setPosition(0);
+                    wobbleArmServo.setPosition(.3);
+                    wobbleClawServo.setPosition(.3);
                 }
+                //setting wobble goal down
+
+                if (gamepad1.dpad_right) {
+                    wobbleArmServo.setPosition(.5);
+                    sleep(200);
+                    wobbleClawServo.setPosition(.3);
+                }
+                //dropping wobble goal down
             }
         }
     }
