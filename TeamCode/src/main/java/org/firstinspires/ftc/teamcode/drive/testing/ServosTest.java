@@ -14,8 +14,8 @@ public class ServosTest extends LinearOpMode {
     Servo liftServo, wobbleClawServo, wobbleArmServo, shootFlicker;
 
     public static double liftServoVal = 0; // 0.08 (up) - 0.58 (down)
-    public static double wobbleClawVal = 0; // 0.3 (open) - 0.8 (closed)
-    public static double wobbleArmVal = 0; // 0.3 (down) - 0.5 (drop-off) - 0.8 (up)
+    public static double wobbleClawVal = 0; // 0.3 (open) - 0.9 (closed) - 0.9 (auton start)
+    public static double wobbleArmVal = 0; // 0.13 (down) - 0.33 (drop-off) - 0.58 (up) - 1.0 (auton start)
     public static double shootFlickerVal = 0; // 0.10 (shot) - 0.45 (back)
 
     public FtcDashboard dashboard;
@@ -35,10 +35,10 @@ public class ServosTest extends LinearOpMode {
         waitForStart();
 
         while (opModeIsActive()) {
-            liftServo.setPosition(liftServoVal);
-            wobbleClawServo.setPosition(wobbleClawVal);
-            wobbleArmServo.setPosition(wobbleArmVal);
-            shootFlicker.setPosition(shootFlickerVal);
+            if (liftServoVal != -1) liftServo.setPosition(liftServoVal);
+            if (wobbleClawVal != -1) wobbleClawServo.setPosition(wobbleClawVal);
+            if (wobbleArmVal != -1) wobbleArmServo.setPosition(wobbleArmVal);
+            if (shootFlickerVal != -1) shootFlicker.setPosition(shootFlickerVal);
         }
 
 
