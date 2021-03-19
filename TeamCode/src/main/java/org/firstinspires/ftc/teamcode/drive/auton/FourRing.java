@@ -1,19 +1,29 @@
 package org.firstinspires.ftc.teamcode.drive.auton;
 
+import android.util.Log;
+
+import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.geometry.Vector2d;
 import com.acmerobotics.roadrunner.trajectory.Trajectory;
+import com.acmerobotics.roadrunner.trajectory.TrajectoryBuilder;
+import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.PIDCoefficients;
+import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.VoltageSensor;
+import com.qualcomm.robotcore.hardware.configuration.typecontainers.MotorConfigurationType;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
 import org.firstinspires.ftc.teamcode.drive.advanced.PoseStorage;
+import org.firstinspires.ftc.teamcode.drive.advanced.SampleMecanumDriveCancelable;
 
 /**
  * Example opmode demonstrating how to hand-off the pose from your autonomous opmode to your teleop
@@ -39,32 +49,77 @@ import org.firstinspires.ftc.teamcode.drive.advanced.PoseStorage;
  */
 @Autonomous(group = "advanced")
 public class FourRing extends LinearOpMode {
+    public static double MOTOR_TICKS_PER_REV = 28;
+    public static double MOTOR_MAX_RPM = 5400;
+    public static double MOTOR_GEAR_RATIO = 1;
+
+    public static boolean RUN_USING_ENCODER = true;
+    public static boolean DEFAULT_GAINS = false;
+
+    private FtcDashboard dashboard = FtcDashboard.getInstance();
+
+    private VoltageSensor batteryVoltageSensor;
 
     private DcMotorEx frontShoot, backShoot;
     private Servo wobbleClawServo, wobbleArmServo;
     private Servo liftServo, shootFlicker;
     private DcMotor intake1, intake2;
 
-    double integralf = 0;
-    double integralb = 0;
+    public static PIDFCoefficients MOTOR_VELO_PID = new PIDFCoefficients(35, 0, 0, 15.7);
+    public static PIDFCoefficients MOTOR_VELO_PID_2 = new PIDFCoefficients(35, 0, 0, 15.7);
 
-    public static PIDCoefficients pidConstsf = new PIDCoefficients(0.4, 0, 83);
-    public static PIDCoefficients pidConstsb = new PIDCoefficients(0.4, 0, 181);
+    private double lastKp = 0.0;
+    private double lastKi = 0.0;
+    private double lastKd = 0.0;
+    private double lastKf = getMotorVelocityF();
+
+    private double lastKp_2 = 0.0;
+    private double lastKi_2 = 0.0;
+    private double lastKd_2 = 0.0;
+    private double lastKf_2 = getMotorVelocityF();
 
     ElapsedTime PIDTimer = new ElapsedTime(ElapsedTime.Resolution.MILLISECONDS);
     @Override
     public void runOpMode() throws InterruptedException {
+        batteryVoltageSensor = hardwareMap.voltageSensor.iterator().next();
 
-        intake1 = hardwareMap.dcMotor.get("intake1");
-        intake2 = hardwareMap.dcMotor.get("intake2");
-
-        backShoot = hardwareMap.get(DcMotorEx.class, "backShoot");
         frontShoot = hardwareMap.get(DcMotorEx.class, "frontShoot");
 
         frontShoot.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         frontShoot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        frontShoot.setDirection(DcMotorSimple.Direction.REVERSE);
+        frontShoot.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+
+        backShoot = hardwareMap.get(DcMotorEx.class, "backShoot");
+
         backShoot.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         backShoot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        backShoot.setDirection(DcMotorSimple.Direction.REVERSE);
+        backShoot.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+
+        frontShoot.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(
+                MOTOR_VELO_PID.p, MOTOR_VELO_PID.i, MOTOR_VELO_PID.d,
+                MOTOR_VELO_PID.f * 12 / hardwareMap.voltageSensor.iterator().next().getVoltage()
+        ));
+        //setPIDFCoefficients(frontShoot, MOTOR_VELO_PID);
+
+        backShoot.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(
+                MOTOR_VELO_PID_2.p, MOTOR_VELO_PID_2.i, MOTOR_VELO_PID_2.d,
+                MOTOR_VELO_PID_2.f * 12 / hardwareMap.voltageSensor.iterator().next().getVoltage()
+        ));
+        //setPIDFCoefficients(backShoot, MOTOR_VELO_PID_2);
+
+        for (LynxModule module : hardwareMap.getAll(LynxModule.class)) {
+            module.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
+        }
+
+        telemetry = new MultipleTelemetry(telemetry, dashboard.getTelemetry());
+
+        telemetry.update();
+        telemetry.clearAll();
+
+        intake1 = hardwareMap.dcMotor.get("intake1");
+        intake2 = hardwareMap.dcMotor.get("intake2");
 
         liftServo = hardwareMap.servo.get("liftServo");
         wobbleClawServo = hardwareMap.servo.get("wobbleClawServo");
@@ -73,90 +128,160 @@ public class FourRing extends LinearOpMode {
 
         intake1.setDirection(DcMotorSimple.Direction.REVERSE);
         intake2.setDirection(DcMotorSimple.Direction.REVERSE);
-        backShoot.setDirection(DcMotorSimple.Direction.REVERSE);
-        frontShoot.setDirection(DcMotorSimple.Direction.REVERSE);
-        // Declare your drive class
-        SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
+
+        MotorConfigurationType motorConfigurationType = frontShoot.getMotorType().clone();
+        motorConfigurationType.setAchieveableMaxRPMFraction(1.0);
+        frontShoot.setMotorType(motorConfigurationType);
+
+        MotorConfigurationType motorConfigurationType2 = backShoot.getMotorType().clone();
+        motorConfigurationType2.setAchieveableMaxRPMFraction(1.0);
+        backShoot.setMotorType(motorConfigurationType2);
+
+        SampleMecanumDriveCancelable drive = new SampleMecanumDriveCancelable(hardwareMap);
 
         Pose2d startPose = new Pose2d(-50, -2, Math.toRadians(0));
 
         drive.setPoseEstimate(startPose);
 
+        sleep(200);
+        shootFlicker.setPosition(0.1);
+        sleep(100);
+        shootFlicker.setPosition(0.45);
+
         wobbleArmServo.setPosition(1);
         sleep(5000);
-        wobbleClawServo.setPosition(.9);
+        wobbleClawServo.setPosition(.95);
 
-        liftServo.setPosition(.08);
+        liftServo.setPosition(.15);
 
         waitForStart();
 
         if (isStopRequested()) return;
-        while (opModeIsActive() && !isStopRequested()) {
+        while (/*opModeIsActive() && */!isStopRequested()) {
 
-            // Update the drive class
+            if (lastKp_2 != MOTOR_VELO_PID_2.p || lastKi_2 != MOTOR_VELO_PID_2.i || lastKd_2 != MOTOR_VELO_PID_2.d || lastKf_2 != MOTOR_VELO_PID_2.f) {
+                setPIDFCoefficients(backShoot, MOTOR_VELO_PID_2);
+
+                lastKp_2 = MOTOR_VELO_PID_2.p;
+                lastKi_2 = MOTOR_VELO_PID_2.i;
+                lastKd_2 = MOTOR_VELO_PID_2.d;
+                lastKf_2 = MOTOR_VELO_PID_2.f;
+            }
+            if (lastKp != MOTOR_VELO_PID.p || lastKi != MOTOR_VELO_PID.i || lastKd != MOTOR_VELO_PID.d || lastKf != MOTOR_VELO_PID.f) {
+                setPIDFCoefficients(frontShoot, MOTOR_VELO_PID);
+
+                lastKp = MOTOR_VELO_PID.p;
+                lastKi = MOTOR_VELO_PID.i;
+                lastKd = MOTOR_VELO_PID.d;
+                lastKf = MOTOR_VELO_PID.f;
+            }
             drive.update();
 
-            // Read pose
             Pose2d poseEstimate = drive.getPoseEstimate();
 
-            // Print pose to telemetry
             telemetry.addData("x", poseEstimate.getX());
             telemetry.addData("y", poseEstimate.getY());
             telemetry.addData("heading", Math.toDegrees(poseEstimate.getHeading()));
 
-            // Example spline path from SplineTest.java
-            // Make sure the start pose matches with the localizer's start pose
-            Trajectory traj = drive.trajectoryBuilder(startPose)
-                    .splineTo(new Vector2d(45, 45), 0)
+            Trajectory traj1 = drive.trajectoryBuilder(startPose)
+                    .splineToConstantHeading(new Vector2d(-45, -2), 0)
+                    .addTemporalMarker(0, () -> {
+                        runShooterMotors(2840);
+                    })
+                    .splineToConstantHeading(new Vector2d(3, 13), 0)
+                    .addDisplacementMarker(() -> {
+                        sleep(150);
+                        shootFlicker.setPosition(0.1);
+                        sleep(100);
+                        shootFlicker.setPosition(0.45);
+                    })
                     .build();
 
-            drive.followTrajectory(traj);
+            Trajectory traj2 = drive.trajectoryBuilder(traj1.end())
+                    .lineToLinearHeading(new Pose2d(3, 20, Math.toRadians(0)))
+                    .addDisplacementMarker(() -> {
+                        sleep(100);
+                        shootFlicker.setPosition(0.1);
+                        sleep(100);
+                        shootFlicker.setPosition(0.45);
+                    })
+                    .build();
+
+            Trajectory traj3 = drive.trajectoryBuilder(traj2.end())
+                    .lineToLinearHeading(new Pose2d(3, 27, Math.toRadians(0)))
+                    .addDisplacementMarker(() -> {
+                        sleep(100);
+                        shootFlicker.setPosition(0.1);
+                        sleep(100);
+                        shootFlicker.setPosition(0.45);
+                        sleep(150);
+                    })
+                    .build();
+            Trajectory traj4 = drive.trajectoryBuilder(traj3.end())
+                    .addTemporalMarker(0, () -> {
+                        frontShoot.setPower(0);
+                        backShoot.setPower(0);
+                        liftServo.setPosition(.7);
+                    })
+                    .lineToLinearHeading(new Pose2d(68, -20, Math.toRadians(90)))
+                    .addDisplacementMarker(() -> {
+                        wobbleArmServo.setPosition(.3);
+                        sleep(700);
+                        wobbleClawServo.setPosition(.5);
+                        sleep(350);
+                    })
+                    .build();
+
+            Trajectory traj5 = drive.trajectoryBuilder(traj4.end())
+                    .lineToLinearHeading(new Pose2d(-26, -12, Math.toRadians(0)))
+                    .addTemporalMarker(1.5, () -> {
+                        wobbleArmServo.setPosition(.02);
+                    })
+                    .addDisplacementMarker(() -> {
+                        wobbleUp();
+                    })
+                    .build();
+
+            Trajectory traj6 = drive.trajectoryBuilder(traj5.end())
+                    .lineToLinearHeading(new Pose2d(65, -10, Math.toRadians(90)))
+                    .addDisplacementMarker(() -> {
+                        wobbleDown();
+                    })
+                    .build();
+
+            Trajectory traj7 = drive.trajectoryBuilder(traj6.end())
+                    .splineToLinearHeading(new Pose2d(24, 0, 0), 0)
+                    .build();
+
+            drive.followTrajectory(traj1);
+            //sleep(400);
+            //shoot();
+            drive.followTrajectory(traj2);
+            //shoot();
+            drive.followTrajectory(traj3);
+            //shoot();
+            //
+            drive.followTrajectory(traj4);
+            //wobble goal
+            sleep(300);
+            drive.followTrajectory(traj5);
+            //picking up 2nd wobble goal
+            drive.followTrajectory(traj6);
+            wobbleArmServo.setPosition(.5);
+            sleep(100);
+            //dropping off the 2nd wobble goal
+            drive.followTrajectory(traj7);
+            //white line
+            //58, 63 2 x wobble 0 15,8 y wobble 0
+            //82, 88 x wobble 1 10, 18 7wobble 1
 
             // Transfer the current pose to PoseStorage so we can use it in TeleOp
             PoseStorage.currentPose = drive.getPoseEstimate();
+            sleep(10000);
+            //break;
         }
     }
-    double lastErrorf = 0;
-    double lastErrorb = 0;
-
-    public void runShooterMotors(double targetVelocity) {
-        PIDTimer.reset();
-
-        double currentVelocityf = frontShoot.getVelocity();
-
-        double errorf = currentVelocityf - targetVelocity;
-
-        double changeInErrorf = lastErrorf - errorf;
-        integralf += -errorf * PIDTimer.time();
-        double derivativef = changeInErrorf / PIDTimer.time();
-
-        double Pf = pidConstsf.p * -errorf;
-        double If = pidConstsf.i * integralf;
-        double Df = pidConstsf.d * derivativef;
-
-        frontShoot.setVelocity(Pf + If + Df + targetVelocity);
-
-        lastErrorf = errorf;
-
-        double currentVelocityb = backShoot.getVelocity();
-
-        double errorb = currentVelocityb - targetVelocity;
-
-        double changeInErrorb = lastErrorb - errorb;
-        integralb += -errorb * PIDTimer.time();
-        double derivativeb = changeInErrorb / PIDTimer.time();
-
-        double Pb = pidConstsb.p * -errorb;
-        double Ib = pidConstsb.i * integralb;
-        double Db = pidConstsb.d * derivativeb;
-
-        backShoot.setVelocity(Pb + Ib + Db + targetVelocity);
-
-        lastErrorb = errorb;
-    }
-
     public void shoot() {
-        sleep(100);
         shootFlicker.setPosition(0.1);
         sleep(100);
         shootFlicker.setPosition(0.45);
@@ -167,8 +292,50 @@ public class FourRing extends LinearOpMode {
         wobbleArmServo.setPosition(.5);
     }
     public void wobbleDown () {
-        wobbleArmServo.setPosition(.03);
-        sleep(300);
+        wobbleArmServo.setPosition(.02);
+        sleep(1200);
         wobbleClawServo.setPosition(.5);
+        sleep(300);
+    }
+
+    public void setVelocity(DcMotorEx motor, double power) {
+        if(RUN_USING_ENCODER) {
+            motor.setVelocity(rpmToTicksPerSecond(power));
+            Log.i("mode", "setting velocity");
+        }
+        else {
+            Log.i("mode", "setting power");
+            motor.setPower(power / MOTOR_MAX_RPM);
+        }
+    }
+
+    public void setPIDFCoefficients(DcMotorEx motor, PIDFCoefficients coefficients) {
+        if(!RUN_USING_ENCODER) {
+            Log.i("config", "skipping RUE");
+            return;
+        }
+
+        if (!DEFAULT_GAINS) {
+            Log.i("config", "setting custom gains");
+            motor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(
+                    coefficients.p, coefficients.i, coefficients.d, coefficients.f * 12 / batteryVoltageSensor.getVoltage()
+            ));
+        } else {
+            Log.i("config", "setting default gains");
+        }
+    }
+
+    public void runShooterMotors(double targetVelocity) {
+        setVelocity(frontShoot, targetVelocity);
+        setVelocity(backShoot, targetVelocity);
+    }
+
+    public static double rpmToTicksPerSecond(double rpm) {
+        return rpm * MOTOR_TICKS_PER_REV / MOTOR_GEAR_RATIO / 60;
+    }
+
+    public static double getMotorVelocityF() {
+        return 32767 * 60.0 / (MOTOR_MAX_RPM * MOTOR_TICKS_PER_REV);
     }
 }
+

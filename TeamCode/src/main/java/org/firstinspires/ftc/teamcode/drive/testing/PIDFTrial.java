@@ -22,13 +22,13 @@ public class PIDFTrial extends LinearOpMode {
     public static double MOTOR_MAX_RPM = 5400;
     public static double MOTOR_GEAR_RATIO = 1;
 
-    public static boolean RUN_USING_ENCODER = false; //think this is what we should do
+    public static boolean RUN_USING_ENCODER = true; //think this is what we should do
     public static boolean DEFAULT_GAINS = false;
 
     public static double TESTING_SPEED = 0.5 * MOTOR_MAX_RPM;
 
-    public static PIDFCoefficients MOTOR_VELO_PID = new PIDFCoefficients(20, 0, .5, 13);
-    public static PIDFCoefficients MOTOR_VELO_PID_2 = new PIDFCoefficients(20, 0, .5, 13);
+    public static PIDFCoefficients MOTOR_VELO_PID = new PIDFCoefficients(35, 0, 0, 15.7);
+    public static PIDFCoefficients MOTOR_VELO_PID_2 = new PIDFCoefficients(35, 0, 0, 15.7);
 
     private double lastKp = 0.0;
     private double lastKi = 0.0;

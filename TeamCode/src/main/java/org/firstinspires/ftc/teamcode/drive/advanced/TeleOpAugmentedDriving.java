@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.drive.advanced;
 
+import android.util.Log;
+
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.acmerobotics.roadrunner.geometry.Pose2d;
@@ -13,7 +15,10 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.PIDCoefficients;
+import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.VoltageSensor;
+import com.qualcomm.robotcore.hardware.configuration.typecontainers.MotorConfigurationType;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
@@ -57,31 +62,76 @@ public class TeleOpAugmentedDriving extends LinearOpMode {
 
     Mode currentMode = Mode.INTAKING;
 
+    public static double MOTOR_TICKS_PER_REV = 28;
+    public static double MOTOR_MAX_RPM = 5400;
+    public static double MOTOR_GEAR_RATIO = 1;
+
+    public static boolean RUN_USING_ENCODER = true;
+    public static boolean DEFAULT_GAINS = false;
+
+    private FtcDashboard dashboard = FtcDashboard.getInstance();
+
+    private VoltageSensor batteryVoltageSensor;
+
     private DcMotorEx frontShoot, backShoot;
     private Servo wobbleClawServo, wobbleArmServo;
     private Servo liftServo, shootFlicker;
     private DcMotor intake1, intake2;
 
-    double integralf = 0;
-    double integralb = 0;
+    public static PIDFCoefficients MOTOR_VELO_PID = new PIDFCoefficients(35, 0, 0, 15.7);
+    public static PIDFCoefficients MOTOR_VELO_PID_2 = new PIDFCoefficients(35, 0, 0, 15.7);
 
-    public static PIDCoefficients pidConstsf = new PIDCoefficients(0.5, 0, 25.0);
-    public static PIDCoefficients pidConstsb = new PIDCoefficients(0.45, 0, 35.0);
+    private double lastKp = 0.0;
+    private double lastKi = 0.0;
+    private double lastKd = 0.0;
+    private double lastKf = getMotorVelocityF();
 
-    ElapsedTime PIDTimer = new ElapsedTime(ElapsedTime.Resolution.MILLISECONDS);
+    private double lastKp_2 = 0.0;
+    private double lastKi_2 = 0.0;
+    private double lastKd_2 = 0.0;
+    private double lastKf_2 = getMotorVelocityF();
 
     @Override
     public void runOpMode() throws InterruptedException {
-        intake1 = hardwareMap.dcMotor.get("intake1");
-        intake2 = hardwareMap.dcMotor.get("intake2");
+        batteryVoltageSensor = hardwareMap.voltageSensor.iterator().next();
 
-        backShoot = hardwareMap.get(DcMotorEx.class, "backShoot");
         frontShoot = hardwareMap.get(DcMotorEx.class, "frontShoot");
 
         frontShoot.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         frontShoot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        frontShoot.setDirection(DcMotorSimple.Direction.REVERSE);
+        frontShoot.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+
+        backShoot = hardwareMap.get(DcMotorEx.class, "backShoot");
+
         backShoot.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         backShoot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        backShoot.setDirection(DcMotorSimple.Direction.REVERSE);
+        backShoot.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+
+        frontShoot.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(
+                MOTOR_VELO_PID.p, MOTOR_VELO_PID.i, MOTOR_VELO_PID.d,
+                MOTOR_VELO_PID.f * 12 / hardwareMap.voltageSensor.iterator().next().getVoltage()
+        ));
+        //setPIDFCoefficients(frontShoot, MOTOR_VELO_PID);
+
+        backShoot.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(
+                MOTOR_VELO_PID_2.p, MOTOR_VELO_PID_2.i, MOTOR_VELO_PID_2.d,
+                MOTOR_VELO_PID_2.f * 12 / hardwareMap.voltageSensor.iterator().next().getVoltage()
+        ));
+        //setPIDFCoefficients(backShoot, MOTOR_VELO_PID_2);
+
+        for (LynxModule module : hardwareMap.getAll(LynxModule.class)) {
+            module.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
+        }
+
+        telemetry = new MultipleTelemetry(telemetry, dashboard.getTelemetry());
+
+        telemetry.update();
+        telemetry.clearAll();
+
+        intake1 = hardwareMap.dcMotor.get("intake1");
+        intake2 = hardwareMap.dcMotor.get("intake2");
 
         liftServo = hardwareMap.servo.get("liftServo");
         wobbleClawServo = hardwareMap.servo.get("wobbleClawServo");
@@ -90,8 +140,14 @@ public class TeleOpAugmentedDriving extends LinearOpMode {
 
         intake1.setDirection(DcMotorSimple.Direction.REVERSE);
         intake2.setDirection(DcMotorSimple.Direction.REVERSE);
-        backShoot.setDirection(DcMotorSimple.Direction.REVERSE);
-        frontShoot.setDirection(DcMotorSimple.Direction.REVERSE);
+
+        MotorConfigurationType motorConfigurationType = frontShoot.getMotorType().clone();
+        motorConfigurationType.setAchieveableMaxRPMFraction(1.0);
+        frontShoot.setMotorType(motorConfigurationType);
+
+        MotorConfigurationType motorConfigurationType2 = backShoot.getMotorType().clone();
+        motorConfigurationType2.setAchieveableMaxRPMFraction(1.0);
+        backShoot.setMotorType(motorConfigurationType2);
 
         SampleMecanumDriveCancelable drive = new SampleMecanumDriveCancelable(hardwareMap);
 
@@ -134,12 +190,14 @@ public class TeleOpAugmentedDriving extends LinearOpMode {
                     frontShoot.setPower(0);
                     backShoot.setPower(0);
 
-                    liftServo.setPosition(.58);
+                    liftServo.setPosition(.65);
 
                     intake1.setPower(.65);
                     intake2.setPower(.65);
                     break;
                 case TELEOP_SHOOTING:
+                    if (gamepad1.x && drive.isBusy() || gamepad1.a && drive.isBusy())
+                        drive.cancelFollowing();
 
                     Trajectory shooting = drive.trajectoryBuilder(poseEstimate)
                             .lineToLinearHeading(new Pose2d(20, 20, Math.toRadians(0))) // need to fix coordinate
@@ -148,17 +206,17 @@ public class TeleOpAugmentedDriving extends LinearOpMode {
                                 intake2.setPower(0);
                                 liftServo.setPosition(.08);
 
-                                runShooterMotors(1200); //need to test shooter power stuff
+                                runShooterMotors(2700); //need to test shooter power stuff
                             })
                             .build(); //need to fix the coordinates
 
                     drive.followTrajectory(shooting);
                     //runShooterMotors(1200);
-
-                    if (gamepad1.x || gamepad1.a)
-                        drive.cancelFollowing();
                     break;
                 case ENDGAME:
+                    if (gamepad1.x && drive.isBusy() || gamepad1.y && drive.isBusy())
+                        drive.cancelFollowing();
+
                     Trajectory endgame1 = drive.trajectoryBuilder(poseEstimate)
                             .strafeRight(24) // need to fix coordinate
                             .addTemporalMarker(0, () -> {
@@ -166,7 +224,7 @@ public class TeleOpAugmentedDriving extends LinearOpMode {
                                 intake2.setPower(0);
                                 liftServo.setPosition(.08);
 
-                                runShooterMotors(1200); //need to test shooter power stuff
+                                runShooterMotors(2700); //need to test shooter power stuff
                             })
                             .build(); //need to fix the coordinates
 
@@ -198,9 +256,6 @@ public class TeleOpAugmentedDriving extends LinearOpMode {
                     sleep(200);
 
                     currentMode = Mode.INTAKING;
-
-                    if (gamepad1.x || gamepad1.y)
-                        drive.cancelFollowing();
                     break;
                 default:
                     // this should *NEVER* happen
@@ -208,6 +263,23 @@ public class TeleOpAugmentedDriving extends LinearOpMode {
                     telemetry.addData("ERROR", errMsg);
                     telemetry.update();
                     throw new InternalError(errMsg);
+            }
+
+            if (lastKp_2 != MOTOR_VELO_PID_2.p || lastKi_2 != MOTOR_VELO_PID_2.i || lastKd_2 != MOTOR_VELO_PID_2.d || lastKf_2 != MOTOR_VELO_PID_2.f) {
+                setPIDFCoefficients(backShoot, MOTOR_VELO_PID_2);
+
+                lastKp_2 = MOTOR_VELO_PID_2.p;
+                lastKi_2 = MOTOR_VELO_PID_2.i;
+                lastKd_2 = MOTOR_VELO_PID_2.d;
+                lastKf_2 = MOTOR_VELO_PID_2.f;
+            }
+            if (lastKp != MOTOR_VELO_PID.p || lastKi != MOTOR_VELO_PID.i || lastKd != MOTOR_VELO_PID.d || lastKf != MOTOR_VELO_PID.f) {
+                setPIDFCoefficients(frontShoot, MOTOR_VELO_PID);
+
+                lastKp = MOTOR_VELO_PID.p;
+                lastKi = MOTOR_VELO_PID.i;
+                lastKd = MOTOR_VELO_PID.d;
+                lastKf = MOTOR_VELO_PID.f;
             }
 
             if (gamepad1.x) currentMode = Mode.INTAKING;
@@ -242,49 +314,51 @@ public class TeleOpAugmentedDriving extends LinearOpMode {
         }
     }
 
-    double lastErrorf = 0;
-    double lastErrorb = 0;
-
-    public void runShooterMotors(double targetVelocity) {
-        PIDTimer.reset();
-
-        double currentVelocityf = frontShoot.getVelocity();
-
-        double errorf = currentVelocityf - targetVelocity;
-
-        double changeInErrorf = lastErrorf - errorf;
-        integralf += -errorf * PIDTimer.time();
-        double derivativef = changeInErrorf / PIDTimer.time();
-
-        double Pf = pidConstsf.p * -errorf;
-        double If = pidConstsf.i * integralf;
-        double Df = pidConstsf.d * derivativef;
-
-        frontShoot.setVelocity(Pf + If + Df + targetVelocity);
-
-        lastErrorf = errorf;
-
-        double currentVelocityb = backShoot.getVelocity();
-
-        double errorb = currentVelocityb - targetVelocity;
-
-        double changeInErrorb = lastErrorb - errorb;
-        integralb += -errorb * PIDTimer.time();
-        double derivativeb = changeInErrorb / PIDTimer.time();
-
-        double Pb = pidConstsb.p * -errorb;
-        double Ib = pidConstsb.i * integralb;
-        double Db = pidConstsb.d * derivativeb;
-
-        backShoot.setVelocity(Pb + Ib + Db + targetVelocity);
-
-        lastErrorb = errorb;
-    }
-
     public void shoot() {
         sleep(100);
         shootFlicker.setPosition(0.1);
         sleep(100);
         shootFlicker.setPosition(0.45);
     }
+
+    public void setVelocity(DcMotorEx motor, double power) {
+        if(RUN_USING_ENCODER) {
+            motor.setVelocity(rpmToTicksPerSecond(power));
+            Log.i("mode", "setting velocity");
+        }
+        else {
+            Log.i("mode", "setting power");
+            motor.setPower(power / MOTOR_MAX_RPM);
+        }
+    }
+
+    public void setPIDFCoefficients(DcMotorEx motor, PIDFCoefficients coefficients) {
+        if(!RUN_USING_ENCODER) {
+            Log.i("config", "skipping RUE");
+            return;
+        }
+
+        if (!DEFAULT_GAINS) {
+            Log.i("config", "setting custom gains");
+            motor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(
+                    coefficients.p, coefficients.i, coefficients.d, coefficients.f * 12 / batteryVoltageSensor.getVoltage()
+            ));
+        } else {
+            Log.i("config", "setting default gains");
+        }
+    }
+
+    public void runShooterMotors(double targetVelocity) {
+        setVelocity(frontShoot, targetVelocity);
+        setVelocity(backShoot, targetVelocity);
+    }
+
+    public static double rpmToTicksPerSecond(double rpm) {
+        return rpm * MOTOR_TICKS_PER_REV / MOTOR_GEAR_RATIO / 60;
+    }
+
+    public static double getMotorVelocityF() {
+        return 32767 * 60.0 / (MOTOR_MAX_RPM * MOTOR_TICKS_PER_REV);
+    }
 }
+
