@@ -7,9 +7,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * Utility functions for log files.
- */
+
 public class LoggingUtil {
     public static final File ROAD_RUNNER_FOLDER =
             new File(AppUtil.ROOT_FOLDER + "/RoadRunner/");
@@ -46,9 +44,7 @@ public class LoggingUtil {
         }
     }
 
-    /**
-     * Obtain a log file with the provided name
-     */
+
     public static File getLogFile(String name) {
         //noinspection ResultOfMethodCallIgnored
         ROAD_RUNNER_FOLDER.mkdirs();
