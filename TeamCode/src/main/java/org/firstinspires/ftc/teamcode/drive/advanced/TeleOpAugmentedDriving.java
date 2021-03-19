@@ -155,7 +155,7 @@ public class TeleOpAugmentedDriving extends LinearOpMode {
                     drive.followTrajectory(shooting);
                     //runShooterMotors(1200);
 
-                    if (gamepad1.x && drive.isBusy() || gamepad1.a && drive.isBusy())
+                    if (gamepad1.x || gamepad1.a)
                         drive.cancelFollowing();
                     break;
                 case ENDGAME:
@@ -199,7 +199,7 @@ public class TeleOpAugmentedDriving extends LinearOpMode {
 
                     currentMode = Mode.INTAKING;
 
-                    if (gamepad1.x && drive.isBusy() || gamepad1.y && drive.isBusy())
+                    if (gamepad1.x || gamepad1.y)
                         drive.cancelFollowing();
                     break;
                 default:
