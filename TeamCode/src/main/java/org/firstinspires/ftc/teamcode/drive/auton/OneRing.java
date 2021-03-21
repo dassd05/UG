@@ -155,11 +155,11 @@ public class OneRing extends LinearOpMode {
         sleep(100);
         shootFlicker.setPosition(0.45);
 
-        wobbleArmServo.setPosition(1);
+        wobbleArmServo.setPosition(.98);
         sleep(5000);
         wobbleClawServo.setPosition(.95);
 
-        liftServo.setPosition(.2);
+        liftServo.setPosition(.17);
 
         waitForStart();
 
@@ -192,7 +192,10 @@ public class OneRing extends LinearOpMode {
 
             Trajectory traj0 = drive.trajectoryBuilder(startPose)
                     .addTemporalMarker(0, () -> {
-                        runShooterMotors(3050);
+                        runShooterMotors(2000);
+                        telemetry.addData("power1", frontShoot.getPower());
+                        telemetry.addData("velo1", frontShoot.getVelocity());
+                        telemetry.update();
                     })
                     .lineToLinearHeading(new Pose2d(-25, -7, Math.toRadians(5)))
                     .addDisplacementMarker(() -> {
@@ -200,32 +203,59 @@ public class OneRing extends LinearOpMode {
                         shootFlicker.setPosition(0.1);
                         sleep(100);
                         shootFlicker.setPosition(0.45);
+                        sleep(400);
+                        shootFlicker.setPosition(0.1);
+                        sleep(100);
+                        shootFlicker.setPosition(0.45);
+                        sleep(400);
+                        shootFlicker.setPosition(0.1);
+                        sleep(100);
+                        shootFlicker.setPosition(0.45);
                         sleep(170);
                         frontShoot.setPower(0);
                         backShoot.setPower(0);
-                        liftServo.setPosition(.7);
-                        sleep(250);
+                        liftServo.setPosition(.72);
+                        sleep(450);
 
-                        intake1.setPower(.65);
-                        intake2.setPower(.65);
+                        intake1.setPower(.8);
+                        intake2.setPower(.8);
                     })
                     .build();
 
             Trajectory traj01 = drive.trajectoryBuilder(traj0.end())
-                    .lineToLinearHeading(new Pose2d(-10, -7, 0))
+                    .lineToLinearHeading(new Pose2d(0, -7, 0))
+                    .addDisplacementMarker(() -> {
+                        sleep(600);
+                        intake1.setPower(0);
+                        intake2.setPower(0);
+                        liftServo.setPosition(.17);
+                        sleep(450);
+                    })
+                    .build();
+            Trajectory traj02 = drive.trajectoryBuilder(traj01.end())
+                    .addTemporalMarker(0, () -> {
+                        runShooterMotors(0.1);
+                    })
+                    .lineToLinearHeading(new Pose2d(-25, -7, Math.toRadians(5)))
+                    .addDisplacementMarker(() -> {
+                        sleep(150);
+                        shootFlicker.setPosition(0.1);
+                        sleep(100);
+                        shootFlicker.setPosition(0.45);
+                        sleep(270);
+                        frontShoot.setPower(0);
+                        backShoot.setPower(0);
+                        liftServo.setPosition(.72);
+                        sleep(450);
+                    })
                     .build();
 
-            Trajectory traj1 = drive.trajectoryBuilder(traj01.end())
+            /*Trajectory traj1 = drive.trajectoryBuilder(traj01.end())
                     .addTemporalMarker(0, () -> {
                         runShooterMotors(2860);
                     })
                     .splineToConstantHeading(new Vector2d(3, 15), 0)
                     .addDisplacementMarker(() -> {
-                        sleep(450);
-                        intake1.setPower(0);
-                        intake2.setPower(0);
-                        liftServo.setPosition(.2);
-                        sleep(650);
                         shootFlicker.setPosition(0.1);
                         sleep(100);
                         shootFlicker.setPosition(0.45);
@@ -233,7 +263,7 @@ public class OneRing extends LinearOpMode {
                     .build();
 
             Trajectory traj2 = drive.trajectoryBuilder(traj1.end())
-                    .lineToLinearHeading(new Pose2d(3, 25, Math.toRadians(0)))
+                    .lineToLinearHeading(new Pose2d(3, 22.5, Math.toRadians(0)))
                     .addDisplacementMarker(() -> {
                         sleep(100);
                         shootFlicker.setPosition(0.1);
@@ -242,8 +272,8 @@ public class OneRing extends LinearOpMode {
                     })
                     .build();
 
-            Trajectory traj3 = drive.trajectoryBuilder(traj2.end())
-                    .lineToLinearHeading(new Pose2d(3, 32, Math.toRadians(0)))
+            Trajectory traj3 = drive.trajectoryBuilder(traj02.end())
+                    .lineToLinearHeading(new Pose2d(3, 28, Math.toRadians(0)))
                     .addDisplacementMarker(() -> {
                         sleep(100);
                         shootFlicker.setPosition(0.1);
@@ -251,16 +281,17 @@ public class OneRing extends LinearOpMode {
                         shootFlicker.setPosition(0.45);
                         sleep(150);
                     })
-                    .build();
+                    .build();*/
 
-            Trajectory traj4 = drive.trajectoryBuilder(traj3.end())
+            Trajectory traj4 = drive.trajectoryBuilder(traj02.end())
                     .addTemporalMarker(0, () -> {
                         frontShoot.setPower(0);
                         backShoot.setPower(0);
-                        liftServo.setPosition(.7);
+                        liftServo.setPosition(.72);
                     })
-                    .lineToLinearHeading(new Pose2d(50, 7, Math.toRadians(90)))
+                    .lineToLinearHeading(new Pose2d(50, 12, Math.toRadians(90)))
                     .addDisplacementMarker(() -> {
+                        sleep(100);
                         wobbleDown();
                         /*wobbleArmServo.setPosition(.3);
                         sleep(700);
@@ -270,9 +301,9 @@ public class OneRing extends LinearOpMode {
                     .build();
 
             Trajectory traj5 = drive.trajectoryBuilder(traj4.end())
-                    .lineToLinearHeading(new Pose2d(-26.3, -12, Math.toRadians(0)))
+                    .lineToLinearHeading(new Pose2d(-26.5, -12, Math.toRadians(0)))
                     .addTemporalMarker(1.5, () -> {
-                        wobbleArmServo.setPosition(.02);
+                        wobbleArmServo.setPosition(0);
                     })
                     .addDisplacementMarker(() -> {
                         wobbleUp();
@@ -280,7 +311,7 @@ public class OneRing extends LinearOpMode {
                     .build();
 
             Trajectory traj6 = drive.trajectoryBuilder(traj5.end())
-                    .lineToLinearHeading(new Pose2d(42, 12, Math.toRadians(90)))
+                    .lineToLinearHeading(new Pose2d(42, 17, Math.toRadians(90)))
                     .addDisplacementMarker(() -> {
                         wobbleDown();
                     })
@@ -299,14 +330,15 @@ public class OneRing extends LinearOpMode {
             drive.followTrajectory(traj01);
             sleep(200);
             //picking up ring
-            drive.followTrajectory(traj1);
+            drive.followTrajectory(traj02);
+            /*drive.followTrajectory(traj1);
             //sleep(400);
             //shoot();
             drive.followTrajectory(traj2);
             //shoot();
             drive.followTrajectory(traj3);
             //shoot();
-            //
+            */
             drive.followTrajectory(traj4);
             wobbleArmServo.setPosition(.5);
             sleep(100);
@@ -325,6 +357,7 @@ public class OneRing extends LinearOpMode {
             // Transfer the current pose to PoseStorage so we can use it in TeleOp
             PoseStorage.currentPose = drive.getPoseEstimate();
             sleep(10000);
+
             //break;
         }
     }
@@ -339,7 +372,7 @@ public class OneRing extends LinearOpMode {
         wobbleArmServo.setPosition(.5);
     }
     public void wobbleDown () {
-        wobbleArmServo.setPosition(.02);
+        wobbleArmServo.setPosition(0);
         sleep(1200);
         wobbleClawServo.setPosition(.5);
         sleep(300);

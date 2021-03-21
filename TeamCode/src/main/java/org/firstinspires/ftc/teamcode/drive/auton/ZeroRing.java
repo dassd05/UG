@@ -152,7 +152,7 @@ public class ZeroRing extends LinearOpMode {
         sleep(5000);
         wobbleClawServo.setPosition(.95);
 
-        liftServo.setPosition(.2);
+        liftServo.setPosition(.17);
 
         waitForStart();
 
@@ -186,7 +186,7 @@ public class ZeroRing extends LinearOpMode {
             Trajectory traj1 = drive.trajectoryBuilder(startPose)
                     .splineToConstantHeading(new Vector2d(-45, -2), 0)
                     .addTemporalMarker(0, () -> {
-                        runShooterMotors(2840);
+                        runShooterMotors(2750);
                     })
                     .splineToConstantHeading(new Vector2d(3, 13), 0)
                     .addDisplacementMarker(() -> {
@@ -198,7 +198,7 @@ public class ZeroRing extends LinearOpMode {
                     .build();
 
             Trajectory traj2 = drive.trajectoryBuilder(traj1.end())
-                    .lineToLinearHeading(new Pose2d(3, 21, Math.toRadians(0)))
+                    .lineToLinearHeading(new Pose2d(3, 20, Math.toRadians(0)))
                     .addDisplacementMarker(() -> {
                         sleep(100);
                         shootFlicker.setPosition(0.1);
@@ -208,7 +208,7 @@ public class ZeroRing extends LinearOpMode {
                     .build();
 
             Trajectory traj3 = drive.trajectoryBuilder(traj2.end())
-                    .lineToLinearHeading(new Pose2d(3, 28, Math.toRadians(0)))
+                    .lineToLinearHeading(new Pose2d(3, 27, Math.toRadians(0)))
                     .addDisplacementMarker(() -> {
                         sleep(100);
                         shootFlicker.setPosition(0.1);
@@ -221,7 +221,7 @@ public class ZeroRing extends LinearOpMode {
                     .addTemporalMarker(0, () -> {
                         frontShoot.setPower(0);
                         backShoot.setPower(0);
-                        liftServo.setPosition(.7);
+                        liftServo.setPosition(.63);
                     })
                     .lineToLinearHeading(new Pose2d(21, -20, Math.toRadians(90)))
                     .addDisplacementMarker(() -> {
@@ -234,9 +234,9 @@ public class ZeroRing extends LinearOpMode {
                     .build();
 
             Trajectory traj5 = drive.trajectoryBuilder(traj4.end())
-                    .lineToLinearHeading(new Pose2d(-26.3, -12, Math.toRadians(0)))
+                    .lineToLinearHeading(new Pose2d(-26.6, -12, Math.toRadians(0)))
                     .addTemporalMarker(1.5, () -> {
-                        wobbleArmServo.setPosition(.02);
+                        wobbleArmServo.setPosition(0);
                     })
                     .addDisplacementMarker(() -> {
                         wobbleUp();
@@ -295,7 +295,7 @@ public class ZeroRing extends LinearOpMode {
         wobbleArmServo.setPosition(.5);
     }
     public void wobbleDown () {
-        wobbleArmServo.setPosition(.02);
+        wobbleArmServo.setPosition(0);
         sleep(1200);
         wobbleClawServo.setPosition(.5);
         sleep(300);

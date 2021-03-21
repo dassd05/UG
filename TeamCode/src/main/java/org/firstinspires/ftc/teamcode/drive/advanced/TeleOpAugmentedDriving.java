@@ -190,21 +190,21 @@ public class TeleOpAugmentedDriving extends LinearOpMode {
                     frontShoot.setPower(0);
                     backShoot.setPower(0);
 
-                    liftServo.setPosition(.65);
+                    liftServo.setPosition(.72);
 
-                    intake1.setPower(.65);
-                    intake2.setPower(.65);
+                    intake1.setPower(.75);
+                    intake2.setPower(.75);
                     break;
                 case TELEOP_SHOOTING:
                     if (gamepad1.x && drive.isBusy() || gamepad1.a && drive.isBusy())
                         drive.cancelFollowing();
 
                     Trajectory shooting = drive.trajectoryBuilder(poseEstimate)
-                            .lineToLinearHeading(new Pose2d(20, 20, Math.toRadians(0))) // need to fix coordinate
+                            .lineToLinearHeading(new Pose2d(-10, -7, Math.toRadians(3))) // need to fix coordinate
                             .addTemporalMarker(0, () -> {
                                 intake1.setPower(0);
                                 intake2.setPower(0);
-                                liftServo.setPosition(.08);
+                                liftServo.setPosition(.17);
 
                                 runShooterMotors(2700); //need to test shooter power stuff
                             })
@@ -218,24 +218,24 @@ public class TeleOpAugmentedDriving extends LinearOpMode {
                         drive.cancelFollowing();
 
                     Trajectory endgame1 = drive.trajectoryBuilder(poseEstimate)
-                            .strafeRight(24) // need to fix coordinate
+                            .strafeRight(10) // need to fix coordinate
                             .addTemporalMarker(0, () -> {
                                 intake1.setPower(0);
                                 intake2.setPower(0);
-                                liftServo.setPosition(.08);
+                                liftServo.setPosition(.17);
 
-                                runShooterMotors(2700); //need to test shooter power stuff
+                                runShooterMotors(2800); //need to test shooter power stuff
                             })
                             .build(); //need to fix the coordinates
 
                     Trajectory endgame2 = drive.trajectoryBuilder(endgame1.end())
-                            .strafeRight(10) // need to fix coordinate
+                            .strafeRight(8) // need to fix coordinate
                             .addTemporalMarker(0, () -> {
                             })
                             .build(); //need to fix the coordinates
 
                     Trajectory endgame3 = drive.trajectoryBuilder(endgame2.end())
-                            .strafeRight(10) // need to fix coordinate
+                            .strafeRight(8) // need to fix coordinate
                             .addTemporalMarker(0, () -> {
                             })
                             .build(); //need to fix the coordinates
@@ -292,27 +292,29 @@ public class TeleOpAugmentedDriving extends LinearOpMode {
 
             // lifting wobble goal
             if (gamepad1.dpad_up) {
-                wobbleClawServo.setPosition(.8);
-                sleep(700);
-                wobbleArmServo.setPosition(.8);
+                wobbleClawServo.setPosition(.9);
+                sleep(500);
+                wobbleArmServo.setPosition(.5);
             }
 
             // setting arm down
             if (gamepad1.dpad_down) {
-                wobbleArmServo.setPosition(.3);
-                wobbleClawServo.setPosition(.3);
+                    wobbleArmServo.setPosition(0);
+                    sleep(1200);
+                    wobbleClawServo.setPosition(.5);
+                    sleep(300);
+                }
             }
 
             // dropping off wobble goal
             if (gamepad1.dpad_right) {
-                wobbleArmServo.setPosition(.5);
-                sleep(1000);
-                wobbleClawServo.setPosition(.3);
+                wobbleArmServo.setPosition(.4);
+                sleep(500);
+                wobbleClawServo.setPosition(.02);
             }
 
             telemetry.update();
         }
-    }
 
     public void shoot() {
         sleep(100);
