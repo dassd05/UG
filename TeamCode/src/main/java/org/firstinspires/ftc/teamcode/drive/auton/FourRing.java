@@ -8,6 +8,10 @@ import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.geometry.Vector2d;
 import com.acmerobotics.roadrunner.trajectory.Trajectory;
 import com.acmerobotics.roadrunner.trajectory.TrajectoryBuilder;
+import com.acmerobotics.roadrunner.trajectory.constraints.AngularVelocityConstraint;
+import com.acmerobotics.roadrunner.trajectory.constraints.MecanumVelocityConstraint;
+import com.acmerobotics.roadrunner.trajectory.constraints.MinVelocityConstraint;
+import com.acmerobotics.roadrunner.trajectory.constraints.ProfileAccelerationConstraint;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -21,9 +25,12 @@ import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.qualcomm.robotcore.hardware.configuration.typecontainers.MotorConfigurationType;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.teamcode.drive.DriveConstants;
 import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
 import org.firstinspires.ftc.teamcode.drive.advanced.PoseStorage;
 import org.firstinspires.ftc.teamcode.drive.advanced.SampleMecanumDriveCancelable;
+
+import java.util.Arrays;
 
 /**
  * Example opmode demonstrating how to hand-off the pose from your autonomous opmode to your teleop
@@ -148,11 +155,11 @@ public class FourRing extends LinearOpMode {
         sleep(100);
         shootFlicker.setPosition(0.45);
 
-        wobbleArmServo.setPosition(1);
+        wobbleArmServo.setPosition(.98);
         sleep(5000);
         wobbleClawServo.setPosition(.95);
 
-        liftServo.setPosition(.15);
+        liftServo.setPosition(.17);
 
         waitForStart();
 
@@ -183,49 +190,124 @@ public class FourRing extends LinearOpMode {
             telemetry.addData("y", poseEstimate.getY());
             telemetry.addData("heading", Math.toDegrees(poseEstimate.getHeading()));
 
-            Trajectory traj1 = drive.trajectoryBuilder(startPose)
-                    .splineToConstantHeading(new Vector2d(-45, -2), 0)
+            Trajectory traj0 = drive.trajectoryBuilder(startPose)
                     .addTemporalMarker(0, () -> {
-                        runShooterMotors(2840);
+                        runShooterMotors(3030);
                     })
-                    .splineToConstantHeading(new Vector2d(3, 13), 0)
+                    .lineToLinearHeading(new Pose2d(-25, -7, Math.toRadians(5)))
                     .addDisplacementMarker(() -> {
                         sleep(150);
                         shootFlicker.setPosition(0.1);
                         sleep(100);
                         shootFlicker.setPosition(0.45);
-                    })
-                    .build();
-
-            Trajectory traj2 = drive.trajectoryBuilder(traj1.end())
-                    .lineToLinearHeading(new Pose2d(3, 20, Math.toRadians(0)))
-                    .addDisplacementMarker(() -> {
-                        sleep(100);
+                        sleep(450);
                         shootFlicker.setPosition(0.1);
                         sleep(100);
                         shootFlicker.setPosition(0.45);
-                    })
-                    .build();
-
-            Trajectory traj3 = drive.trajectoryBuilder(traj2.end())
-                    .lineToLinearHeading(new Pose2d(3, 27, Math.toRadians(0)))
-                    .addDisplacementMarker(() -> {
-                        sleep(100);
+                        sleep(450);
                         shootFlicker.setPosition(0.1);
                         sleep(100);
                         shootFlicker.setPosition(0.45);
+                        sleep(170);
+                        frontShoot.setPower(0);
+                        backShoot.setPower(0);
+                        liftServo.setPosition(.72);
+                        sleep(450);
+
+                        intake1.setPower(.8);
+                        intake2.setPower(.8);
+                    })
+                    .build();
+
+            Trajectory traj01 = drive.trajectoryBuilder(traj0.end())
+                    .lineToLinearHeading(new Pose2d(-10, -7, 0),
+            new MinVelocityConstraint(
+                    Arrays.asList(
+                            new AngularVelocityConstraint(DriveConstants.MAX_ANG_VEL),
+                            new MecanumVelocityConstraint(30, DriveConstants.TRACK_WIDTH)
+                    )
+            ),                                  new ProfileAccelerationConstraint(DriveConstants.MAX_ACCEL)
+                    )
+                    .addDisplacementMarker(() -> {
+                        sleep(850);
+                        liftServo.setPosition(.17);
+                        sleep(450);
+                    })
+                    .build();
+
+            Trajectory traj02 = drive.trajectoryBuilder(traj01.end())
+                    .addTemporalMarker(0, () -> {
+                        runShooterMotors(3000);
+                    })
+                    .lineToLinearHeading(new Pose2d(-25, -7, Math.toRadians(5)))
+                    .addDisplacementMarker(() -> {
                         sleep(150);
+                        shootFlicker.setPosition(0.1);
+                        sleep(100);
+                        shootFlicker.setPosition(0.45);
+                        sleep(350);
+                        shootFlicker.setPosition(0.1);
+                        sleep(100);
+                        shootFlicker.setPosition(0.45);
+                        sleep(170);
+                        liftServo.setPosition(.72);
+                        sleep(450);
                     })
                     .build();
-            Trajectory traj4 = drive.trajectoryBuilder(traj3.end())
+
+            Trajectory traj03 = drive.trajectoryBuilder(traj02.end())
+                    .addTemporalMarker(0, () -> {
+                        intake1.setPower(.8);
+                        intake2.setPower(.8);
+                    })
+                    .lineToLinearHeading(new Pose2d(10, -7, Math.toRadians(0)),
+            new MinVelocityConstraint(
+                    Arrays.asList(
+                            new AngularVelocityConstraint(DriveConstants.MAX_ANG_VEL),
+                            new MecanumVelocityConstraint(30, DriveConstants.TRACK_WIDTH)
+                    )
+            ),
+                    new ProfileAccelerationConstraint(DriveConstants.MAX_ACCEL)
+            )
+                    .addDisplacementMarker(() -> {
+                        sleep(850);
+                        intake1.setPower(0);
+                        intake2.setPower(0);
+                        liftServo.setPosition(.17);
+                        sleep(450);
+                    })
+                    .build();
+            Trajectory traj04 = drive.trajectoryBuilder(traj03.end())
+                    .addTemporalMarker(0, () -> {
+                        runShooterMotors(3000);
+                    })
+                    .lineToLinearHeading(new Pose2d(-25, -7, Math.toRadians(5)))
+                    .addDisplacementMarker(() -> {
+                        sleep(270);
+                        shootFlicker.setPosition(0.1);
+                        sleep(100);
+                        shootFlicker.setPosition(0.45);
+                        sleep(350);
+                        shootFlicker.setPosition(0.1);
+                        sleep(100);
+                        shootFlicker.setPosition(0.45);
+                        sleep(350);
+                        frontShoot.setPower(0);
+                        backShoot.setPower(0);
+                        liftServo.setPosition(.72);
+                        sleep(450);
+                    })
+                    .build();
+
+            Trajectory traj4 = drive.trajectoryBuilder(traj02.end())
                     .addTemporalMarker(0, () -> {
                         frontShoot.setPower(0);
                         backShoot.setPower(0);
                         liftServo.setPosition(.7);
                     })
-                    .lineToLinearHeading(new Pose2d(68, -20, Math.toRadians(90)))
+                    .lineToLinearHeading(new Pose2d(71, -13, Math.toRadians(90)))
                     .addDisplacementMarker(() -> {
-                        wobbleArmServo.setPosition(.3);
+                        wobbleArmServo.setPosition(.1);
                         sleep(700);
                         wobbleClawServo.setPosition(.5);
                         sleep(350);
@@ -233,9 +315,9 @@ public class FourRing extends LinearOpMode {
                     .build();
 
             Trajectory traj5 = drive.trajectoryBuilder(traj4.end())
-                    .lineToLinearHeading(new Pose2d(-26, -12, Math.toRadians(0)))
+                    .lineToLinearHeading(new Pose2d(-26.5, -10, Math.toRadians(0)))
                     .addTemporalMarker(1.5, () -> {
-                        wobbleArmServo.setPosition(.02);
+                        wobbleArmServo.setPosition(0);
                     })
                     .addDisplacementMarker(() -> {
                         wobbleUp();
@@ -243,7 +325,7 @@ public class FourRing extends LinearOpMode {
                     .build();
 
             Trajectory traj6 = drive.trajectoryBuilder(traj5.end())
-                    .lineToLinearHeading(new Pose2d(65, -10, Math.toRadians(90)))
+                    .lineToLinearHeading(new Pose2d(67, -10, Math.toRadians(90)))
                     .addDisplacementMarker(() -> {
                         wobbleDown();
                     })
@@ -253,12 +335,15 @@ public class FourRing extends LinearOpMode {
                     .splineToLinearHeading(new Pose2d(24, 0, 0), 0)
                     .build();
 
-            drive.followTrajectory(traj1);
+            drive.followTrajectory(traj0);
             //sleep(400);
             //shoot();
-            drive.followTrajectory(traj2);
+            drive.followTrajectory(traj01);
             //shoot();
-            drive.followTrajectory(traj3);
+            drive.followTrajectory(traj02);
+            drive.followTrajectory(traj03);
+            drive.followTrajectory(traj04);
+
             //shoot();
             //
             drive.followTrajectory(traj4);
@@ -292,7 +377,7 @@ public class FourRing extends LinearOpMode {
         wobbleArmServo.setPosition(.5);
     }
     public void wobbleDown () {
-        wobbleArmServo.setPosition(.02);
+        wobbleArmServo.setPosition(0);
         sleep(1200);
         wobbleClawServo.setPosition(.5);
         sleep(300);
