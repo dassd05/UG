@@ -3,9 +3,14 @@ package org.firstinspires.ftc.teamcode.drive.testing;
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
+import com.qualcomm.hardware.bosch.BNO055IMU;
+import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
+
+import org.firstinspires.ftc.robotcore.external.navigation.Position;
+import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
 
 
 //@Config
@@ -37,7 +42,7 @@ public class DashboardTest extends OpMode {
     https://github.com/FRCDashboard/FRCDashboard
      */
 
-//    private BNO055IMU imu;
+    private BNO055IMU imu;
     private VoltageSensor voltageSensor;
 
     private FtcDashboard dashboard;
@@ -75,14 +80,14 @@ public class DashboardTest extends OpMode {
 
     @Override
     public void init() {
-//        imu = hardwareMap.get(BNO055IMU.class, "imu");
-//        BNO055IMU.Parameters imuParameters = new BNO055IMU.Parameters();
-//        imuParameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
-//        imuParameters.calibrationDataFile = "BNO055IMUCalibration.json";
-//        imuParameters.loggingEnabled = true;
-//        imuParameters.loggingTag = "imu";
-//        imuParameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
-//        imu.initialize(imuParameters);
+        imu = hardwareMap.get(BNO055IMU.class, "imu");
+        BNO055IMU.Parameters imuParameters = new BNO055IMU.Parameters();
+        imuParameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
+        imuParameters.calibrationDataFile = "BNO055IMUCalibration.json";
+        imuParameters.loggingEnabled = true;
+        imuParameters.loggingTag = "imu";
+        imuParameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
+        imu.initialize(imuParameters);
         voltageSensor = hardwareMap.voltageSensor.iterator().next();
 
         dashboard = FtcDashboard.getInstance();
@@ -94,7 +99,7 @@ public class DashboardTest extends OpMode {
 
     @Override
     public void start() {
-//        imu.startAccelerationIntegration(new Position(), new Velocity(), 1000);
+        imu.startAccelerationIntegration(new Position(), new Velocity(), 1000);
     }
 
     @Override
@@ -129,8 +134,8 @@ public class DashboardTest extends OpMode {
         telemetry_addData("fps", fps);
         telemetry_addData("timeBetweenFrames", (int)(timeBetweenFrames/1000));
         telemetry_addData("frameCount", frameCount);
-//        telemetry_addData("angle", imu.getAngularOrientation().firstAngle);
-//        telemetry_addData("position", imu.getPosition());
+        telemetry_addData("angle", imu.getAngularOrientation().firstAngle);
+        telemetry_addData("position", imu.getPosition());
         telemetry_update();
 
 //        telemetry = new MultipleTelemetry(telemetry);
