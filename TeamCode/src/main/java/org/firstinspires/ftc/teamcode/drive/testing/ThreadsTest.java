@@ -1,8 +1,10 @@
 package org.firstinspires.ftc.teamcode.drive.testing;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
+@Disabled
 @TeleOp(group = "testing")
 public class ThreadsTest extends LinearOpMode {
 
