@@ -4,6 +4,7 @@ import android.util.Log;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
+import com.acmerobotics.roadrunner.followers.HolonomicPIDVAFollower;
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.geometry.Vector2d;
 import com.acmerobotics.roadrunner.trajectory.Trajectory;
@@ -63,7 +64,11 @@ public class FourRing extends LinearOpMode {
     public static boolean RUN_USING_ENCODER = true;
     public static boolean DEFAULT_GAINS = false;
 
-    private FtcDashboard dashboard = FtcDashboard.getInstance();
+    public static PIDFCoefficients MOTOR_VELO_PID = new PIDFCoefficients(45, 0, 0, 16.97);
+    public static PIDFCoefficients MOTOR_VELO_PID_2 = new PIDFCoefficients(45, 0, 0, 16.97);
+
+    private double lastKf = 17.1;
+    private double lastKf_2 = 17.1;
 
     private VoltageSensor batteryVoltageSensor;
 
@@ -72,20 +77,6 @@ public class FourRing extends LinearOpMode {
     private Servo liftServo, shootFlicker;
     private DcMotor intake1, intake2;
 
-    public static PIDFCoefficients MOTOR_VELO_PID = new PIDFCoefficients(35, 0, 0, 15.7);
-    public static PIDFCoefficients MOTOR_VELO_PID_2 = new PIDFCoefficients(35, 0, 0, 15.7);
-
-    private double lastKp = 0.0;
-    private double lastKi = 0.0;
-    private double lastKd = 0.0;
-    private double lastKf = getMotorVelocityF();
-
-    private double lastKp_2 = 0.0;
-    private double lastKi_2 = 0.0;
-    private double lastKd_2 = 0.0;
-    private double lastKf_2 = getMotorVelocityF();
-
-    ElapsedTime PIDTimer = new ElapsedTime(ElapsedTime.Resolution.MILLISECONDS);
     @Override
     public void runOpMode() throws InterruptedException {
         batteryVoltageSensor = hardwareMap.voltageSensor.iterator().next();
@@ -119,8 +110,6 @@ public class FourRing extends LinearOpMode {
         for (LynxModule module : hardwareMap.getAll(LynxModule.class)) {
             module.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
         }
-
-        telemetry = new MultipleTelemetry(telemetry, dashboard.getTelemetry());
 
         telemetry.update();
         telemetry.clearAll();
@@ -166,22 +155,19 @@ public class FourRing extends LinearOpMode {
         if (isStopRequested()) return;
         while (/*opModeIsActive() && */!isStopRequested()) {
 
-            if (lastKp_2 != MOTOR_VELO_PID_2.p || lastKi_2 != MOTOR_VELO_PID_2.i || lastKd_2 != MOTOR_VELO_PID_2.d || lastKf_2 != MOTOR_VELO_PID_2.f) {
-                setPIDFCoefficients(backShoot, MOTOR_VELO_PID_2);
-
-                lastKp_2 = MOTOR_VELO_PID_2.p;
-                lastKi_2 = MOTOR_VELO_PID_2.i;
-                lastKd_2 = MOTOR_VELO_PID_2.d;
+            if (lastKf_2 != MOTOR_VELO_PID_2.f) {
+                MOTOR_VELO_PID_2.f = lastKf_2 * 12 / batteryVoltageSensor.getVoltage();
                 lastKf_2 = MOTOR_VELO_PID_2.f;
             }
-            if (lastKp != MOTOR_VELO_PID.p || lastKi != MOTOR_VELO_PID.i || lastKd != MOTOR_VELO_PID.d || lastKf != MOTOR_VELO_PID.f) {
-                setPIDFCoefficients(frontShoot, MOTOR_VELO_PID);
 
-                lastKp = MOTOR_VELO_PID.p;
-                lastKi = MOTOR_VELO_PID.i;
-                lastKd = MOTOR_VELO_PID.d;
+            if (lastKf != MOTOR_VELO_PID.f) {
+                MOTOR_VELO_PID.f = lastKf * 12 / batteryVoltageSensor.getVoltage();
                 lastKf = MOTOR_VELO_PID.f;
             }
+
+            setPIDFCoefficients2(backShoot, MOTOR_VELO_PID_2);
+            setPIDFCoefficients(frontShoot, MOTOR_VELO_PID);
+
             drive.update();
 
             Pose2d poseEstimate = drive.getPoseEstimate();
@@ -394,7 +380,22 @@ public class FourRing extends LinearOpMode {
         }
     }
 
-    public void setPIDFCoefficients(DcMotorEx motor, PIDFCoefficients coefficients) {
+    private void setPIDFCoefficients(DcMotorEx motor, PIDFCoefficients coefficients) {
+        if(!RUN_USING_ENCODER) {
+            Log.i("config", "skipping RUE");
+            return;
+        }
+
+        if (!DEFAULT_GAINS) {
+            Log.i("config", "setting custom gains");
+            motor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(
+                    coefficients.p, coefficients.i, coefficients.d, coefficients.f * 12 / batteryVoltageSensor.getVoltage()
+            ));
+        } else {
+            Log.i("config", "setting default gains");
+        }
+    }
+    private void setPIDFCoefficients2(DcMotorEx motor, PIDFCoefficients coefficients) {
         if(!RUN_USING_ENCODER) {
             Log.i("config", "skipping RUE");
             return;
@@ -417,10 +418,6 @@ public class FourRing extends LinearOpMode {
 
     public static double rpmToTicksPerSecond(double rpm) {
         return rpm * MOTOR_TICKS_PER_REV / MOTOR_GEAR_RATIO / 60;
-    }
-
-    public static double getMotorVelocityF() {
-        return 32767 * 60.0 / (MOTOR_MAX_RPM * MOTOR_TICKS_PER_REV);
     }
 }
 
