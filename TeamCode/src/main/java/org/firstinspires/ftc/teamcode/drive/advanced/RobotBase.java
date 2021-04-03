@@ -5,7 +5,9 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 
-public class RobotFunctions {
+import androidx.annotation.*;
+
+public class RobotBase {
     /*
     TODO:
      rename this
@@ -16,6 +18,11 @@ public class RobotFunctions {
      make documentation for this (and everything)
      */
 
+    //----------------------------------------------------------------------------------------------
+    // FIELDS
+    //----------------------------------------------------------------------------------------------
+
+    public SampleMecanumDriveCancelable drive;
     private DcMotorEx frontLeft, backLeft, backRight, frontRight, frontShoot, backShoot;
     private DcMotorSimple intake1, intake2;
 //    private List<DcMotorEx> motors;
@@ -24,11 +31,16 @@ public class RobotFunctions {
 //    private BNO055IMU imu;
 
 
-    public RobotFunctions(HardwareMap hardwareMap) {
+    //----------------------------------------------------------------------------------------------
+    // CONSTRUCTION
+    //----------------------------------------------------------------------------------------------
+
+    public RobotBase(HardwareMap hardwareMap) {
 //        frontLeft = hardwareMap.get(DcMotorEx.class, "frontLeft");
 //        backLeft = hardwareMap.get(DcMotorEx.class, "backLeft");
 //        backRight = hardwareMap.get(DcMotorEx.class, "backRight");
 //        frontRight = hardwareMap.get(DcMotorEx.class, "frontRight");
+        drive = new SampleMecanumDriveCancelable(hardwareMap);
 
         frontShoot = hardwareMap.get(DcMotorEx.class, "frontShoot");
         backShoot = hardwareMap.get(DcMotorEx.class, "backShoot");
@@ -46,6 +58,12 @@ public class RobotFunctions {
 
         servos = new Servo[]{liftServo, wobbleClawServo, wobbleArmServo, shootFlicker};
     }
+
+//    public RobotBase(@Nullable DcMotorSimple frontLeft, @Nullable DcMotorSimple frontRight,
+//                     @Nullable DcMotorSimple backLeft, @Nullable DcMotorSimple backRight,
+//                     @Nullable DcMotorSimple ) {
+//
+//    }
 
     public void grabWobbleGoal() {
         wobbleClawServo.setPosition(0.8);

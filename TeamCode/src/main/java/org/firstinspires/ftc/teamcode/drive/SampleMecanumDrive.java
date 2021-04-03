@@ -92,8 +92,7 @@ public class SampleMecanumDrive extends MecanumDrive {
 
     private LinkedList<Pose2d> poseHistory;
 
-    private DcMotorEx frontLeft, backLeft, backRight, frontRight, frontShoot, backShoot;
-    private DcMotorSimple intake1, intake2;
+    private DcMotorEx frontLeft, backLeft, backRight, frontRight;
     private List<DcMotorEx> motors;
     private BNO055IMU imu;
 
@@ -144,12 +143,6 @@ public class SampleMecanumDrive extends MecanumDrive {
         backRight = hardwareMap.get(DcMotorEx.class, "backRight");
         frontRight = hardwareMap.get(DcMotorEx.class, "frontRight");
 
-        frontShoot = hardwareMap.get(DcMotorEx.class, "frontShoot");
-        backShoot = hardwareMap.get(DcMotorEx.class, "backShoot");
-
-        intake1 = hardwareMap.get(DcMotorSimple.class, "intake1");
-        intake2 = hardwareMap.get(DcMotorSimple.class, "intake2");
-
         motors = Arrays.asList(frontLeft, backLeft, backRight, frontRight);
 
         for (DcMotorEx motor : motors) {
@@ -171,12 +164,6 @@ public class SampleMecanumDrive extends MecanumDrive {
         // TODO: reverse any motors using DcMotor.setDirection()
         frontRight.setDirection(DcMotorSimple.Direction.REVERSE);
         backRight.setDirection(DcMotorSimple.Direction.REVERSE);
-
-        intake1.setDirection(DcMotorSimple.Direction.REVERSE);
-        intake2.setDirection(DcMotorSimple.Direction.REVERSE);
-
-        backShoot.setDirection(DcMotorSimple.Direction.REVERSE);
-        frontShoot.setDirection(DcMotorSimple.Direction.REVERSE);
 
         // TODO: if desired, use setLocalizer() to change the localization method
         // for instance, setLocalizer(new ThreeTrackingWheelLocalizer(...));
