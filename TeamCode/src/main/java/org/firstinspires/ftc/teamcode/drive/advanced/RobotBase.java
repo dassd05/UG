@@ -5,6 +5,8 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 
+import androidx.annotation.*;
+
 public class RobotBase {
     /*
     TODO:
@@ -16,6 +18,10 @@ public class RobotBase {
      make documentation for this (and everything)
      */
 
+    //----------------------------------------------------------------------------------------------
+    // FIELDS
+    //----------------------------------------------------------------------------------------------
+
     public SampleMecanumDriveCancelable drive;
     private DcMotorEx frontLeft, backLeft, backRight, frontRight, frontShoot, backShoot;
     private DcMotorSimple intake1, intake2;
@@ -24,6 +30,10 @@ public class RobotBase {
     Servo[] servos;
 //    private BNO055IMU imu;
 
+
+    //----------------------------------------------------------------------------------------------
+    // CONSTRUCTION
+    //----------------------------------------------------------------------------------------------
 
     public RobotBase(HardwareMap hardwareMap) {
 //        frontLeft = hardwareMap.get(DcMotorEx.class, "frontLeft");
@@ -48,6 +58,12 @@ public class RobotBase {
 
         servos = new Servo[]{liftServo, wobbleClawServo, wobbleArmServo, shootFlicker};
     }
+
+//    public RobotBase(@Nullable DcMotorSimple frontLeft, @Nullable DcMotorSimple frontRight,
+//                     @Nullable DcMotorSimple backLeft, @Nullable DcMotorSimple backRight,
+//                     @Nullable DcMotorSimple ) {
+//
+//    }
 
     public void grabWobbleGoal() {
         wobbleClawServo.setPosition(0.8);
