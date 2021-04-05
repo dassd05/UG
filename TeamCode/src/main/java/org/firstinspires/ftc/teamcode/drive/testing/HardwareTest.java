@@ -21,7 +21,6 @@ import com.qualcomm.robotcore.hardware.configuration.typecontainers.ServoConfigu
 import java.lang.annotation.Annotation;
 
 @SuppressWarnings({"FieldCanBeLocal", "CanBeFinal", "unused"})
-@Disabled
 @Config
 @TeleOp(group = "testing")
 public class HardwareTest extends LinearOpMode {

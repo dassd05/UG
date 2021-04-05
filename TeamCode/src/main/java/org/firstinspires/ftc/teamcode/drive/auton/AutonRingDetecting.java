@@ -36,6 +36,8 @@ public class AutonRingDetecting extends LinearOpMode {
 
     private DcMotorEx frontShoot, backShoot;
 
+    boolean runFinished = false;
+
     @Override
     public void runOpMode() {
 
@@ -71,43 +73,37 @@ public class AutonRingDetecting extends LinearOpMode {
                 telemetry.addData("Zero Rings", "Waiting for start");
                 HowManyRings = ThisManyRings.ZeroRings;
             }
+            telemetry.update();
         }
-        telemetry.addData("Number of Rings", HowManyRings);
-        telemetry.update();
+
 
         waitForStart();
 
         if (opModeIsActive()){
-            while (opModeIsActive()) {
+            while (opModeIsActive() && !runFinished) {
                 switch (HowManyRings) {
                     case FourRings:
                         telemetry.addData("4 rings detected", "wobble position C");
-                        frontShoot.setPower(.2);
-                        backShoot.setPower(.2); // to test if it's working
                         //autonFourRings();
+                        //runFinished = true;
                         break;
                     case OneRing:
                         telemetry.addData("1 ring detected",  "wobble position B");
-                        frontShoot.setPower(-.2);
-                        backShoot.setPower(-.2); // to test if it's working
                         //autonOneRing();
+                        //runFinished = true;
                         break;
                     case ZeroRings:
                         telemetry.addData("0 rings detected", "wobble position A");
-                        frontShoot.setPower(.5);
-                        backShoot.setPower(.5); // to test if it's working
                         //autonZeroRings();
+                        //runFinished = true;
                         break;
                     case Default:
                         telemetry.addData("ERROR", "NUMBER OF RINGS NOT RECOGNIZED");
-                        frontShoot.setPower(0);
-                        backShoot.setPower(0); // to test if it's working
                         break;
                 }
+                telemetry.update();
             }
         }
-        telemetry.addData("run", "finished");
-        telemetry.update();
     }
 
     public abstract static class RingDetecting extends LinearOpMode {
@@ -147,7 +143,7 @@ public class AutonRingDetecting extends LinearOpMode {
             private final Scalar GREEN = new Scalar(0, 255, 0);
 
             // The core values which define the location and size of the sample regions
-            private final Point REGION1_TOPLEFT_ANCHOR_POINT = new Point(170, 315);
+            private final Point REGION1_TOPLEFT_ANCHOR_POINT = new Point(250, 310);
 
             private final int REGION_WIDTH = 180;
             private final int REGION_HEIGHT = 150;
