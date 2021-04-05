@@ -2,9 +2,7 @@ package org.firstinspires.ftc.teamcode.drive.auton;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.opencv.core.Core;
@@ -19,7 +17,6 @@ import org.openftc.easyopencv.OpenCvCameraRotation;
 import org.openftc.easyopencv.OpenCvPipeline;
 import org.openftc.easyopencv.OpenCvWebcam;
 
-import static org.firstinspires.ftc.teamcode.drive.auton.AutonRingDetecting.RingDetecting.RingDetection.avg1;
 import static org.firstinspires.ftc.teamcode.drive.auton.AutonRingDetecting.RingDetecting.pipeline;
 
 @Autonomous(name = "AutonRingDetecting", group = "sensor")
@@ -28,14 +25,14 @@ public class AutonRingDetecting extends LinearOpMode {
     protected WebcamName webcamName;
     protected OpenCvWebcam webcam;
 
-    public enum HowManyRings {
+    public enum ThisManyRings {
         FourRings,
         OneRing,
         ZeroRings,
         Default
     }
 
-    public volatile HowManyRings ThisManyRings;
+    public volatile ThisManyRings HowManyRings;
 
     private DcMotorEx frontShoot, backShoot;
 
@@ -60,43 +57,43 @@ public class AutonRingDetecting extends LinearOpMode {
 
         while (!opModeIsActive()) {
             if (pipeline.position == null) {
-                telemetry.addLine("still working on it");
-                ThisManyRings = HowManyRings.Default;
+                telemetry.addData("still working on it", "gimme a sec");
+                HowManyRings = ThisManyRings.Default;
             } else if (pipeline.position == RingDetecting.RingPosition.FOUR){
-                telemetry.addLine("Four Rings. Waiting for start");
-                ThisManyRings = HowManyRings.FourRings;
+                telemetry.addData("Four Rings", "Waiting for start");
+                HowManyRings = ThisManyRings.FourRings;
             }
             else if (pipeline.position == RingDetecting.RingPosition.ONE){
-                telemetry.addLine("One Ring. Waiting for start");
-                ThisManyRings = HowManyRings.OneRing;
+                telemetry.addData("One Ring", "Waiting for start");
+                HowManyRings = ThisManyRings.OneRing;
             }
             else if (pipeline.position == RingDetecting.RingPosition.NONE){
-                telemetry.addLine("Zero Rings. Waiting for start");
-                ThisManyRings = HowManyRings.ZeroRings;
+                telemetry.addData("Zero Rings", "Waiting for start");
+                HowManyRings = ThisManyRings.ZeroRings;
             }
         }
-        telemetry.addData("Number of Rings", ThisManyRings);
+        telemetry.addData("Number of Rings", HowManyRings);
         telemetry.update();
 
         waitForStart();
 
         if (opModeIsActive()){
             while (opModeIsActive()) {
-                switch (ThisManyRings) {
+                switch (HowManyRings) {
                     case FourRings:
-                        telemetry.addLine("4 rings detected; wobble position C");
+                        telemetry.addData("4 rings detected", "wobble position C");
                         frontShoot.setPower(.2);
                         backShoot.setPower(.2); // to test if it's working
                         //autonFourRings();
                         break;
                     case OneRing:
-                        telemetry.addLine("1 ring detected; wobble position B");
+                        telemetry.addData("1 ring detected",  "wobble position B");
                         frontShoot.setPower(-.2);
                         backShoot.setPower(-.2); // to test if it's working
                         //autonOneRing();
                         break;
                     case ZeroRings:
-                        telemetry.addLine("0 rings detected; wobble position A");
+                        telemetry.addData("0 rings detected", "wobble position A");
                         frontShoot.setPower(.5);
                         backShoot.setPower(.5); // to test if it's working
                         //autonZeroRings();
@@ -173,7 +170,6 @@ public class AutonRingDetecting extends LinearOpMode {
 
             // Volatile since accessed by OpMode thread w/o synchronization
             public volatile RingPosition position;
-            private boolean yes;
 
             // This function takes the RGB frame, converts to YCrCb, and extracts the Cb channel to the 'Cb' variable
             void inputToCb(Mat input) {
