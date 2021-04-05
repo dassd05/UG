@@ -6,6 +6,7 @@ import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.qualcomm.hardware.lynx.LynxServoController;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
@@ -20,6 +21,7 @@ import com.qualcomm.robotcore.hardware.configuration.typecontainers.ServoConfigu
 import java.lang.annotation.Annotation;
 
 @SuppressWarnings({"FieldCanBeLocal", "CanBeFinal", "unused"})
+@Disabled
 @Config
 @TeleOp(group = "testing")
 public class HardwareTest extends LinearOpMode {

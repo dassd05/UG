@@ -1,7 +1,10 @@
 package org.firstinspires.ftc.teamcode.legacycode;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
+
 import java.sql.SQLOutput;
 import java.util.Arrays;
 
+@Disabled
 public class Vector2D {
 
     private String name = "Vector";

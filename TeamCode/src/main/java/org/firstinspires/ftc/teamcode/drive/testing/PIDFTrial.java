@@ -30,11 +30,11 @@ public class  PIDFTrial extends LinearOpMode {
 
     public static double TESTING_SPEED = 0.5 * MOTOR_MAX_RPM;
 
-    public static PIDFCoefficients MOTOR_VELO_PID = new PIDFCoefficients(45, 0, 0, 16.97);
-    public static PIDFCoefficients MOTOR_VELO_PID_2 = new PIDFCoefficients(45, 0, 0, 16.97); // fix this
+    public static PIDFCoefficients MOTOR_VELO_PID = new PIDFCoefficients(45, 0, 0, 25);
+    public static PIDFCoefficients MOTOR_VELO_PID_2 = new PIDFCoefficients(45, 0, 0, 25); // fix this
 
-    public static double lastKf = 16.9;
-    public static double lastKf_2 = 16.9; // fix this
+    public static double lastKf = 20.9;
+    public static double lastKf_2 = 20.9; // fix this
 
     double lastVoltage = 0;
 
