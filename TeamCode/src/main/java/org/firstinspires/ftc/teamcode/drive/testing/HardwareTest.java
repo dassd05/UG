@@ -39,7 +39,7 @@ public class HardwareTest extends LinearOpMode {
     private double[] pwmRangeVals0;
     private double[] pwmRangeVals1;
 
-    public static double motorPowers = 0.1;
+    public static double motorPowers = 0.0;
 
     public static ServoFlavor servoFlavor0 = ServoFlavor.STANDARD;
     public static ServoFlavor servoFlavor1 = ServoFlavor.CONTINUOUS;
