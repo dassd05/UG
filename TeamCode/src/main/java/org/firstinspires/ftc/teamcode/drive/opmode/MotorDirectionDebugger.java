@@ -6,6 +6,7 @@ import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
@@ -30,7 +31,7 @@ import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
  *             |  ( X )  _  ( B ) |     Front Left   \    Front Right
  *        ___  '.      ( A )     /|       Wheel       \      Wheel
  *      .'    '.    '-._____.-'  .'       (x/▢)        \     (Y/Δ)
- *     |       |                 |                      \
+ *     |       |                 |   a                   \
  *      '.___.' '.               |          Rear Left    \   Rear Right
  *               '.             /             Wheel       \    Wheel
  *                \.          .'              (A/X)        \   (B/O)
@@ -38,11 +39,12 @@ import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
  *
  * Uncomment the @Disabled tag below to use this opmode.
  */
-@Disabled
 @Config
 @TeleOp(group = "drive")
 public class MotorDirectionDebugger extends LinearOpMode {
     public static double MOTOR_POWER = 0.7;
+
+    DcMotorEx frontLeft, backLeft, frontRight, backRight;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -50,8 +52,14 @@ public class MotorDirectionDebugger extends LinearOpMode {
 
         SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
 
+
         telemetry.addLine("Press play to begin the debugging opmode");
         telemetry.update();
+
+        frontLeft = hardwareMap.get(DcMotorEx.class, "frontLeft");
+        backLeft = hardwareMap.get(DcMotorEx.class, "backLeft");
+        backRight = hardwareMap.get(DcMotorEx.class, "backRight");
+        frontRight = hardwareMap.get(DcMotorEx.class, "frontRight");
 
         waitForStart();
 
@@ -71,21 +79,30 @@ public class MotorDirectionDebugger extends LinearOpMode {
             telemetry.addLine();
 
             if(gamepad1.x) {
-                drive.setMotorPowers(MOTOR_POWER, 0, 0, 0);
+                //drive.setMotorPowers(MOTOR_POWER, 0, 0, 0);
+                frontLeft.setPower(.5);
+                telemetry.addData("port", frontLeft.getPortNumber());
                 telemetry.addLine("Running Motor: Front Left");
             } else if(gamepad1.y) {
-                drive.setMotorPowers(0, 0, 0, MOTOR_POWER);
+                //drive.setMotorPowers(0, 0, 0, MOTOR_POWER);
+                frontRight.setPower(.5);
+                telemetry.addData("port", frontRight.getPortNumber());
                 telemetry.addLine("Running Motor: Front Right");
             } else if(gamepad1.b) {
-                drive.setMotorPowers(0, 0, MOTOR_POWER, 0);
+                //drive.setMotorPowers(0, 0, MOTOR_POWER, 0);
+                backRight.setPower(.5);
+                telemetry.addData("port", backRight.getPortNumber());
                 telemetry.addLine("Running Motor: Rear Right");
             } else if(gamepad1.a) {
-                drive.setMotorPowers(0, MOTOR_POWER, 0, 0);
+                //drive.setMotorPowers(0, MOTOR_POWER, 0, 0);
+                backLeft.setPower(.5);
+                telemetry.addData("port", backLeft.getPortNumber());
                 telemetry.addLine("Running Motor: Rear Left");
             } else {
                 drive.setMotorPowers(0, 0, 0, 0);
                 telemetry.addLine("Running Motor: None");
             }
+
 
             telemetry.update();
         }

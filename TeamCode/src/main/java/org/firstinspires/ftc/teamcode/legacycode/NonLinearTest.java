@@ -1,7 +1,9 @@
 package org.firstinspires.ftc.teamcode.legacycode;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
+@Disabled
 public class NonLinearTest extends OpMode {
     @Override
     public void init() {
