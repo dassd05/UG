@@ -24,18 +24,25 @@ public class PIDTest extends LinearOpMode {
 
     private DcMotorEx frontShoot, backShoot;
 
+    private DcMotorEx wobbleArm;
+
     double integralf = 0;
     double integralb = 0;
+
+    double integral = 0;
 
     public static PIDCoefficients pidConstsf = new PIDCoefficients(0.4, 0, 83);
     public static PIDCoefficients pidConstsb = new PIDCoefficients(0.4, 0, 181);
 
+    public static PIDCoefficients pidConsts = new PIDCoefficients(0.4, 0.004, 0);
 
     FtcDashboard dashboard;
 
     boolean runShooterMotors = true;
 
     public static double speed = 1280;
+
+    public static double position = 10;
 
     ElapsedTime PIDTimer = new ElapsedTime(ElapsedTime.Resolution.MILLISECONDS);
 
@@ -44,6 +51,8 @@ public class PIDTest extends LinearOpMode {
         backShoot = hardwareMap.get(DcMotorEx.class, "backShoot");
         frontShoot = hardwareMap.get(DcMotorEx.class, "frontShoot");
 
+        wobbleArm = hardwareMap.get(DcMotorEx.class, "wobbleArm");
+
         backShoot.setDirection(DcMotorSimple.Direction.REVERSE);
         frontShoot.setDirection(DcMotorSimple.Direction.REVERSE);
 
@@ -51,6 +60,9 @@ public class PIDTest extends LinearOpMode {
         frontShoot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         backShoot.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         backShoot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        wobbleArm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        wobbleArm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         dashboard = FtcDashboard.getInstance();
         Telemetry dashboardTelemetry = dashboard.getTelemetry();
@@ -62,18 +74,42 @@ public class PIDTest extends LinearOpMode {
 
         while (opModeIsActive()) {
 
-            if (runShooterMotors) {
-                runShooterMotors(speed);
-            } else if (!runShooterMotors) {
-                frontShoot.setPower(0);
-                backShoot.setPower(0);
-            }
+            PID(position);
+
+            dashboardTelemetry.addData("position", wobbleArm.getCurrentPosition());
+            dashboardTelemetry.addData("targetPosition", position);
+            dashboardTelemetry.update();
 
             /*dashboardTelemetry.addData("backShoot velocity", backShoot.getVelocity());
             dashboardTelemetry.addData("frontShoot velocity", frontShoot.getVelocity());
             dashboardTelemetry.update();*/
         }
 
+    }
+
+    public void PID(double targetPosition) {
+
+        double lastError = 0;
+        double currentPosition = wobbleArm.getCurrentPosition();
+        double error = targetPosition - currentPosition;
+
+        while(Math.abs(error) > 1) {
+            PIDTimer.reset();
+            currentPosition = wobbleArm.getCurrentPosition();
+            error = targetPosition - currentPosition;
+
+            double deltaError = error - lastError;
+            integral += error * PIDTimer.time();
+            double derivative = -deltaError / PIDTimer.time();
+
+            double P = pidConsts.p * error;
+            double I = pidConsts.i * integral;
+            double D = pidConsts.d * derivative;
+
+            wobbleArm.setPower(P + I + D);
+
+            lastError = error;
+        }
     }
 
     double lastErrorf = 0;
