@@ -1,14 +1,19 @@
 package org.firstinspires.ftc.teamcode.drive.advanced;
 
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
+import com.qualcomm.hardware.bosch.BNO055IMU;
+import com.qualcomm.robotcore.hardware.CRServo;
+import com.qualcomm.robotcore.hardware.ColorSensor;
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.VoltageSensor;
 
 import androidx.annotation.*;
 
-@Disabled
+import java.util.List;
+
 public class RobotBase {
     /*
     TODO:
@@ -24,13 +29,21 @@ public class RobotBase {
     // FIELDS
     //----------------------------------------------------------------------------------------------
 
-    public SampleMecanumDriveCancelable drive;
-    private DcMotorEx frontLeft, backLeft, backRight, frontRight, frontShoot, backShoot;
-    private DcMotorSimple intake1, intake2;
-//    private List<DcMotorEx> motors;
-    Servo liftServo, wobbleClawServo, wobbleArmServo, shootFlicker;
+    // HARDWARE
+
+    public DcMotorEx frontLeft, backLeft, backRight, frontRight, frontShoot, backShoot;
+    public DcMotorSimple intake1, intake2;
+    List<DcMotorEx> motors;
+    public Servo liftServo, wobbleClawServo, wobbleArmServo, shootFlicker;
     Servo[] servos;
-//    private BNO055IMU imu;
+    public CRServo crServo; // N/A
+    public BNO055IMU imu;
+    public VoltageSensor voltageSensor;
+    public ColorSensor colorSensor; // N/A
+    // TODO: add webcam
+
+    public SampleMecanumDriveCancelable drive;
+
 
 
     //----------------------------------------------------------------------------------------------
@@ -61,11 +74,13 @@ public class RobotBase {
         servos = new Servo[]{liftServo, wobbleClawServo, wobbleArmServo, shootFlicker};
     }
 
-//    public RobotBase(@Nullable DcMotorSimple frontLeft, @Nullable DcMotorSimple frontRight,
-//                     @Nullable DcMotorSimple backLeft, @Nullable DcMotorSimple backRight,
-//                     @Nullable DcMotorSimple ) {
-//
-//    }
+    public RobotBase(@Nullable DcMotor frontLeft, @Nullable DcMotor frontRight,
+                     @Nullable DcMotor backLeft, @Nullable DcMotor backRight,
+                     @Nullable DcMotor frontShoot, @Nullable DcMotor backShoot) {
+
+    }
+
+    RobotBase robot = new RobotBase(frontLeft, backRight, null, null, null, null);
 
     public void grabWobbleGoal() {
         wobbleClawServo.setPosition(0.8);
