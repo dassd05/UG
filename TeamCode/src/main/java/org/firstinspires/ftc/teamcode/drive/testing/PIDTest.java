@@ -8,23 +8,24 @@ import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.PIDCoefficients;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 
-@Disabled
 @Config
-@Autonomous
+@TeleOp
 public class PIDTest extends LinearOpMode {
 
     private DcMotorEx frontShoot, backShoot;
 
-    private DcMotorEx wobbleArm;
+    private Servo wobbleArm;
 
     double integralf = 0;
     double integralb = 0;
@@ -42,7 +43,7 @@ public class PIDTest extends LinearOpMode {
 
     public static double speed = 1280;
 
-    public static double position = 10;
+    public static double position = 0.0;
 
     ElapsedTime PIDTimer = new ElapsedTime(ElapsedTime.Resolution.MILLISECONDS);
 
@@ -51,7 +52,7 @@ public class PIDTest extends LinearOpMode {
         backShoot = hardwareMap.get(DcMotorEx.class, "backShoot");
         frontShoot = hardwareMap.get(DcMotorEx.class, "frontShoot");
 
-        wobbleArm = hardwareMap.get(DcMotorEx.class, "wobbleArm");
+        wobbleArm = hardwareMap.get(Servo.class, "wobbleArm");
 
         backShoot.setDirection(DcMotorSimple.Direction.REVERSE);
         frontShoot.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -61,9 +62,6 @@ public class PIDTest extends LinearOpMode {
         backShoot.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         backShoot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        wobbleArm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        wobbleArm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
         dashboard = FtcDashboard.getInstance();
         Telemetry dashboardTelemetry = dashboard.getTelemetry();
 
@@ -71,23 +69,29 @@ public class PIDTest extends LinearOpMode {
 
 
         waitForStart();
+        if (opModeIsActive()) {
+            while (opModeIsActive()) {
 
-        while (opModeIsActive()) {
+                //PID(position);
 
-            PID(position);
+                wobbleArm.setPosition(position);
 
-            dashboardTelemetry.addData("position", wobbleArm.getCurrentPosition());
-            dashboardTelemetry.addData("targetPosition", position);
-            dashboardTelemetry.update();
+//                wobbleArm.setTargetPosition(position);
+
+                dashboardTelemetry.addData("position", wobbleArm.getPosition());
+                dashboardTelemetry.update();
+
+                telemetry.addData("position", wobbleArm.getPosition());
+                telemetry.update();
 
             /*dashboardTelemetry.addData("backShoot velocity", backShoot.getVelocity());
             dashboardTelemetry.addData("frontShoot velocity", frontShoot.getVelocity());
             dashboardTelemetry.update();*/
+            }
         }
-
     }
 
-    public void PID(double targetPosition) {
+    /*public void PID(double targetPosition) {
 
         double lastError = 0;
         double currentPosition = wobbleArm.getCurrentPosition();
@@ -111,6 +115,7 @@ public class PIDTest extends LinearOpMode {
             lastError = error;
         }
     }
+     */
 
     double lastErrorf = 0;
     double lastErrorb = 0;

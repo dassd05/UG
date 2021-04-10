@@ -8,6 +8,10 @@ import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.geometry.Vector2d;
 import com.acmerobotics.roadrunner.trajectory.Trajectory;
 import com.acmerobotics.roadrunner.trajectory.TrajectoryBuilder;
+import com.acmerobotics.roadrunner.trajectory.constraints.AngularVelocityConstraint;
+import com.acmerobotics.roadrunner.trajectory.constraints.MecanumVelocityConstraint;
+import com.acmerobotics.roadrunner.trajectory.constraints.MinVelocityConstraint;
+import com.acmerobotics.roadrunner.trajectory.constraints.ProfileAccelerationConstraint;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -21,9 +25,12 @@ import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.qualcomm.robotcore.hardware.configuration.typecontainers.MotorConfigurationType;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.teamcode.drive.DriveConstants;
 import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
 import org.firstinspires.ftc.teamcode.drive.advanced.PoseStorage;
 import org.firstinspires.ftc.teamcode.drive.advanced.SampleMecanumDriveCancelable;
+
+import java.util.Arrays;
 
 /**
  * Example opmode demonstrating how to hand-off the pose from your autonomous opmode to your teleop
@@ -60,54 +67,66 @@ public class ZeroRing extends LinearOpMode {
 
     private VoltageSensor batteryVoltageSensor;
 
-    private DcMotorEx frontShoot, backShoot;
+    //private DcMotorEx frontShoot, backShoot;
     private Servo wobbleClawServo, wobbleArmServo;
-    private Servo liftServo, shootFlicker;
-    private DcMotor intake1, intake2;
+    private Servo /*liftServo,*/ shootFlicker;
+    //private DcMotor intake1, intake2;
 
-    public static PIDFCoefficients MOTOR_VELO_PID = new PIDFCoefficients(35, 0, 0, 15.7);
-    public static PIDFCoefficients MOTOR_VELO_PID_2 = new PIDFCoefficients(35, 0, 0, 15.7);
+    public static PIDFCoefficients MOTOR_VELO_PID = new PIDFCoefficients(45, 0, 0, 25);
+    public static PIDFCoefficients MOTOR_VELO_PID_2 = new PIDFCoefficients(45, 0, 0, 25); // fix this
 
-    private double lastKp = 0.0;
-    private double lastKi = 0.0;
-    private double lastKd = 0.0;
-    private double lastKf = getMotorVelocityF();
+    public static double lastKf = 16.7;
+    public static double lastKf_2 = 16.7; // fix this
 
-    private double lastKp_2 = 0.0;
-    private double lastKi_2 = 0.0;
-    private double lastKd_2 = 0.0;
-    private double lastKf_2 = getMotorVelocityF();
+    double lastVoltage = 0;
 
     ElapsedTime PIDTimer = new ElapsedTime(ElapsedTime.Resolution.MILLISECONDS);
+    private DcMotorEx frontShoot, backShoot;
+
     @Override
     public void runOpMode() throws InterruptedException {
         batteryVoltageSensor = hardwareMap.voltageSensor.iterator().next();
 
-        frontShoot = hardwareMap.get(DcMotorEx.class, "frontShoot");
-
-        frontShoot.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        frontShoot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        DcMotorEx frontShoot = hardwareMap.get(DcMotorEx.class, "frontShoot");
         frontShoot.setDirection(DcMotorSimple.Direction.REVERSE);
         frontShoot.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 
-        backShoot = hardwareMap.get(DcMotorEx.class, "backShoot");
+        MotorConfigurationType motorConfigurationType = frontShoot.getMotorType().clone();
+        motorConfigurationType.setAchieveableMaxRPMFraction(1.0);
+        frontShoot.setMotorType(motorConfigurationType);
 
-        backShoot.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        backShoot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        DcMotorEx backShoot = hardwareMap.get(DcMotorEx.class, "backShoot");
         backShoot.setDirection(DcMotorSimple.Direction.REVERSE);
         backShoot.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 
-        frontShoot.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(
+        MotorConfigurationType motorConfigurationType2 = backShoot.getMotorType().clone();
+        motorConfigurationType2.setAchieveableMaxRPMFraction(1.0);
+        backShoot.setMotorType(motorConfigurationType2);
+
+        if (RUN_USING_ENCODER)
+            frontShoot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        else
+            frontShoot.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        if (RUN_USING_ENCODER)
+            backShoot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        else
+            backShoot.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+        shootFlicker = hardwareMap.get(Servo.class, "shootFlicker");
+
+        batteryVoltageSensor = hardwareMap.voltageSensor.iterator().next();
+
+        /*frontShoot.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(
                 MOTOR_VELO_PID.p, MOTOR_VELO_PID.i, MOTOR_VELO_PID.d,
                 MOTOR_VELO_PID.f * 12 / hardwareMap.voltageSensor.iterator().next().getVoltage()
-        ));
-        //setPIDFCoefficients(frontShoot, MOTOR_VELO_PID);
+        ));*/
+        setPIDFCoefficients(frontShoot, MOTOR_VELO_PID);
 
-        backShoot.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(
+        /*backShoot.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(
                 MOTOR_VELO_PID_2.p, MOTOR_VELO_PID_2.i, MOTOR_VELO_PID_2.d,
                 MOTOR_VELO_PID_2.f * 12 / hardwareMap.voltageSensor.iterator().next().getVoltage()
-        ));
-        //setPIDFCoefficients(backShoot, MOTOR_VELO_PID_2);
+        ));*/
+        setPIDFCoefficients2(backShoot, MOTOR_VELO_PID_2);
 
         for (LynxModule module : hardwareMap.getAll(LynxModule.class)) {
             module.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
@@ -118,24 +137,17 @@ public class ZeroRing extends LinearOpMode {
         telemetry.update();
         telemetry.clearAll();
 
-        intake1 = hardwareMap.dcMotor.get("intake1");
+        /*intake1 = hardwareMap.dcMotor.get("intake1");
         intake2 = hardwareMap.dcMotor.get("intake2");
-
-        liftServo = hardwareMap.servo.get("liftServo");
+        */
+        //liftServo = hardwareMap.servo.get("liftServo");
         wobbleClawServo = hardwareMap.servo.get("wobbleClawServo");
         wobbleArmServo = hardwareMap.servo.get("wobbleArmServo");
         shootFlicker = hardwareMap.servo.get("shootFlicker");
-
+        /*
         intake1.setDirection(DcMotorSimple.Direction.REVERSE);
         intake2.setDirection(DcMotorSimple.Direction.REVERSE);
-
-        MotorConfigurationType motorConfigurationType = frontShoot.getMotorType().clone();
-        motorConfigurationType.setAchieveableMaxRPMFraction(1.0);
-        frontShoot.setMotorType(motorConfigurationType);
-
-        MotorConfigurationType motorConfigurationType2 = backShoot.getMotorType().clone();
-        motorConfigurationType2.setAchieveableMaxRPMFraction(1.0);
-        backShoot.setMotorType(motorConfigurationType2);
+        */
 
         SampleMecanumDriveCancelable drive = new SampleMecanumDriveCancelable(hardwareMap);
 
@@ -144,37 +156,36 @@ public class ZeroRing extends LinearOpMode {
         drive.setPoseEstimate(startPose);
 
         sleep(200);
-        shootFlicker.setPosition(0.1);
+        shootFlicker.setPosition(0.4);
         sleep(100);
-        shootFlicker.setPosition(0.45);
+        shootFlicker.setPosition(0.1);
 
         wobbleArmServo.setPosition(1);
         sleep(5000);
-        wobbleClawServo.setPosition(.95);
+        wobbleClawServo.setPosition(.07); // need to change
 
-        liftServo.setPosition(.17);
+        //liftServo.setPosition(.17);
 
         waitForStart();
 
         if (isStopRequested()) return;
         while (/*opModeIsActive() && */!isStopRequested()) {
 
-            if (lastKp_2 != MOTOR_VELO_PID_2.p || lastKi_2 != MOTOR_VELO_PID_2.i || lastKd_2 != MOTOR_VELO_PID_2.d || lastKf_2 != MOTOR_VELO_PID_2.f) {
-                setPIDFCoefficients(backShoot, MOTOR_VELO_PID_2);
-
-                lastKp_2 = MOTOR_VELO_PID_2.p;
-                lastKi_2 = MOTOR_VELO_PID_2.i;
-                lastKd_2 = MOTOR_VELO_PID_2.d;
+            if (lastKf_2 != MOTOR_VELO_PID_2.f) {
+                MOTOR_VELO_PID_2.f = lastKf_2 * 12 / batteryVoltageSensor.getVoltage();
                 lastKf_2 = MOTOR_VELO_PID_2.f;
             }
-            if (lastKp != MOTOR_VELO_PID.p || lastKi != MOTOR_VELO_PID.i || lastKd != MOTOR_VELO_PID.d || lastKf != MOTOR_VELO_PID.f) {
-                setPIDFCoefficients(frontShoot, MOTOR_VELO_PID);
 
-                lastKp = MOTOR_VELO_PID.p;
-                lastKi = MOTOR_VELO_PID.i;
-                lastKd = MOTOR_VELO_PID.d;
+            if (lastKf != MOTOR_VELO_PID.f) {
+                MOTOR_VELO_PID.f = lastKf * 12 / batteryVoltageSensor.getVoltage();
                 lastKf = MOTOR_VELO_PID.f;
             }
+
+            setPIDFCoefficients2(backShoot, MOTOR_VELO_PID_2);
+            setPIDFCoefficients(frontShoot, MOTOR_VELO_PID);
+
+            lastVoltage = batteryVoltageSensor.getVoltage();
+
             drive.update();
 
             Pose2d poseEstimate = drive.getPoseEstimate();
@@ -183,14 +194,72 @@ public class ZeroRing extends LinearOpMode {
             telemetry.addData("y", poseEstimate.getY());
             telemetry.addData("heading", Math.toDegrees(poseEstimate.getHeading()));
 
-            Trajectory traj1 = drive.trajectoryBuilder(startPose)
-                    .splineToConstantHeading(new Vector2d(-45, -2), 0)
+            /*Trajectory traj0 = drive.trajectoryBuilder(startPose)
                     .addTemporalMarker(0, () -> {
-                        runShooterMotors(2750);
+                        runShooterMotors(2000);
+                        telemetry.addData("power1", frontShoot.getPower());
+                        telemetry.addData("velo1", frontShoot.getVelocity());
+                        telemetry.update();
                     })
-                    .splineToConstantHeading(new Vector2d(3, 13), 0)
+                    .lineToLinearHeading(new Pose2d(-25, -7, Math.toRadians(5)))
                     .addDisplacementMarker(() -> {
                         sleep(150);
+                        shootFlicker.setPosition(0.1);
+                        sleep(100);
+                        shootFlicker.setPosition(0.45);
+                        sleep(400);
+                        shootFlicker.setPosition(0.1);
+                        sleep(100);
+                        shootFlicker.setPosition(0.45);
+                        sleep(400);
+                        shootFlicker.setPosition(0.1);
+                        sleep(100);
+                        shootFlicker.setPosition(0.45);
+                        sleep(170);
+                        frontShoot.setPower(0);
+                        backShoot.setPower(0);
+                        liftServo.setPosition(.72);
+                        sleep(450);
+
+                        intake1.setPower(.8);
+                        intake2.setPower(.8);
+                    })
+                    .build();
+
+            Trajectory traj01 = drive.trajectoryBuilder(traj0.end())
+                    .lineToLinearHeading(new Pose2d(0, -7, 0))
+                    .addDisplacementMarker(() -> {
+                        sleep(600);
+                        intake1.setPower(0);
+                        intake2.setPower(0);
+                        liftServo.setPosition(.17);
+                        sleep(450);
+                    })
+                    .build();
+            Trajectory traj02 = drive.trajectoryBuilder(traj01.end())
+                    .addTemporalMarker(0, () -> {
+                        runShooterMotors(0.1);
+                    })
+                    .lineToLinearHeading(new Pose2d(-25, -7, Math.toRadians(5)))
+                    .addDisplacementMarker(() -> {
+                        sleep(150);
+                        shootFlicker.setPosition(0.1);
+                        sleep(100);
+                        shootFlicker.setPosition(0.45);
+                        sleep(270);
+                        frontShoot.setPower(0);
+                        backShoot.setPower(0);
+                        liftServo.setPosition(.72);
+                        sleep(450);
+                    })
+                    .build();
+
+            /*Trajectory traj1 = drive.trajectoryBuilder(traj01.end())
+                    .addTemporalMarker(0, () -> {
+                        runShooterMotors(2860);
+                    })
+                    .splineToConstantHeading(new Vector2d(3, 15), 0)
+                    .addDisplacementMarker(() -> {
                         shootFlicker.setPosition(0.1);
                         sleep(100);
                         shootFlicker.setPosition(0.45);
@@ -198,7 +267,7 @@ public class ZeroRing extends LinearOpMode {
                     .build();
 
             Trajectory traj2 = drive.trajectoryBuilder(traj1.end())
-                    .lineToLinearHeading(new Pose2d(3, 20, Math.toRadians(0)))
+                    .lineToLinearHeading(new Pose2d(3, 22.5, Math.toRadians(0)))
                     .addDisplacementMarker(() -> {
                         sleep(100);
                         shootFlicker.setPosition(0.1);
@@ -207,8 +276,8 @@ public class ZeroRing extends LinearOpMode {
                     })
                     .build();
 
-            Trajectory traj3 = drive.trajectoryBuilder(traj2.end())
-                    .lineToLinearHeading(new Pose2d(3, 27, Math.toRadians(0)))
+            Trajectory traj3 = drive.trajectoryBuilder(traj02.end())
+                    .lineToLinearHeading(new Pose2d(3, 28, Math.toRadians(0)))
                     .addDisplacementMarker(() -> {
                         sleep(100);
                         shootFlicker.setPosition(0.1);
@@ -217,24 +286,26 @@ public class ZeroRing extends LinearOpMode {
                         sleep(150);
                     })
                     .build();
-            Trajectory traj4 = drive.trajectoryBuilder(traj3.end())
+
+            Trajectory traj4 = drive.trajectoryBuilder(traj02.end())
                     .addTemporalMarker(0, () -> {
                         frontShoot.setPower(0);
                         backShoot.setPower(0);
-                        liftServo.setPosition(.63);
+                        liftServo.setPosition(.72);
                     })
-                    .lineToLinearHeading(new Pose2d(21, -20, Math.toRadians(90)))
+                    .lineToLinearHeading(new Pose2d(50, 12, Math.toRadians(90)))
                     .addDisplacementMarker(() -> {
+                        sleep(100);
                         wobbleDown();
                         /*wobbleArmServo.setPosition(.3);
                         sleep(700);
                         wobbleClawServo.setPosition(.5);
                         sleep(350);*/
-                    })
-                    .build();
+            //})
+                    /*.build();
 
             Trajectory traj5 = drive.trajectoryBuilder(traj4.end())
-                    .lineToLinearHeading(new Pose2d(-26.6, -12, Math.toRadians(0)))
+                    .lineToLinearHeading(new Pose2d(-26.5, -12, Math.toRadians(0)))
                     .addTemporalMarker(1.5, () -> {
                         wobbleArmServo.setPosition(0);
                     })
@@ -244,14 +315,149 @@ public class ZeroRing extends LinearOpMode {
                     .build();
 
             Trajectory traj6 = drive.trajectoryBuilder(traj5.end())
-                    .lineToLinearHeading(new Pose2d(18, -12, Math.toRadians(90)))
+                    .lineToLinearHeading(new Pose2d(42, 17, Math.toRadians(90)))
                     .addDisplacementMarker(() -> {
                         wobbleDown();
                     })
                     .build();
 
             Trajectory traj7 = drive.trajectoryBuilder(traj6.end())
+                    .lineToLinearHeading(new Pose2d(42, 20, Math.toRadians(90)))
+                    .build();
+            Trajectory traj8 = drive.trajectoryBuilder(traj7.end())
+                    .lineToLinearHeading(new Pose2d(24, 20, Math.toRadians(0)))
+                    .build();
+
+            drive.followTrajectory(traj0);
+            //high goal
+            sleep(700);
+            drive.followTrajectory(traj01);
+            sleep(200);
+            //picking up ring
+            drive.followTrajectory(traj02);
+            /*drive.followTrajectory(traj1);
+            //sleep(400);
+            //shoot();
+            drive.followTrajectory(traj2);
+            //shoot();
+            drive.followTrajectory(traj3);
+            //shoot();
+            */
+            /*drive.followTrajectory(traj4);
+            wobbleArmServo.setPosition(.5);
+            sleep(100);
+            //wobble goal
+            sleep(300);
+            drive.followTrajectory(traj5);
+            //picking up 2nd wobble goal
+            drive.followTrajectory(traj6);
+            wobbleArmServo.setPosition(.5);
+            sleep(100);
+            //dropping off the 2nd wobble goal
+            drive.followTrajectory(traj7);
+            drive.followTrajectory(traj8);
+            //white line
+
+            // Transfer the current pose to PoseStorage so we can use it in TeleOp
+            PoseStorage.currentPose = drive.getPoseEstimate();
+            sleep(10000);
+
+            //break;*/
+            Trajectory traj1 = drive.trajectoryBuilder(startPose)
+                    //.splineToConstantHeading(new Vector2d(-45, -2), 0)
+                    .addTemporalMarker(0, () -> {
+                        setVelocity(frontShoot, 2700);
+                        setVelocity(backShoot, 2700);
+                    })
+                    .splineToConstantHeading(new Vector2d(3, 13), 0)
+                    .addDisplacementMarker(() -> {
+                        sleep(100);
+                        shootFlicker.setPosition(0.45);
+                        sleep(170);
+                        shootFlicker.setPosition(0.1);
+                    })
+                    .build();
+
+            Trajectory traj2 = drive.trajectoryBuilder(traj1.end())
+                    .lineToLinearHeading(new Pose2d(3, 21.5, Math.toRadians(0)))
+                    .addDisplacementMarker(() -> {
+                        sleep(100);
+                        shootFlicker.setPosition(0.45);
+                        sleep(170);
+                        shootFlicker.setPosition(0.1);
+                    })
+                    .build();
+
+            Trajectory traj3 = drive.trajectoryBuilder(traj2.end())
+                    .lineToLinearHeading(new Pose2d(3, 29, Math.toRadians(0)))
+                    .addDisplacementMarker(() -> {
+                        sleep(100);
+                        shootFlicker.setPosition(0.45);
+                        sleep(170);
+                        shootFlicker.setPosition(0.1);
+                        sleep(150);
+                    })
+                    .build();
+            Trajectory traj4 = drive.trajectoryBuilder(traj3.end())
+                    .addTemporalMarker(0, () -> {
+                        frontShoot.setPower(0);
+                        backShoot.setPower(0);
+                        //liftServo.setPosition(.63);
+                    })
+                    .lineToLinearHeading(new Pose2d(20, -25, Math.toRadians(270))) //change pose
+                    .addDisplacementMarker(() -> {
+                        sleep(250);
+                        wobbleArmServo.setPosition(.44);
+                        sleep(800);
+                        wobbleClawServo.setPosition(.51); //need to change position and time
+                        sleep(500);
+                        //wobbleUp();
+                        /*wobbleArmServo.setPosition(.3);
+                        sleep(700);
+                        wobbleClawServo.setPosition(.5);
+                        sleep(350);*/
+                    })
+                    .build();
+            Trajectory traj5_0 = drive.trajectoryBuilder(traj4.end())
+                    /*.addTemporalMarker(1.5, () -> {
+                        wobbleDown();
+            })*/
+                    .lineToLinearHeading(new Pose2d(21, -15, Math.toRadians(270)))
+                    //.lineToLinearHeading(new Pose2d(-26.6, -12, Math.toRadians(0)))
+                    /*.addTemporalMarker(1.5, () -> {
+                        wobbleArmServo.setPosition(0);
+                    })*/
+                    .build();
+
+            Trajectory traj5 = drive.trajectoryBuilder(traj5_0.end())
+                    .lineToLinearHeading(new Pose2d(-26.6, -17, Math.toRadians(180)))
+                    //.lineToLinearHeading(new Pose2d(-26.6, -12, Math.toRadians(0)))
+                    /*.addTemporalMarker(1.5, () -> {
+                        wobbleArmServo.setPosition(0);
+                    })*/
+                    .addDisplacementMarker(() -> {
+                        sleep(250);
+                        wobbleUp();
+                    })
+                    .build();
+
+            Trajectory traj6 = drive.trajectoryBuilder(traj5.end())
+                    .lineToLinearHeading(new Pose2d(18, -12, Math.toRadians(270))) //change pose
+                    .addDisplacementMarker(() -> {
+                        sleep(250);
+                        wobbleArmServo.setPosition(.44);
+                        sleep(350);
+                        wobbleClawServo.setPosition(.51); //need to change position and time
+                        sleep(200);
+                    })
+                    .build();
+
+            Trajectory traj7 = drive.trajectoryBuilder(traj6.end())
                     .lineToLinearHeading(new Pose2d(24, 8, 0))
+                    .addDisplacementMarker(() -> {
+                        sleep(250);
+                        wobbleUp();
+                    })
                     .build();
 
             drive.followTrajectory(traj1);
@@ -263,15 +469,14 @@ public class ZeroRing extends LinearOpMode {
             //shoot();
             //
             drive.followTrajectory(traj4);
-            wobbleArmServo.setPosition(.5);
-            sleep(100);
+            /*wobbleArmServo.setPosition(.5);
+            sleep(100);*/
             //wobble goal
-            sleep(300);
+            //sleep(300);
+            drive.followTrajectory(traj5_0);
             drive.followTrajectory(traj5);
             //picking up 2nd wobble goal
             drive.followTrajectory(traj6);
-            wobbleArmServo.setPosition(.5);
-            sleep(220);
             //dropping off the 2nd wobble goal
             drive.followTrajectory(traj7);
             //white line
@@ -280,25 +485,23 @@ public class ZeroRing extends LinearOpMode {
 
             // Transfer the current pose to PoseStorage so we can use it in TeleOp
             PoseStorage.currentPose = drive.getPoseEstimate();
-            sleep(10000);
-            //break;
+            break;
         }
     }
     public void shoot() {
-        shootFlicker.setPosition(0.1);
+        shootFlicker.setPosition(0.4);
         sleep(100);
-        shootFlicker.setPosition(0.45);
+        shootFlicker.setPosition(0.1);
     }
     public void wobbleUp () {
-        wobbleClawServo.setPosition(.9);
-        sleep(500);
-        wobbleArmServo.setPosition(.5);
+        wobbleClawServo.setPosition(.07); // need to change position and time
+        sleep(720);
+        wobbleArmServo.setPosition(.8);
     }
     public void wobbleDown () {
-        wobbleArmServo.setPosition(0);
+        wobbleArmServo.setPosition(.44);
+        wobbleClawServo.setPosition(.51); //need to change position and time
         sleep(1200);
-        wobbleClawServo.setPosition(.5);
-        sleep(300);
     }
 
     public void setVelocity(DcMotorEx motor, double power) {
@@ -312,7 +515,27 @@ public class ZeroRing extends LinearOpMode {
         }
     }
 
-    public void setPIDFCoefficients(DcMotorEx motor, PIDFCoefficients coefficients) {
+    public void runShooterMotors(double targetVelocity) {
+        setVelocity(frontShoot, targetVelocity);
+        setVelocity(backShoot, targetVelocity);
+    }
+
+    private void setPIDFCoefficients(DcMotorEx motor, PIDFCoefficients coefficients) {
+        if(!RUN_USING_ENCODER) {
+            Log.i("config", "skipping RUE");
+            return;
+        }
+
+        if (!DEFAULT_GAINS) {
+            Log.i("config", "setting custom gains");
+            motor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(
+                    coefficients.p, coefficients.i, coefficients.d, coefficients.f * 12 / batteryVoltageSensor.getVoltage()
+            ));
+        } else {
+            Log.i("config", "setting default gains");
+        }
+    }
+    private void setPIDFCoefficients2(DcMotorEx motor, PIDFCoefficients coefficients) {
         if(!RUN_USING_ENCODER) {
             Log.i("config", "skipping RUE");
             return;
@@ -328,17 +551,8 @@ public class ZeroRing extends LinearOpMode {
         }
     }
 
-    public void runShooterMotors(double targetVelocity) {
-        setVelocity(frontShoot, targetVelocity);
-        setVelocity(backShoot, targetVelocity);
-    }
-
     public static double rpmToTicksPerSecond(double rpm) {
         return rpm * MOTOR_TICKS_PER_REV / MOTOR_GEAR_RATIO / 60;
-    }
-
-    public static double getMotorVelocityF() {
-        return 32767 * 60.0 / (MOTOR_MAX_RPM * MOTOR_TICKS_PER_REV);
     }
 }
 

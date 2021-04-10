@@ -19,7 +19,7 @@ import com.qualcomm.robotcore.hardware.configuration.typecontainers.MotorConfigu
 @Config
 @TeleOp
 public class  PIDFTrial extends LinearOpMode {
-    Servo shootFlicker;
+    //Servo shootFlicker;
 
     public static double MOTOR_TICKS_PER_REV = 28;
     public static double MOTOR_MAX_RPM = 5400;
@@ -69,7 +69,7 @@ public class  PIDFTrial extends LinearOpMode {
         else
             backShoot.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-        shootFlicker = hardwareMap.get(Servo.class, "shootFlicker");
+        //shootFlicker = hardwareMap.get(Servo.class, "shootFlicker");
 
         batteryVoltageSensor = hardwareMap.voltageSensor.iterator().next();
 
@@ -91,7 +91,7 @@ public class  PIDFTrial extends LinearOpMode {
 
         telemetry = new MultipleTelemetry(telemetry, dashboard.getTelemetry());
 
-        shootFlicker.setPosition(.3);
+        //shootFlicker.setPosition(.3);
 
         telemetry.update();
         telemetry.clearAll();
@@ -111,11 +111,11 @@ public class  PIDFTrial extends LinearOpMode {
                 lastKf = MOTOR_VELO_PID.f;
             } //might need to change the way we adjust the feedforward value
 
-            if (gamepad1.b) {
+            /*if (gamepad1.b) {
                 shootFlicker.setPosition(.6);
                 sleep(200);
                 shootFlicker.setPosition(.3);
-            }
+            }*/
 
             setPIDFCoefficients2(backShoot, MOTOR_VELO_PID_2);
             setPIDFCoefficients(frontShoot, MOTOR_VELO_PID);
