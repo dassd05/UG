@@ -11,11 +11,11 @@ import com.qualcomm.robotcore.util.Range;
 @TeleOp(group = "testing")
 public class ServosTest extends LinearOpMode {
 
-    Servo /*liftServo, wobbleClawServo, wobbleArmServo,*/ shootFlicker;
+    Servo /*liftServo,*/ wobbleClawServo, wobbleArmServo, shootFlicker;
 
-    /*public static double liftServoVal = 0; // 0.08 (up) - 0.58 (down)
-    public static double wobbleClawVal = 0; // 0.5 (open) - 0.9 (closed) - 1 (auton start)
-    public static double wobbleArmVal = 0; // 0.03 (down) - 0.35 (drop-off) - 0.5 (up) - 1.0 (auton start)*/
+    //public static double liftServoVal = 0; // 0.08 (up) - 0.58 (down)
+    public static double wobbleClawVal = -1; // 0.5 (open) - 0.9 (closed) - 1 (auton start)
+    public static double wobbleArmVal = -1; // 0.03 (down) - 0.35 (drop-off) - 0.5 (up) - 1.0 (auton start)
     public static double shootFlickerVal = -1; // 0.10 (shot) - 0.45 (back)
 
     public FtcDashboard dashboard;
@@ -23,11 +23,11 @@ public class ServosTest extends LinearOpMode {
 
     @Override
     public void runOpMode() throws InterruptedException {
-        /*liftServo = hardwareMap.get(Servo.class, "liftServo");
+        //liftServo = hardwareMap.get(Servo.class, "liftServo");
         wobbleClawServo = hardwareMap.get(Servo.class, "wobbleClawServo");
-        wobbleArmServo = hardwareMap.get(Servo.class, "wobbleArmServo");/*/
+        wobbleArmServo = hardwareMap.get(Servo.class, "wobbleArmServo");
         shootFlicker = hardwareMap.get(Servo.class, "shootFlicker");
-        Servo[] servos = {/*liftServo, wobbleClawServo, wobbleArmServo,*/ shootFlicker};
+        Servo[] servos = {/*liftServo,*/ wobbleClawServo, /*wobbleArmServo,*/ shootFlicker};
 
         dashboard = FtcDashboard.getInstance();
 
@@ -35,14 +35,18 @@ public class ServosTest extends LinearOpMode {
         waitForStart();
 
         while (opModeIsActive()) {
-            /*if (liftServoVal != -1) liftServo.setPosition(liftServoVal);
-            if (wobbleClawVal != -1) wobbleClawServo.setPosition(wobbleClawVal);
-            if (wobbleArmVal != -1) wobbleArmServo.setPosition(wobbleArmVal);*/
-            if (shootFlickerVal != -1) shootFlicker.setPosition(shootFlickerVal); //.3 is not shooting position .6 feeds into shooter
+            //if (liftServoVal != -1) liftServo.setPosition(liftServoVal);
+            if (wobbleClawVal != -1) wobbleClawServo.setPosition(wobbleClawVal); //.7 is open, .15 is closed
+            if (wobbleArmVal != -1) wobbleArmServo.setPosition(wobbleArmVal);
+            if (shootFlickerVal != -1) shootFlicker.setPosition(shootFlickerVal); //.1 is not shooting position .4 feeds into shooter
+            //wobble arm 1 start of auton, .44 down, .8 deploying
+            telemetry.addData("position", wobbleClawServo.getPosition());
+            telemetry.update();
         }
-        telemetry.addLine(
-                String.valueOf(telemetry.addData("position", shootFlicker.getPosition()))
-                );
+        /*telemetry.addLine(
+                //String.valueOf(telemetry.addData("position", shootFlicker.getPosition()))
+                String.valueOf(telemetry.addData("position", wobbleClawServo.getPosition()))
+                );*/
 
 
         int s = -1;

@@ -75,8 +75,8 @@ public class TeleOpAugmentedDriving extends LinearOpMode {
 
     private DcMotorEx frontShoot, backShoot;
     private Servo wobbleClawServo, wobbleArmServo;
-    private Servo liftServo, shootFlicker;
-    private DcMotor intake1, intake2;
+    private Servo /*liftServo,*/ shootFlicker;
+    //private DcMotor intake1, intake2;
 
     public static PIDFCoefficients MOTOR_VELO_PID = new PIDFCoefficients(35, 0, 0, 15.7);
     public static PIDFCoefficients MOTOR_VELO_PID_2 = new PIDFCoefficients(35, 0, 0, 15.7);
@@ -130,16 +130,16 @@ public class TeleOpAugmentedDriving extends LinearOpMode {
         telemetry.update();
         telemetry.clearAll();
 
-        intake1 = hardwareMap.dcMotor.get("intake1");
+        /*intake1 = hardwareMap.dcMotor.get("intake1");
         intake2 = hardwareMap.dcMotor.get("intake2");
 
-        liftServo = hardwareMap.servo.get("liftServo");
+        liftServo = hardwareMap.servo.get("liftServo");*/
         wobbleClawServo = hardwareMap.servo.get("wobbleClawServo");
         wobbleArmServo = hardwareMap.servo.get("wobbleArmServo");
         shootFlicker = hardwareMap.servo.get("shootFlicker");
 
-        intake1.setDirection(DcMotorSimple.Direction.REVERSE);
-        intake2.setDirection(DcMotorSimple.Direction.REVERSE);
+        //intake1.setDirection(DcMotorSimple.Direction.REVERSE);
+        //intake2.setDirection(DcMotorSimple.Direction.REVERSE);
 
         MotorConfigurationType motorConfigurationType = frontShoot.getMotorType().clone();
         motorConfigurationType.setAchieveableMaxRPMFraction(1.0);
@@ -157,6 +157,7 @@ public class TeleOpAugmentedDriving extends LinearOpMode {
         // See AutoTransferPose.java for further details
         drive.setPoseEstimate(PoseStorage.currentPose);
 
+
         waitForStart();
 
         if (isStopRequested()) return;
@@ -170,7 +171,7 @@ public class TeleOpAugmentedDriving extends LinearOpMode {
             Vector2d input = new Vector2d(
                     -gamepad1.left_stick_y,
                     -gamepad1.left_stick_x
-            ).rotated(-poseEstimate.getHeading() - Math.toRadians(90));
+            ).rotated(-poseEstimate.getHeading() - Math.toRadians(270));
 
             drive.setWeightedDrivePower(
                     new Pose2d(
@@ -190,10 +191,10 @@ public class TeleOpAugmentedDriving extends LinearOpMode {
                     frontShoot.setPower(0);
                     backShoot.setPower(0);
 
-                    liftServo.setPosition(.72);
+                    /*liftServo.setPosition(.72);
 
                     intake1.setPower(.75);
-                    intake2.setPower(.75);
+                    intake2.setPower(.75);*/
                     break;
                 case TELEOP_SHOOTING:
                     if (gamepad1.x && drive.isBusy() || gamepad1.a && drive.isBusy())
@@ -202,9 +203,9 @@ public class TeleOpAugmentedDriving extends LinearOpMode {
                     Trajectory shooting = drive.trajectoryBuilder(poseEstimate)
                             .lineToLinearHeading(new Pose2d(-10, -7, Math.toRadians(3))) // need to fix coordinate
                             .addTemporalMarker(0, () -> {
-                                intake1.setPower(0);
+                                /*intake1.setPower(0);
                                 intake2.setPower(0);
-                                liftServo.setPosition(.17);
+                                liftServo.setPosition(.17);*/
 
                                 runShooterMotors(2700); //need to test shooter power stuff
                             })
@@ -220,9 +221,9 @@ public class TeleOpAugmentedDriving extends LinearOpMode {
                     Trajectory endgame1 = drive.trajectoryBuilder(poseEstimate)
                             .strafeRight(10) // need to fix coordinate
                             .addTemporalMarker(0, () -> {
-                                intake1.setPower(0);
+                                /*intake1.setPower(0);
                                 intake2.setPower(0);
-                                liftServo.setPosition(.17);
+                                liftServo.setPosition(.17);*/
 
                                 runShooterMotors(2800); //need to test shooter power stuff
                             })
@@ -292,35 +293,42 @@ public class TeleOpAugmentedDriving extends LinearOpMode {
 
             // lifting wobble goal
             if (gamepad1.dpad_up) {
-                wobbleClawServo.setPosition(.9);
-                sleep(500);
-                wobbleArmServo.setPosition(.5);
+                wobbleUp();
             }
 
             // setting arm down
             if (gamepad1.dpad_down) {
-                    wobbleArmServo.setPosition(0);
-                    sleep(1200);
-                    wobbleClawServo.setPosition(.5);
-                    sleep(300);
-                }
+                wobbleDown();
             }
 
             // dropping off wobble goal
-            if (gamepad1.dpad_right) {
-                wobbleArmServo.setPosition(.4);
-                sleep(500);
-                wobbleClawServo.setPosition(.02);
+            if (gamepad1.dpad_left) {
+                wobbleDeploy();
             }
+        }
 
             telemetry.update();
         }
 
     public void shoot() {
+        shootFlicker.setPosition(0.4);
         sleep(100);
         shootFlicker.setPosition(0.1);
-        sleep(100);
-        shootFlicker.setPosition(0.45);
+    }
+    public void wobbleUp () {
+        wobbleClawServo.setPosition(.07); // need to change position and time
+        sleep(700);
+        wobbleArmServo.setPosition(.8);
+    }
+    public void wobbleDown () {
+        wobbleArmServo.setPosition(.44);
+        wobbleClawServo.setPosition(.51); //need to change position and time
+        sleep(1200);
+    }
+    public void wobbleDeploy () {
+        wobbleArmServo.setPosition(.7);
+        wobbleClawServo.setPosition(.51); //need to change position and time
+        sleep(1200);
     }
 
     public void setVelocity(DcMotorEx motor, double power) {
