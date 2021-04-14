@@ -245,7 +245,6 @@ public class Camera {
     }
     @Deprecated
     public Camera(HardwareMap hardwareMap, CamType.Phone phone, @Nullable List<TrackingType> trackers) {
-
     }
     public Camera(HardwareMap hardwareMap, String webcamName, @Nullable List<TrackingType> trackers) {
         if (camType instanceof CamType.Phone) {

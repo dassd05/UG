@@ -47,7 +47,7 @@ public class CameraTest extends LinearOpMode {
             telemetry.update();
         }
 
-        camera.vuforia.deactivate();
+//        camera.vuforia.deactivate();
     }
 
 }
