@@ -3,6 +3,8 @@ package org.firstinspires.ftc.teamcode.drive.advanced;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
@@ -63,7 +65,7 @@ public class Camera {
     //----------------------------------------------------------------------------------------------
 
     public WebcamName webcamName;
-    public OpenCvWebcam webcam;
+    public OpenCvWebcam cvWebcam;
     public int cameraMonitorViewId;
 
     /**
@@ -120,6 +122,7 @@ public class Camera {
                 this.name = name;
                 this.vuforiaKey = vuforiaKey;
             }
+            public Webcam() {}
         }
 
         @Deprecated
@@ -150,6 +153,54 @@ public class Camera {
     // CONSTRUCTION
     //----------------------------------------------------------------------------------------------
 
+    @TeleOp(group = "testing")
+    public static class CameraTestInternal extends LinearOpMode {
+
+        Camera camera;
+
+        double xPos;
+        double yPos;
+        double zPos;
+        double roll;
+        double pitch;
+        double heading;
+
+        @Override
+        public void runOpMode() throws InterruptedException {
+            camera = new Camera(hardwareMap, new Camera.CamType.Webcam(null, null),  Camera.TrackingType.RING_DETECTION);
+
+//        camera.vuforia = camera.new Vuforia();
+//        Camera.Vuforia vuf = camera.new Vuforia();
+//        vuf.activate();
+
+        waitForStart();
+
+//        camera.vuforia.activate();
+
+            while(!isStopRequested()) {
+//            camera.vuforia.update();
+//            xPos = camera.vuforia.xPos;
+//            yPos = camera.vuforia.yPos;
+//            zPos = camera.vuforia.zPos;
+//            roll = camera.vuforia.roll;
+//            pitch = camera.vuforia.pitch;
+//            heading = camera.vuforia.heading;
+//
+//            telemetry.addData("position", "{x, y, z} = %.0f, %.0f, %.0f", xPos, yPos, zPos);
+//            telemetry.addData("angles", "{roll, pitch, heading} = %.0f, %.0f, %.0f",
+//                    roll, pitch, heading);
+                telemetry.addData("num rings", camera.pipeline.position);
+                telemetry.addData("avg1", camera.pipeline.avg1);
+                telemetry.addData("avg2", camera.pipeline.avgs2);
+                telemetry.update();
+            }
+
+//            camera.vuforia.deactivate();
+        }
+
+    }
+
+
     // make a phone and webcam that inherits Camera, polymorphism
     Camera camera0 = new Camera(new HardwareMap(null), new CamType.Webcam("webcam 1", "key"), Arrays.asList(TrackingType.RING_DETECTION, TrackingType.VUFORIA));
     Camera camera1 = new Camera(new HardwareMap(null), new CamType.Webcam("webcam 1", "key"), new TrackingType[] {TrackingType.RING_DETECTION, TrackingType.VUFORIA});
@@ -161,6 +212,7 @@ public class Camera {
     }
 
     /**
+     *
      *
      * @param hardwareMap The hardwareMap in your OpMode so we can actually initialize a camera
      * @param webcam Webcam
@@ -177,23 +229,24 @@ public class Camera {
         cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier(
                 "cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
         setAngleDisplacement(0, 0, 0);
+        setDisplacement(0, 0, 0);
 
         if (trackers.contains(TrackingType.VUFORIA)) {
             vuforia = new Vuforia();
         }
 
         if (trackers.contains(TrackingType.RING_DETECTION)) {
-            this.webcam = OpenCvCameraFactory.getInstance().createWebcam(this.webcamName, cameraMonitorViewId);
-            this.webcam.setPipeline(pipeline);
-            this.webcam.openCameraDeviceAsync(() -> this.webcam.startStreaming(960, 720, OpenCvCameraRotation.UPRIGHT));
+            cvWebcam = OpenCvCameraFactory.getInstance().createWebcam(this.webcamName, cameraMonitorViewId);
+            cvWebcam.setPipeline(pipeline);
+            cvWebcam.openCameraDeviceAsync(() -> cvWebcam.startStreaming(960, 720, OpenCvCameraRotation.UPRIGHT));
 
             //vuforiaCode.config();
         }
     }
+    @Deprecated
     public Camera(HardwareMap hardwareMap, CamType.Phone phone, @Nullable List<TrackingType> trackers) {
 
     }
-
     public Camera(HardwareMap hardwareMap, String webcamName, @Nullable List<TrackingType> trackers) {
         if (camType instanceof CamType.Phone) {
             throw new IllegalArgumentException("CamType.Phone is deprecated, please don't use it");
@@ -228,14 +281,16 @@ public class Camera {
         return num * num;
     }
 
+
     //----------------------------------------------------------------------------------------------
     // CAMERA CLASSES
     //----------------------------------------------------------------------------------------------
-    protected class RingDetection extends OpenCvPipeline {
+    @SuppressWarnings("FieldCanBeLocal")
+    public static class RingDetection extends OpenCvPipeline {
 
         // Some color constants
-        private final Scalar BLUE = new Scalar(0, 0, 255);
-        private final Scalar GREEN = new Scalar(0, 255, 0);
+        protected final Scalar BLUE = new Scalar(0, 0, 255, 100);
+        protected final Scalar GREEN = new Scalar(0, 255, 0, 100);
 
         // The core values which define the location and size of the sample regions
         private final Point REGION1_TOPLEFT_ANCHOR_POINT = new Point(650, 400);
@@ -243,8 +298,8 @@ public class Camera {
         private final int REGION_WIDTH = 150;
         private final int REGION_HEIGHT = 125;
 
-        private int FOUR_RING_THRESHOLD = 145;
-        private int ONE_RING_THRESHOLD = 130;
+        private final int FOUR_RING_THRESHOLD = 145;
+        private final int ONE_RING_THRESHOLD = 130;
 
         Point region1_pointA = new Point(
                 REGION1_TOPLEFT_ANCHOR_POINT.x,
@@ -257,7 +312,10 @@ public class Camera {
         Mat region1_Cb;
         Mat YCrCb = new Mat();
         Mat Cb = new Mat();
-        int avg1;
+        public int avg1;
+
+        Mat region_rgb;
+        public double[] avgs2;
 
         // Volatile since accessed by OpMode thread w/o synchronization
         public volatile RingPosition position;
@@ -273,6 +331,7 @@ public class Camera {
             inputToCb(firstFrame);
 
             region1_Cb = Cb.submat(new Rect(region1_pointA, region1_pointB));
+            region_rgb = firstFrame.submat(new Rect(region1_pointA, region1_pointB));
         }
 
         @Override
@@ -281,6 +340,7 @@ public class Camera {
             inputToCb(input);
 
             avg1 = (int) Core.mean(region1_Cb).val[0];
+            avgs2 = Core.mean(region_rgb).val;
 
             Imgproc.rectangle(
                     input, // Buffer to draw on
@@ -307,9 +367,17 @@ public class Camera {
 
             return input;
         }
+
+        @Override
+        public void onViewportTapped() {
+            
+        }
     }
 
-    protected class Vuforia {
+    /**
+     * The Vuforia class for the implementation of vuforia with the camera.
+     */
+    public class Vuforia {
 
         // constants
         public static final float mmPerInch        = 25.4f;
@@ -343,13 +411,22 @@ public class Camera {
          */
         public Map<String, OpenGLMatrix> visibleTargets;
 
-        public double xPos;
-        public double yPos;
-        public double zPos;
-
-        public double roll;
-        public double pitch;
-        public double heading;
+        /**
+         * The coordinates the robot is at, in inches, where each coordinate is of its respective
+         * axis.
+         *
+         * <p>Note that these are based on the FTC's coordinates where x is positive towards the
+         * back, y is positive towards the left, and z is positive upwards.</p>
+         *
+         * <p>Additionally, note that the origin is at the center of the (full) field, so at one
+         * of the corners, your coordinates would be (+/-72, +/-72, 0)</p>
+         */
+        public double xPos, yPos, zPos;
+        /**
+         * The angles that the robot is at, in degrees. Roll, pitch, and heading are the rotations
+         * around the x, y, and z axes, respectively.
+         */
+        public double roll, pitch, heading;
 
 
         public Vuforia() {
@@ -357,7 +434,7 @@ public class Camera {
             if (camType instanceof CamType.Webcam) {
                 CamType.Webcam webcam = (CamType.Webcam) camType;
                 parameters = new VuforiaLocalizer.Parameters(cameraMonitorViewId);
-                parameters.vuforiaLicenseKey = webcam.vuforiaKey;
+                parameters.vuforiaLicenseKey = webcam.vuforiaKey == null ? DEFUALT_KEY : webcam.vuforiaKey;
                 parameters.cameraName = webcamName;
                 parameters.useExtendedTracking = false; // for some reason wasn't allowed in example
             } else if (camType instanceof CamType.Phone) {
@@ -374,21 +451,21 @@ public class Camera {
             vuforiaLocalizer = ClassFactory.getInstance().createVuforia(parameters);
             createVuforiaTargets();
 
-            OpenGLMatrix robotFromCamera = OpenGLMatrix
+            OpenGLMatrix cameraFromRobot = OpenGLMatrix
                     .translation(forwardDisplacement, horizontalDisplacement, verticalDisplacement)
                     .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XYZ, DEGREES, xAngleDisplacement, yAngleDisplacement, zAngleDisplacement));
 
             /*  Let all the trackable listeners know where the phone is.  */
             for (VuforiaTrackable trackable : allTrackables) {
                 // for phone
-//                ((VuforiaTrackableDefaultListener) trackable.getListener()).setPhoneInformation(robotFromCamera, parameters.cameraDirection);
+//                ((VuforiaTrackableDefaultListener) trackable.getListener()).setPhoneInformation(cameraFromRobot, parameters.cameraDirection);
                 // for webcam
-                ((VuforiaTrackableDefaultListener) trackable.getListener()).setCameraLocationOnRobot(parameters.cameraName, robotFromCamera);
+                ((VuforiaTrackableDefaultListener) trackable.getListener()).setCameraLocationOnRobot(parameters.cameraName, cameraFromRobot);
                 // dunno the difference between the two
             }
         }
 
-        public @Nullable OpenGLMatrix updateVuforia() {
+        public @Nullable OpenGLMatrix update() {
             visibleTargets = new HashMap<>();
             for (VuforiaTrackable trackable : allTrackables) {
                 if (((VuforiaTrackableDefaultListener) trackable.getListener()).isVisible()) {

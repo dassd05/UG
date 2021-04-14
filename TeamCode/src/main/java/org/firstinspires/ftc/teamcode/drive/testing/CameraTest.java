@@ -1,39 +1,53 @@
 package org.firstinspires.ftc.teamcode.drive.testing;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
-import org.firstinspires.ftc.robotcore.external.ClassFactory;
-import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
-import org.firstinspires.ftc.robotcore.external.matrices.OpenGLMatrix;
-import org.firstinspires.ftc.robotcore.external.matrices.VectorF;
-import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefaultListener;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
-import org.opencv.core.Core;
-import org.opencv.core.Mat;
-import org.opencv.core.Point;
-import org.opencv.core.Rect;
-import org.opencv.core.Scalar;
-import org.opencv.imgproc.Imgproc;
-import org.openftc.easyopencv.OpenCvPipeline;
-import org.openftc.easyopencv.OpenCvWebcam;
+import org.firstinspires.ftc.teamcode.drive.advanced.Camera;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.DEGREES;
-import static org.firstinspires.ftc.robotcore.external.navigation.AxesOrder.XYZ;
-import static org.firstinspires.ftc.robotcore.external.navigation.AxesOrder.YZX;
-import static org.firstinspires.ftc.robotcore.external.navigation.AxesReference.EXTRINSIC;
-import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer.CameraDirection.BACK;
-
+@TeleOp(group = "testing")
 public class CameraTest extends LinearOpMode {
+
+    Camera camera;
+
+    double xPos;
+    double yPos;
+    double zPos;
+    double roll;
+    double pitch;
+    double heading;
 
     @Override
     public void runOpMode() throws InterruptedException {
+        camera = new Camera(hardwareMap, new Camera.CamType.Webcam(null, null),  Camera.TrackingType.RING_DETECTION);
 
+//        camera.vuforia = camera.new Vuforia();
+//        Camera.Vuforia vuf = camera.new Vuforia();
+//        vuf.activate();
+
+//        waitForStart();
+
+//        camera.vuforia.activate();
+
+        while(!isStopRequested()) {
+//            camera.vuforia.update();
+//            xPos = camera.vuforia.xPos;
+//            yPos = camera.vuforia.yPos;
+//            zPos = camera.vuforia.zPos;
+//            roll = camera.vuforia.roll;
+//            pitch = camera.vuforia.pitch;
+//            heading = camera.vuforia.heading;
+//
+//            telemetry.addData("position", "{x, y, z} = %.0f, %.0f, %.0f", xPos, yPos, zPos);
+//            telemetry.addData("angles", "{roll, pitch, heading} = %.0f, %.0f, %.0f",
+//                    roll, pitch, heading);
+            telemetry.addData("num rings", camera.pipeline.position);
+            telemetry.addData("avg1", camera.pipeline.avg1);
+            telemetry.addData("avg2", camera.pipeline.avgs2);
+            telemetry.update();
+        }
+
+        camera.vuforia.deactivate();
     }
 
 }
