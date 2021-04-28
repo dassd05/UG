@@ -49,53 +49,67 @@ public class HardwareTest extends LinearOpMode {
     public static double servoPowPos0 = 0;
     public static double servoPowPos1 = 0.5;
 
+    public static int delay = 100;
+
     @Override
     public void runOpMode() throws InterruptedException {
 //        motor2 = hardwareMap.get(DcMotor.class, "motor2");
 //        motor3 = hardwareMap.get(DcMotor.class, "motor3");
 
         servo0 = hardwareMap.get(Servo.class, "servo0");
-        servo1 = hardwareMap.get(CRServo.class, "servo1");
-        servoConfigType0 = ServoConfigurationType.getStandardServoType();
-        servoConfigType1 = ServoConfigurationType.getStandardServoType();
-
-        servoController = (LynxServoController) servo0.getController();
-
-        pwmRange0 = servoController.getServoPwmRange(0);
-        pwmRange1 = servoController.getServoPwmRange(1);
-
-        pwmRangeVals0 = new double[]{pwmRange0.usPulseLower, pwmRange0.usPulseUpper, pwmRange0.usFrame};
-        pwmRangeVals1 = new double[]{pwmRange1.usPulseLower, pwmRange1.usPulseUpper, pwmRange1.usFrame};
+//        servo1 = hardwareMap.get(CRServo.class, "servo1");
+//        servoConfigType0 = ServoConfigurationType.getStandardServoType();
+//        servoConfigType1 = ServoConfigurationType.getStandardServoType();
+//
+//        servoController = (LynxServoController) servo0.getController();
+//
+//        pwmRange0 = servoController.getServoPwmRange(0);
+//        pwmRange1 = servoController.getServoPwmRange(1);
+//
+//        pwmRangeVals0 = new double[]{pwmRange0.usPulseLower, pwmRange0.usPulseUpper, pwmRange0.usFrame};
+//        pwmRangeVals1 = new double[]{pwmRange1.usPulseLower, pwmRange1.usPulseUpper, pwmRange1.usFrame};
 
         dashboard = FtcDashboard.getInstance();
 
         waitForStart();
 
+        float pos = 0f;
+        boolean goUp = true;
+
         while (opModeIsActive() && !isStopRequested()) {
 //            motor2.setPower(motorPowers);
 //            motor3.setPower(motorPowers);
 
-            if (lastFlavor0 != servoFlavor0) {
-                servoConfigType0.processAnnotation(servoFlavor0 == ServoFlavor.STANDARD ? standardServo() : continuousServo());
-                servoController.setServoType(0, servoConfigType0);
-                servoController.initializeHardware();
-            } else if (lastFlavor1 != servoFlavor1) {
-                servoConfigType1.processAnnotation(servoFlavor1 == ServoFlavor.STANDARD ? standardServo() : continuousServo());
-                servoController.setServoType(1, servoConfigType1);
-                servoController.initializeHardware();
-            }
+//            if (lastFlavor0 != servoFlavor0) {
+//                servoConfigType0.processAnnotation(servoFlavor0 == ServoFlavor.STANDARD ? standardServo() : continuousServo());
+//                servoController.setServoType(0, servoConfigType0);
+//                servoController.initializeHardware();
+//            } else if (lastFlavor1 != servoFlavor1) {
+//                servoConfigType1.processAnnotation(servoFlavor1 == ServoFlavor.STANDARD ? standardServo() : continuousServo());
+//                servoController.setServoType(1, servoConfigType1);
+//                servoController.initializeHardware();
+//            }
 
-            servoController.setServoPosition(0, servoPowPos0);
-            servoController.setServoPosition(1, servoPowPos1);
+//            servoController.setServoPosition(0, servoPowPos0);
+//            servoController.setServoPosition(1, servoPowPos1);
+//
+//            telemetry_addData("servoConfigType0", servoConfigType0);
+//            telemetry_addData("servoConfigType1", servoConfigType1);
+//            telemetry_addData("servoConfigTypeFlavor0", servoConfigType0.getServoFlavor());
+//            telemetry_addData("servoConfigTypeFlavor1", servoConfigType1.getServoFlavor());
+//            telemetry_addData("servoConfigs equal", servoConfigType0.equals(servoConfigType1));
+//            telemetry_addData("pwm enabled", servoController.isServoPwmEnabled(0));
+//            telemetry_addData("pwmRangeVals0", pwmRangeVals0);
+//            telemetry_addData("pwmRangeVals1", pwmRangeVals1);
 
-            telemetry_addData("servoConfigType0", servoConfigType0);
-            telemetry_addData("servoConfigType1", servoConfigType1);
-            telemetry_addData("servoConfigTypeFlavor0", servoConfigType0.getServoFlavor());
-            telemetry_addData("servoConfigTypeFlavor1", servoConfigType1.getServoFlavor());
-            telemetry_addData("servoConfigs equal", servoConfigType0.equals(servoConfigType1));
-            telemetry_addData("pwm enabled", servoController.isServoPwmEnabled(0));
-            telemetry_addData("pwmRangeVals0", pwmRangeVals0);
-            telemetry_addData("pwmRangeVals1", pwmRangeVals1);
+            servo0.setPosition(pos);
+
+            pos += goUp ? 0.01 : -0.01;
+            if (pos >= 0.9) goUp = false;
+            else if (pos <= 0.1) goUp = true;
+            sleep(delay);
+
+            telemetry_addData("pos", pos);
             telemetry_update();
         }
     }
