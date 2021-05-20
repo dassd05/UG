@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.drive.advanced;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -14,6 +15,7 @@ import androidx.annotation.*;
 
 import java.util.List;
 
+@Disabled
 public class RobotBase {
     /*
     TODO:

@@ -25,32 +25,6 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 
 import java.util.*;
 
-/**
- * This opmode demonstrates how one can augment driver control by following Road Runner arbitrary
- * Road Runner trajectories at any time during teleop. This really isn't recommended at all. This is
- * not what Trajectories are meant for. A path follower is more suited for this scenario. This
- * sample primarily serves as a demo showcasing Road Runner's capabilities.
- * <p>
- * This bot starts in driver controlled mode by default. The player is able to drive the bot around
- * like any teleop opmode. However, if one of the select buttons are pressed, the bot will switch
- * to automatic control and run to specified location on its own.
- * <p>
- * If A is pressed, the bot will generate a splineTo() trajectory on the fly and follow it to
- * targetA (x: 45, y: 45, heading: 90deg).
- * <p>
- * If B is pressed, the bot will generate a lineTo() trajectory on the fly and follow it to
- * targetB (x: -15, y: 25, heading: whatever the heading is when you press B).
- * <p>
- * If Y is pressed, the bot will turn to face 45 degrees, no matter its position on the field.
- * <p>
- * Pressing X will cancel trajectory following and switch control to the driver. The bot will also
- * cede control to the driver once trajectory following is done.
- * <p>
- * The following may be a little off with this method as the trajectory follower and turn
- * function assume the bot starts at rest.
- * <p>
- * This sample utilizes the SampleMecanumDriveCancelable.java class.
- */
 
 @TeleOp(group = "advanced")
 public class TeleOpAugmentedDriving extends LinearOpMode {
@@ -73,53 +47,63 @@ public class TeleOpAugmentedDriving extends LinearOpMode {
 
     private VoltageSensor batteryVoltageSensor;
 
-    private DcMotorEx frontShoot, backShoot;
+    //private DcMotorEx frontShoot, backShoot;
     private Servo wobbleClawServo, wobbleArmServo;
     private Servo /*liftServo,*/ shootFlicker;
     //private DcMotor intake1, intake2;
 
-    public static PIDFCoefficients MOTOR_VELO_PID = new PIDFCoefficients(35, 0, 0, 15.7);
-    public static PIDFCoefficients MOTOR_VELO_PID_2 = new PIDFCoefficients(35, 0, 0, 15.7);
+    public static PIDFCoefficients MOTOR_VELO_PID = new PIDFCoefficients(45, 0, 0, 25);
+    public static PIDFCoefficients MOTOR_VELO_PID_2 = new PIDFCoefficients(45, 0, 0, 25); // fix this
 
-    private double lastKp = 0.0;
-    private double lastKi = 0.0;
-    private double lastKd = 0.0;
-    private double lastKf = getMotorVelocityF();
+    public static double lastKf = 16.7;
+    public static double lastKf_2 = 16.7; // fix this
 
-    private double lastKp_2 = 0.0;
-    private double lastKi_2 = 0.0;
-    private double lastKd_2 = 0.0;
-    private double lastKf_2 = getMotorVelocityF();
+    double lastVoltage = 0;
 
     @Override
     public void runOpMode() throws InterruptedException {
         batteryVoltageSensor = hardwareMap.voltageSensor.iterator().next();
 
-        frontShoot = hardwareMap.get(DcMotorEx.class, "frontShoot");
-
-        frontShoot.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        frontShoot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        DcMotorEx frontShoot = hardwareMap.get(DcMotorEx.class, "frontShoot");
         frontShoot.setDirection(DcMotorSimple.Direction.REVERSE);
         frontShoot.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 
-        backShoot = hardwareMap.get(DcMotorEx.class, "backShoot");
+        MotorConfigurationType motorConfigurationType = frontShoot.getMotorType().clone();
+        motorConfigurationType.setAchieveableMaxRPMFraction(1.0);
+        frontShoot.setMotorType(motorConfigurationType);
 
-        backShoot.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        backShoot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        DcMotorEx backShoot = hardwareMap.get(DcMotorEx.class, "backShoot");
         backShoot.setDirection(DcMotorSimple.Direction.REVERSE);
         backShoot.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 
-        frontShoot.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(
+        MotorConfigurationType motorConfigurationType2 = backShoot.getMotorType().clone();
+        motorConfigurationType2.setAchieveableMaxRPMFraction(1.0);
+        backShoot.setMotorType(motorConfigurationType2);
+
+        if (RUN_USING_ENCODER)
+            frontShoot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        else
+            frontShoot.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        if (RUN_USING_ENCODER)
+            backShoot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        else
+            backShoot.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+        shootFlicker = hardwareMap.get(Servo.class, "shootFlicker");
+
+        batteryVoltageSensor = hardwareMap.voltageSensor.iterator().next();
+
+        /*frontShoot.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(
                 MOTOR_VELO_PID.p, MOTOR_VELO_PID.i, MOTOR_VELO_PID.d,
                 MOTOR_VELO_PID.f * 12 / hardwareMap.voltageSensor.iterator().next().getVoltage()
-        ));
-        //setPIDFCoefficients(frontShoot, MOTOR_VELO_PID);
+        ));*/
+        setPIDFCoefficients(frontShoot, MOTOR_VELO_PID);
 
-        backShoot.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(
+        /*backShoot.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(
                 MOTOR_VELO_PID_2.p, MOTOR_VELO_PID_2.i, MOTOR_VELO_PID_2.d,
                 MOTOR_VELO_PID_2.f * 12 / hardwareMap.voltageSensor.iterator().next().getVoltage()
-        ));
-        //setPIDFCoefficients(backShoot, MOTOR_VELO_PID_2);
+        ));*/
+        setPIDFCoefficients2(backShoot, MOTOR_VELO_PID_2);
 
         for (LynxModule module : hardwareMap.getAll(LynxModule.class)) {
             module.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
@@ -140,14 +124,6 @@ public class TeleOpAugmentedDriving extends LinearOpMode {
 
         //intake1.setDirection(DcMotorSimple.Direction.REVERSE);
         //intake2.setDirection(DcMotorSimple.Direction.REVERSE);
-
-        MotorConfigurationType motorConfigurationType = frontShoot.getMotorType().clone();
-        motorConfigurationType.setAchieveableMaxRPMFraction(1.0);
-        frontShoot.setMotorType(motorConfigurationType);
-
-        MotorConfigurationType motorConfigurationType2 = backShoot.getMotorType().clone();
-        motorConfigurationType2.setAchieveableMaxRPMFraction(1.0);
-        backShoot.setMotorType(motorConfigurationType2);
 
         SampleMecanumDriveCancelable drive = new SampleMecanumDriveCancelable(hardwareMap);
 
@@ -207,7 +183,7 @@ public class TeleOpAugmentedDriving extends LinearOpMode {
                                 intake2.setPower(0);
                                 liftServo.setPosition(.17);*/
 
-                                runShooterMotors(2700); //need to test shooter power stuff
+                                //runShooterMotors(2700); //need to test shooter power stuff
                             })
                             .build(); //need to fix the coordinates
 
@@ -225,7 +201,7 @@ public class TeleOpAugmentedDriving extends LinearOpMode {
                                 intake2.setPower(0);
                                 liftServo.setPosition(.17);*/
 
-                                runShooterMotors(2800); //need to test shooter power stuff
+                                // runShooterMotors(2800); //need to test shooter power stuff
                             })
                             .build(); //need to fix the coordinates
 
@@ -266,22 +242,20 @@ public class TeleOpAugmentedDriving extends LinearOpMode {
                     throw new InternalError(errMsg);
             }
 
-            if (lastKp_2 != MOTOR_VELO_PID_2.p || lastKi_2 != MOTOR_VELO_PID_2.i || lastKd_2 != MOTOR_VELO_PID_2.d || lastKf_2 != MOTOR_VELO_PID_2.f) {
-                setPIDFCoefficients(backShoot, MOTOR_VELO_PID_2);
-
-                lastKp_2 = MOTOR_VELO_PID_2.p;
-                lastKi_2 = MOTOR_VELO_PID_2.i;
-                lastKd_2 = MOTOR_VELO_PID_2.d;
+            if (lastKf_2 != MOTOR_VELO_PID_2.f) {
+                MOTOR_VELO_PID_2.f = lastKf_2 * 12 / batteryVoltageSensor.getVoltage();
                 lastKf_2 = MOTOR_VELO_PID_2.f;
             }
-            if (lastKp != MOTOR_VELO_PID.p || lastKi != MOTOR_VELO_PID.i || lastKd != MOTOR_VELO_PID.d || lastKf != MOTOR_VELO_PID.f) {
-                setPIDFCoefficients(frontShoot, MOTOR_VELO_PID);
 
-                lastKp = MOTOR_VELO_PID.p;
-                lastKi = MOTOR_VELO_PID.i;
-                lastKd = MOTOR_VELO_PID.d;
+            if (lastKf != MOTOR_VELO_PID.f) {
+                MOTOR_VELO_PID.f = lastKf * 12 / batteryVoltageSensor.getVoltage();
                 lastKf = MOTOR_VELO_PID.f;
             }
+
+            setPIDFCoefficients2(backShoot, MOTOR_VELO_PID_2);
+            setPIDFCoefficients(frontShoot, MOTOR_VELO_PID);
+
+            lastVoltage = batteryVoltageSensor.getVoltage();
 
             if (gamepad1.x) currentMode = Mode.INTAKING;
             if (gamepad1.y) currentMode = Mode.TELEOP_SHOOTING;
@@ -342,7 +316,22 @@ public class TeleOpAugmentedDriving extends LinearOpMode {
         }
     }
 
-    public void setPIDFCoefficients(DcMotorEx motor, PIDFCoefficients coefficients) {
+    private void setPIDFCoefficients(DcMotorEx motor, PIDFCoefficients coefficients) {
+        if(!RUN_USING_ENCODER) {
+            Log.i("config", "skipping RUE");
+            return;
+        }
+
+        if (!DEFAULT_GAINS) {
+            Log.i("config", "setting custom gains");
+            motor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(
+                    coefficients.p, coefficients.i, coefficients.d, coefficients.f * 12 / batteryVoltageSensor.getVoltage()
+            ));
+        } else {
+            Log.i("config", "setting default gains");
+        }
+    }
+    private void setPIDFCoefficients2(DcMotorEx motor, PIDFCoefficients coefficients) {
         if(!RUN_USING_ENCODER) {
             Log.i("config", "skipping RUE");
             return;
@@ -358,17 +347,8 @@ public class TeleOpAugmentedDriving extends LinearOpMode {
         }
     }
 
-    public void runShooterMotors(double targetVelocity) {
-        setVelocity(frontShoot, targetVelocity);
-        setVelocity(backShoot, targetVelocity);
-    }
-
     public static double rpmToTicksPerSecond(double rpm) {
         return rpm * MOTOR_TICKS_PER_REV / MOTOR_GEAR_RATIO / 60;
-    }
-
-    public static double getMotorVelocityF() {
-        return 32767 * 60.0 / (MOTOR_MAX_RPM * MOTOR_TICKS_PER_REV);
     }
 }
 
