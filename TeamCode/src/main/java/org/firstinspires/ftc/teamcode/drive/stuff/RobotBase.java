@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.drive.stuff;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -17,6 +18,7 @@ import org.firstinspires.ftc.teamcode.drive.advanced.SampleMecanumDriveCancelabl
 import java.util.List;
 
 @SuppressWarnings("unused")
+@Disabled
 public class RobotBase {
     /*
     TODO:
@@ -91,7 +93,7 @@ public class RobotBase {
     DcMotor motor5;
     RobotBase robit = new RobotBase(motor0, motor1, motor2, motor3, motor4);
     public RobotBase(DcMotor... motors) {
-        
+
     }
 
     RobotBase robot = new RobotBase(frontLeft, backRight, null, null, null, null);

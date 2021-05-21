@@ -33,8 +33,8 @@ public class  PIDFTrial extends LinearOpMode {
     public static PIDFCoefficients MOTOR_VELO_PID = new PIDFCoefficients(45, 0, 0, 25);
     public static PIDFCoefficients MOTOR_VELO_PID_2 = new PIDFCoefficients(45, 0, 0, 25); // fix this
 
-    public static double lastKf = 20.9;
-    public static double lastKf_2 = 20.9; // fix this
+    public static double lastKf = 16.7;
+    public static double lastKf_2 = 16.7; // fix this
 
     double lastVoltage = 0;
 
@@ -45,7 +45,7 @@ public class  PIDFTrial extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
         DcMotorEx frontShoot = hardwareMap.get(DcMotorEx.class, "frontShoot");
-        frontShoot.setDirection(DcMotorSimple.Direction.REVERSE);
+        //frontShoot.setDirection(DcMotorSimple.Direction.REVERSE);
         frontShoot.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 
         MotorConfigurationType motorConfigurationType = frontShoot.getMotorType().clone();
@@ -53,7 +53,7 @@ public class  PIDFTrial extends LinearOpMode {
         frontShoot.setMotorType(motorConfigurationType);
 
         DcMotorEx backShoot = hardwareMap.get(DcMotorEx.class, "backShoot");
-        backShoot.setDirection(DcMotorSimple.Direction.REVERSE);
+        //backShoot.setDirection(DcMotorSimple.Direction.REVERSE);
         backShoot.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 
         MotorConfigurationType motorConfigurationType2 = backShoot.getMotorType().clone();

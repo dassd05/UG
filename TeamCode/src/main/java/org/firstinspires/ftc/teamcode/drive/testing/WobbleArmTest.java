@@ -59,4 +59,22 @@ public class WobbleArmTest extends LinearOpMode {
             }
         }
     }
+    public void moveWobbleArm (double targetPosition, long wait) {
+        double movement;
+
+        while (wobbleArmServo.getPosition() !=  targetPosition) {
+            double currentPosition = wobbleArmServo.getPosition();
+            double difference = currentPosition - targetPosition;
+            if (difference > 0) {
+                movement = -.01;
+            } else if (difference < 0) {
+                movement = .01;
+            } else {
+                movement = 0; //shouldn't happen
+            }
+            wobbleArmServo.setPosition(currentPosition + movement);
+            wobbleArmServo/*2*/.setPosition(currentPosition + movement);
+            sleep(wait);
+        }
+    }
 }
