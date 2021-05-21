@@ -33,6 +33,7 @@ public class HardwareTest extends LinearOpMode {
     private CRServo servo1;
 
     private LynxServoController servoController;
+    private LynxServoController servoController1;
     private ServoConfigurationType servoConfigType0;
     private ServoConfigurationType servoConfigType1;
     private PwmControl.PwmRange pwmRange0;
@@ -40,7 +41,7 @@ public class HardwareTest extends LinearOpMode {
     private double[] pwmRangeVals0;
     private double[] pwmRangeVals1;
 
-    public static double motorPowers = 0.0;
+//    public static double motorPowers = 0.0;
 
     public static ServoFlavor servoFlavor0 = ServoFlavor.STANDARD;
     public static ServoFlavor servoFlavor1 = ServoFlavor.CONTINUOUS;
@@ -51,23 +52,36 @@ public class HardwareTest extends LinearOpMode {
 
     public static int delay = 100;
 
+    public static int conSerPort = -1;
+    public static int expSerPort = -1;
+
+    public static double conSerPow = -1;
+    public static double expSerPow = -1;
+
     @Override
     public void runOpMode() throws InterruptedException {
+        servo0 = hardwareMap.get(Servo.class, "ser");
+        servo2 = hardwareMap.get(Servo.class, "serC");
+
 //        motor2 = hardwareMap.get(DcMotor.class, "motor2");
 //        motor3 = hardwareMap.get(DcMotor.class, "motor3");
 
-        servo0 = hardwareMap.get(Servo.class, "servo0");
+//        servo0 = hardwareMap.get(Servo.class, "servo0");
 //        servo1 = hardwareMap.get(CRServo.class, "servo1");
 //        servoConfigType0 = ServoConfigurationType.getStandardServoType();
 //        servoConfigType1 = ServoConfigurationType.getStandardServoType();
 //
-//        servoController = (LynxServoController) servo0.getController();
+        servoController = (LynxServoController) servo0.getController();
+        servoController1 = (LynxServoController) servo2.getController();
 //
 //        pwmRange0 = servoController.getServoPwmRange(0);
 //        pwmRange1 = servoController.getServoPwmRange(1);
 //
 //        pwmRangeVals0 = new double[]{pwmRange0.usPulseLower, pwmRange0.usPulseUpper, pwmRange0.usFrame};
 //        pwmRangeVals1 = new double[]{pwmRange1.usPulseLower, pwmRange1.usPulseUpper, pwmRange1.usFrame};
+
+//        motor0 = hardwareMap.get(DcMotor.class, "motor0");
+//        motor1 = hardwareMap.get(DcMotor.class, "motor1");
 
         dashboard = FtcDashboard.getInstance();
 
@@ -102,14 +116,43 @@ public class HardwareTest extends LinearOpMode {
 //            telemetry_addData("pwmRangeVals0", pwmRangeVals0);
 //            telemetry_addData("pwmRangeVals1", pwmRangeVals1);
 
-            servo0.setPosition(pos);
+//            servo0.setPosition(pos);
+//
+//            pos += goUp ? 0.01 : -0.01;
+//            if (pos >= 0.9) goUp = false;
+//            else if (pos <= 0.1) goUp = true;
+//            sleep(delay);
+//
+//            telemetry_addData("pos", pos);
+//            telemetry_update();
 
-            pos += goUp ? 0.01 : -0.01;
-            if (pos >= 0.9) goUp = false;
-            else if (pos <= 0.1) goUp = true;
-            sleep(delay);
+//            motor0.setPower(-motorPowers);
+//            motor1.setPower(motorPowers);
 
-            telemetry_addData("pos", pos);
+            if (conSerPort >= 0 && conSerPort < 6) {
+                try {
+                    if (conSerPow < 0 || conSerPow > 1) {
+                        servoController1.setServoPosition(conSerPort, servoController1.getServoPosition(conSerPort));
+                    } else {
+                        servoController1.setServoPosition(conSerPort, conSerPow);
+                    }
+                } catch(Exception e) {
+                    telemetry_addData("Control Hub Servo Err", e.getMessage());
+                    telemetry_addData("Control Hub Servo Errr", e.getStackTrace());
+                }
+            }
+            if (expSerPort >= 0 && expSerPort < 6) {
+                try {
+                    if (expSerPow < 0 || expSerPow > 1) {
+                        servoController.setServoPosition(expSerPort, servoController.getServoPosition(expSerPort));
+                    } else {
+                        servoController.setServoPosition(expSerPort, expSerPow);
+                    }
+                } catch(Exception e) {
+                    telemetry_addData("Expansion Hub Servo Err", e.getMessage());
+                    telemetry_addData("Expansion Hub Servo Errr", e.getStackTrace());
+                }
+            }
             telemetry_update();
         }
     }

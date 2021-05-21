@@ -21,6 +21,8 @@ public class ThreadsTest extends LinearOpMode {
 
     public static boolean withThreads = true;
 
+    public static int addShot = 0;
+
     @Override
     public void runOpMode() throws InterruptedException {
         servo0 = hardwareMap.get(Servo.class, "servo0");
@@ -36,52 +38,64 @@ public class ThreadsTest extends LinearOpMode {
 
         waitForStart();
 
-        double pos = servo0.getPosition() < 0.1 ? 1 : 0;
-        Thread t1 = new Thread(() -> {
-            multiTelemetry("start_time0", System.currentTimeMillis() - time);
-            servo0.setPosition(pos);
-            multiTelemetry("end_time0", System.currentTimeMillis() - time);
-            telemetry.update();
-        });
-        Thread t2 = new Thread(() -> {
-            multiTelemetry("start_time1", System.currentTimeMillis() - time);
-            servo1.setPosition(pos);
-            multiTelemetry("end_time1", System.currentTimeMillis() - time);
-            telemetry.update();
-        });
-        Thread t3 = new Thread(() -> {
-            multiTelemetry("start_time2", System.currentTimeMillis() - time);
-            servo2.setPosition(pos);
-            multiTelemetry("end_time2", System.currentTimeMillis() - time);
-            telemetry.update();
-        });
+//        double pos = servo0.getPosition() < 0.1 ? 1 : 0;
+//        Thread t1 = new Thread(() -> {
+//            multiTelemetry("start_time0", System.currentTimeMillis() - time);
+//            servo0.setPosition(pos);
+//            multiTelemetry("end_time0", System.currentTimeMillis() - time);
+//            telemetry.update();
+//        });
+//        Thread t2 = new Thread(() -> {
+//            multiTelemetry("start_time1", System.currentTimeMillis() - time);
+//            servo1.setPosition(pos);
+//            multiTelemetry("end_time1", System.currentTimeMillis() - time);
+//            telemetry.update();
+//        });
+//        Thread t3 = new Thread(() -> {
+//            multiTelemetry("start_time2", System.currentTimeMillis() - time);
+//            servo2.setPosition(pos);
+//            multiTelemetry("end_time2", System.currentTimeMillis() - time);
+//            telemetry.update();
+//        });
+//
+//        if (opModeIsActive()) {
+//            time = System.currentTimeMillis();
+//
+//            multiTelemetry("start_time", System.currentTimeMillis() - time);
+//            if (withThreads) {
+//                t1.start();
+//                t2.start();
+//                t3.start();
+//                while (t1.isAlive() || t2.isAlive() || t2.isAlive()) {
+//                    //sleep(1);
+//                }
+//            } else {
+//                multiTelemetry("start_time0", System.currentTimeMillis() - time);
+//                servo0.setPosition(pos);
+//                multiTelemetry("end_time0", System.currentTimeMillis() - time);
+//                multiTelemetry("start_time1", System.currentTimeMillis() - time);
+//                servo1.setPosition(pos);
+//                multiTelemetry("end_time1", System.currentTimeMillis() - time);
+//                multiTelemetry("start_time2", System.currentTimeMillis() - time);
+//                servo2.setPosition(pos);
+//                multiTelemetry("end_time2", System.currentTimeMillis() - time);
+//            }
+//            multiTelemetry("end_time", System.currentTimeMillis() - time);
+//            telemetry.update();
+//            dashTelemetry.update();
+//            sleep(2500);
+//        }
 
-        if (opModeIsActive()) {
-            time = System.currentTimeMillis();
-
-            multiTelemetry("start_time", System.currentTimeMillis() - time);
-            if (withThreads) {
-                t1.start();
-                t2.start();
-                t3.start();
-                while (t1.isAlive() || t2.isAlive() || t2.isAlive()) {
-                    //sleep(1);
-                }
-            } else {
-                multiTelemetry("start_time0", System.currentTimeMillis() - time);
-                servo0.setPosition(pos);
-                multiTelemetry("end_time0", System.currentTimeMillis() - time);
-                multiTelemetry("start_time1", System.currentTimeMillis() - time);
-                servo1.setPosition(pos);
-                multiTelemetry("end_time1", System.currentTimeMillis() - time);
-                multiTelemetry("start_time2", System.currentTimeMillis() - time);
-                servo2.setPosition(pos);
-                multiTelemetry("end_time2", System.currentTimeMillis() - time);
+        while (opModeIsActive()) {
+            if (addShot != 0) {
+                addShot = 0;
+                queueShot();
             }
-            multiTelemetry("end_time", System.currentTimeMillis() - time);
+
+            multiTelemetry("shotsQueued", shotsQueued);
             telemetry.update();
             dashTelemetry.update();
-            sleep(2500);
+            update();
         }
     }
 

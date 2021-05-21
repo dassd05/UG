@@ -3,7 +3,7 @@ package org.firstinspires.ftc.teamcode.drive.testing;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
-import org.firstinspires.ftc.teamcode.drive.advanced.Camera;
+import org.firstinspires.ftc.teamcode.drive.stuff.Camera;
 
 @TeleOp(group = "testing")
 public class CameraTest extends LinearOpMode {

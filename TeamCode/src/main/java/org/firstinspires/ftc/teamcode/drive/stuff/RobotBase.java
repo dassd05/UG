@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.drive.advanced;
+package org.firstinspires.ftc.teamcode.drive.stuff;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.hardware.CRServo;
@@ -12,8 +12,11 @@ import com.qualcomm.robotcore.hardware.VoltageSensor;
 
 import androidx.annotation.*;
 
+import org.firstinspires.ftc.teamcode.drive.advanced.SampleMecanumDriveCancelable;
+
 import java.util.List;
 
+@SuppressWarnings("unused")
 public class RobotBase {
     /*
     TODO:
@@ -80,6 +83,17 @@ public class RobotBase {
 
     }
 
+    DcMotor motor0;
+    DcMotor motor1;
+    DcMotor motor2;
+    DcMotor motor3;
+    DcMotor motor4;
+    DcMotor motor5;
+    RobotBase robit = new RobotBase(motor0, motor1, motor2, motor3, motor4);
+    public RobotBase(DcMotor... motors) {
+        
+    }
+
     RobotBase robot = new RobotBase(frontLeft, backRight, null, null, null, null);
 
     public void grabWobbleGoal() {
@@ -133,7 +147,7 @@ public class RobotBase {
 
     // DK abt this
     // maybe change float to double
-    // idk abt other runtopoint algo
+    // idk abt other runtopoint algorithm
     public void runToPoint(float x, float y) {
 
     }
