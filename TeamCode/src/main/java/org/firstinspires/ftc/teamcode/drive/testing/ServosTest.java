@@ -5,77 +5,54 @@ import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.util.Range;
 
 @Config
 @TeleOp(group = "testing")
 public class ServosTest extends LinearOpMode {
 
-    Servo /*liftServo,*/ wobbleClawServo, wobbleArmServo, shootFlicker;
+    Servo shooterStopper, wobbleClawServo1, wobbleClawServo2, shootFlicker, flap, turret, droptakeStopper, wobbleArm;
 
-    //public static double liftServoVal = 0; // 0.08 (up) - 0.58 (down)
-    public static double wobbleClawVal = -1; // 0.5 (open) - 0.9 (closed) - 1 (auton start)
-    public static double wobbleArmVal = -1; // 0.03 (down) - 0.35 (drop-off) - 0.5 (up) - 1.0 (auton start)
-    public static double shootFlickerVal = -1; // 0.10 (shot) - 0.45 (back)
+    public static double droptakeStopperVal = -1;
+    public static double wobbleArmVal = -1;
+    public static double wobbleClaw1Val = -1;
+    public static double wobbleClaw2Val = -1;
+    public static double shootFlickerVal = -1;
+    public static double shooterStopperVal = -1;
+    public static double flapVal = -1;
+    public static double turretVal = -1;
 
     public FtcDashboard dashboard;
 
 
     @Override
     public void runOpMode() throws InterruptedException {
-        //liftServo = hardwareMap.get(Servo.class, "liftServo");
-        wobbleClawServo = hardwareMap.get(Servo.class, "wobbleClawServo");
-        wobbleArmServo = hardwareMap.get(Servo.class, "wobbleArmServo");
+
+        turret = hardwareMap.get(Servo.class, "turret");
+        flap = hardwareMap.get(Servo.class, "flap");
+        wobbleClawServo1 = hardwareMap.get(Servo.class, "wobbleClawServo1");
+        wobbleClawServo2 = hardwareMap.get(Servo.class, "wobbleClawServo2");
         shootFlicker = hardwareMap.get(Servo.class, "shootFlicker");
-        Servo[] servos = {/*liftServo,*/ wobbleClawServo, /*wobbleArmServo,*/ shootFlicker};
+        droptakeStopper = hardwareMap.get(Servo.class, "droptakeStopper");
+        wobbleArm = hardwareMap.get(Servo.class, "wobbleArm");
+        shooterStopper = hardwareMap.get(Servo.class, "shooterStopper");
+
+        Servo[] servos = {shooterStopper, wobbleClawServo1, wobbleClawServo2, shootFlicker, flap, turret, droptakeStopper, wobbleArm};
 
         dashboard = FtcDashboard.getInstance();
-
 
         waitForStart();
 
         while (opModeIsActive()) {
-            //if (liftServoVal != -1) liftServo.setPosition(liftServoVal);
-            if (wobbleClawVal != -1) wobbleClawServo.setPosition(wobbleClawVal); //.7 is open, .15 is closed
-            if (wobbleArmVal != -1) wobbleArmServo.setPosition(wobbleArmVal);
-            if (shootFlickerVal != -1) shootFlicker.setPosition(shootFlickerVal); //.1 is not shooting position .4 feeds into shooter
-            //wobble arm 1 start of auton, .44 down, .8 deploying
-            telemetry.addData("position", wobbleClawServo.getPosition());
+            if (flapVal != -1) flap.setPosition(flapVal);
+            if (wobbleClaw1Val != -1) wobbleClawServo1.setPosition(wobbleClaw1Val);
+            if (wobbleClaw2Val != -1) wobbleClawServo2.setPosition(wobbleClaw2Val);
+            if (shootFlickerVal != -1) shootFlicker.setPosition(shootFlickerVal);
+            if (turretVal != -1) turret.setPosition(turretVal);
+            if (shooterStopperVal != -1) shooterStopper.setPosition(shooterStopperVal);
+            if (droptakeStopperVal != -1) droptakeStopper.setPosition(droptakeStopperVal);
+            if (wobbleArmVal != -1) wobbleArm.setPosition(wobbleArmVal);
+
             telemetry.update();
         }
-        /*telemetry.addLine(
-                //String.valueOf(telemetry.addData("position", shootFlicker.getPosition()))
-                String.valueOf(telemetry.addData("position", wobbleClawServo.getPosition()))
-                );*/
-
-
-        int s = -1;
-        boolean aPressed = false;
-        boolean stickMoved = false;
-
-//        while (opModeIsActive()) {
-//
-//            if (gamepad1.a) aPressed = true;
-//            else if (aPressed) {
-//                s ++;
-//                aPressed = false;
-//                stickMoved = false;
-//                while (gamepad1.right_stick_y != 0) { sleep(100); }
-//            }
-//            if (s >= 4) s -= 4;
-//            if (gamepad1.right_stick_y > 0.015) stickMoved = true;
-//
-//            if (s >= 0 & s < 4 && stickMoved) servos[s].setPosition(Range.clip(gamepad1.right_stick_y, 0, 1));
-//            for (Servo servo : servos) {
-//                servo.setPosition(servo.getPosition());
-//            }
-//
-//            telemetry.addData("s", s);
-//            telemetry.addData("liftServo", liftServo.getPosition());
-//            telemetry.addData("wobbleClawServo", wobbleClawServo.getPosition());
-//            telemetry.addData("wobbleArmServo", wobbleArmServo.getPosition());
-//            telemetry.addData("shootFlicker", shootFlicker.getPosition());
-//            telemetry.update();
-//        }
     }
 }
