@@ -80,7 +80,7 @@ public class AutonRingDetecting extends LinearOpMode {
 //    private DcMotorEx frontShoot, backShoot;
 
     @Override
-    public void runOpMode() {
+    public void runOpMode() throws InterruptedException{
 
 //        frontShoot = hardwareMap.get(DcMotorEx.class, "frontShoot");
 //        backShoot = hardwareMap.get(DcMotorEx.class, "backShoot");
