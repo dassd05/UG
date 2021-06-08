@@ -1,12 +1,10 @@
-package org.firstinspires.ftc.teamcode.drive.auton;
+package org.firstinspires.ftc.teamcode.drive.auton.Red1;
 
 import android.util.Log;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.acmerobotics.roadrunner.geometry.Pose2d;
-import com.acmerobotics.roadrunner.geometry.Vector2d;
-import com.acmerobotics.roadrunner.trajectory.Trajectory;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -17,10 +15,8 @@ import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.qualcomm.robotcore.hardware.configuration.typecontainers.MotorConfigurationType;
-import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
-import org.firstinspires.ftc.teamcode.drive.advanced.PoseStorage;
 import org.firstinspires.ftc.teamcode.drive.advanced.SampleMecanumDriveCancelable;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
@@ -34,10 +30,12 @@ import org.openftc.easyopencv.OpenCvCameraRotation;
 import org.openftc.easyopencv.OpenCvPipeline;
 import org.openftc.easyopencv.OpenCvWebcam;
 
-import static org.firstinspires.ftc.teamcode.drive.auton.AutonRingDetecting.RingDetecting.pipeline;
+import static org.firstinspires.ftc.teamcode.drive.auton.Red1.AutonRingDetectingRed1.RingDetecting.pipeline;
 
-@Autonomous(name = "AutonRingDetecting", group = "sensor")
-public class AutonRingDetecting extends LinearOpMode {
+@Autonomous(name = "AutonRingDetecting", group = "R1")
+public class AutonRingDetectingRed1 extends LinearOpMode {
+
+    FourRingRed1 FourR1 = new FourRingRed1();
 
     protected WebcamName webcamName;
     protected OpenCvWebcam webcam;
@@ -62,28 +60,28 @@ public class AutonRingDetecting extends LinearOpMode {
 
     private VoltageSensor batteryVoltageSensor;
 
-//    //private DcMotorEx frontShoot, backShoot;   not needed now
-//    private Servo wobbleClawServo, wobbleArmServo1, wobbleArmServo2;
-//    private Servo stopper, flicker, turret, flap;
-//    private Servo dropServo;
-//    private DcMotor intake, bottomRoller;
-//
-//    public static PIDFCoefficients MOTOR_VELO_PID = new PIDFCoefficients(45, 0, 0, 25);
-//    public static PIDFCoefficients MOTOR_VELO_PID_2 = new PIDFCoefficients(45, 0, 0, 25); // fix this
-//
-//    public static double lastKf = 16.7;
-//    public static double lastKf_2 = 16.7; // fix this
-//
-//    double lastVoltage = 0;
-//
-//    ElapsedTime PIDTimer = new ElapsedTime(ElapsedTime.Resolution.MILLISECONDS);
-//    private DcMotorEx frontShoot, backShoot;
+    private Servo shooterStopper, wobbleArm1, wobbleArm2, shootFlicker, flap, turret, droptakeStopper, wobbleClaw;
 
+    private DcMotor intake, bottomRoller;
+
+
+    /********************************************************************************************
+     *
+     */
+
+    public static PIDFCoefficients MOTOR_VELO_PID = new PIDFCoefficients(45, 0, 0, 25);
+    public static PIDFCoefficients MOTOR_VELO_PID_2 = new PIDFCoefficients(45, 0, 0, 25); // fix this
+
+    public static double lastKf = 16.7;
+    public static double lastKf_2 = 16.7; // fix this
+
+    /********************************************************************************************
+     *
+     */
+
+    double lastVoltage = 0;
     @Override
     public void runOpMode() throws InterruptedException{
-
-//        frontShoot = hardwareMap.get(DcMotorEx.class, "frontShoot");
-//        backShoot = hardwareMap.get(DcMotorEx.class, "backShoot");
 
         int cameraMonitorViewId = hardwareMap.appContext.getResources().
                 getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
@@ -97,77 +95,89 @@ public class AutonRingDetecting extends LinearOpMode {
                 webcam.startStreaming(960, 720, OpenCvCameraRotation.UPRIGHT);
             }
         });
+
         batteryVoltageSensor = hardwareMap.voltageSensor.iterator().next();
 
-//        DcMotorEx frontShoot = hardwareMap.get(DcMotorEx.class, "frontShoot");
-//        frontShoot.setDirection(DcMotorSimple.Direction.REVERSE);
-//        frontShoot.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-//
-//        MotorConfigurationType motorConfigurationType = frontShoot.getMotorType().clone();
-//        motorConfigurationType.setAchieveableMaxRPMFraction(1.0);
-//        frontShoot.setMotorType(motorConfigurationType);
-//
-//        DcMotorEx backShoot = hardwareMap.get(DcMotorEx.class, "backShoot");
-//        backShoot.setDirection(DcMotorSimple.Direction.REVERSE);
-//        backShoot.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-//
-//        MotorConfigurationType motorConfigurationType2 = backShoot.getMotorType().clone();
-//        motorConfigurationType2.setAchieveableMaxRPMFraction(1.0);
-//        backShoot.setMotorType(motorConfigurationType2);
-//
-//        if (RUN_USING_ENCODER)
-//            frontShoot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-//        else
-//            frontShoot.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-//        if (RUN_USING_ENCODER)
-//            backShoot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-//        else
-//            backShoot.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-//
-//        batteryVoltageSensor = hardwareMap.voltageSensor.iterator().next();
-//
-//        setPIDFCoefficients(frontShoot, MOTOR_VELO_PID);
-//
-//        setPIDFCoefficients2(backShoot, MOTOR_VELO_PID_2);
-//
-//        for (LynxModule module : hardwareMap.getAll(LynxModule.class)) {
-//            module.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
-//        }
-//
-//        telemetry = new MultipleTelemetry(telemetry, dashboard.getTelemetry());
-//
-        telemetry.update();
-//        telemetry.clearAll();
-//
-//        //servos
-//        flap = hardwareMap.get(Servo.class, "flap");
-//        turret = hardwareMap.get(Servo.class, "turret");
-//        stopper = hardwareMap.servo.get("stopper");
-//        dropServo = hardwareMap.get(Servo.class, "dropServo");
-//        wobbleClawServo = hardwareMap.servo.get("wobbleClawServo");
-//        wobbleArmServo1 = hardwareMap.servo.get("wobbleArmServo1");
-//        wobbleArmServo2 = hardwareMap.servo.get("wobbleArmServo2");
-//        flicker = hardwareMap.get(Servo.class, "flicker");
-//
-//        //motors
-//        intake = hardwareMap.get(DcMotor.class, "intake");
-//        bottomRoller = hardwareMap.get(DcMotor.class, " bottomRoller");
-//
-//
-//        SampleMecanumDriveCancelable drive = new SampleMecanumDriveCancelable(hardwareMap);
-//
-//        Pose2d startPose = new Pose2d(-50, -2, Math.toRadians(0));
-//
-//        drive.setPoseEstimate(startPose);
 
-//        sleep(200);
-//        shootFlicker.setPosition(0.4);
-//        sleep(100);
-//        shootFlicker.setPosition(0.1);
-//
-//        wobbleArmServo.setPosition(1);
-//        sleep(5000);
-//        wobbleClawServo.setPosition(.07); // need to change
+        DcMotorEx shooter1 = hardwareMap.get(DcMotorEx.class, "shooter1");
+        shooter1.setDirection(DcMotorSimple.Direction.REVERSE);
+        shooter1.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+
+        MotorConfigurationType motorConfigurationType = shooter1.getMotorType().clone();
+        motorConfigurationType.setAchieveableMaxRPMFraction(1.0);
+        shooter1.setMotorType(motorConfigurationType);
+
+        DcMotorEx shooter2 = hardwareMap.get(DcMotorEx.class, "shooter2");
+        shooter2.setDirection(DcMotorSimple.Direction.REVERSE);
+        shooter2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+
+        MotorConfigurationType motorConfigurationType2 = shooter2.getMotorType().clone();
+        motorConfigurationType2.setAchieveableMaxRPMFraction(1.0);
+        shooter2.setMotorType(motorConfigurationType2);
+
+        if (RUN_USING_ENCODER)
+            shooter1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        else
+            shooter1.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        if (RUN_USING_ENCODER)
+            shooter2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        else
+            shooter2.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+        batteryVoltageSensor = hardwareMap.voltageSensor.iterator().next();
+
+        setPIDFCoefficients(shooter1, MOTOR_VELO_PID);
+
+        setPIDFCoefficients2(shooter1, MOTOR_VELO_PID_2);
+
+        for (LynxModule module : hardwareMap.getAll(LynxModule.class)) {
+            module.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
+        }
+
+        turret = hardwareMap.get(Servo.class, "turret");
+        flap = hardwareMap.get(Servo.class, "flap");
+        wobbleArm1 = hardwareMap.get(Servo.class, "wobbleArm1");
+        wobbleArm2 = hardwareMap.get(Servo.class, "wobbleArm2");
+        shootFlicker = hardwareMap.get(Servo.class, "shootFlicker");
+        droptakeStopper = hardwareMap.get(Servo.class, "droptakeStopper");
+        wobbleClaw = hardwareMap.get(Servo.class, "wobbleClaw");
+        shooterStopper = hardwareMap.get(Servo.class, "shooterStopper");
+
+        intake = hardwareMap.dcMotor.get("intake");
+        bottomRoller = hardwareMap.dcMotor.get("bottomRoller");
+
+        telemetry = new MultipleTelemetry(telemetry, dashboard.getTelemetry());
+
+        telemetry.update();
+        telemetry.clearAll();
+
+
+        SampleMecanumDriveCancelable drive = new SampleMecanumDriveCancelable(hardwareMap);
+
+        Pose2d startPose = new Pose2d(-50, -2, Math.toRadians(0));
+
+        drive.setPoseEstimate(startPose);
+/**
+ *
+ */
+
+        //wobbleClaw.setPosition();
+        wobbleArm1.setPosition(0);
+        wobbleArm2.setPosition(0);
+
+        turret.setPosition(.15);
+        flap.setPosition(.55);
+
+        droptakeStopper.setPosition(.25);
+        //shooterStopper.setPosition();
+
+        shootFlicker.setPosition(.35);
+        sleep(250);
+        shootFlicker.setPosition(.57);
+
+        sleep(10000);
+
+        //wobbleClaw.setPosition();
 
         while (!opModeIsActive()) {
             if (pipeline.position == null) {
@@ -218,6 +228,7 @@ public class AutonRingDetecting extends LinearOpMode {
 //                    case FourRings:
 //                        telemetry.addData("4 rings detected", "wobble position C");
 //                        //autonFourRings();
+                FourR1.runOpMode();
 //                        //runFinished = true;
 //                        Trajectory traj1_4 = drive.trajectoryBuilder(startPose)
 //                                //.splineToConstantHeading(new Vector2d(-45, -2), 0)
@@ -599,72 +610,81 @@ public class AutonRingDetecting extends LinearOpMode {
         }
 
 
-//    public void shoot() {
-//        shootFlicker.setPosition(0.4);
-//        sleep(100);
-//        shootFlicker.setPosition(0.1);
-//    }
-//    public void wobbleUp () {
-//        wobbleClawServo.setPosition(.07); // need to change position and time
-//        sleep(720);
-//        wobbleArmServo.setPosition(.8);
-//    }
-//    public void wobbleDown () {
-//        wobbleArmServo.setPosition(.44);
-//        wobbleClawServo.setPosition(.51); //need to change position and time
-//        sleep(1200);
+    public void shoot() {
+        shootFlicker.setPosition(0.35);
+        sleep(280);
+        shootFlicker.setPosition(0.57);
+    }
+    public void wobbleUp () {
+        //wobbleClaw.setPosition(.07); // need to change position and time
+        sleep(700);
+        wobbleArm1.setPosition(.2);
+        wobbleArm2.setPosition(.2);
+        sleep(500);
+    }
+    public void wobbleDown () {
+        wobbleArm1.setPosition(.54);
+        wobbleArm2.setPosition(.54);
+        sleep(500);
+        //wobbleClaw.setPosition(.07); // need to change position and time
+        sleep(350);
+    }
+
+    public void setVelocity(DcMotorEx motor, double power) {
+        if(RUN_USING_ENCODER) {
+            motor.setVelocity(rpmToTicksPerSecond(power));
+            Log.i("mode", "setting velocity");
+        }
+        else {
+            Log.i("mode", "setting power");
+            motor.setPower(power / MOTOR_MAX_RPM);
+        }
+    }
+
+//    public void runShooterMotors(double targetVelocity) {
+//        setVelocity(shooter1, targetVelocity);
+//        setVelocity(shooter1, targetVelocity);
 //    }
 
-//    public void setVelocity(DcMotorEx motor, double power) {
-//        if(RUN_USING_ENCODER) {
-//            motor.setVelocity(rpmToTicksPerSecond(power));
-//            Log.i("mode", "setting velocity");
-//        }
-//        else {
-//            Log.i("mode", "setting power");
-//            motor.setPower(power / MOTOR_MAX_RPM);
-//        }
-//    }
-//
-//    public void runShooterMotors(double targetVelocity) {
-//        setVelocity(frontShoot, targetVelocity);
-//        setVelocity(backShoot, targetVelocity);
-//    }
-//
-//    private void setPIDFCoefficients(DcMotorEx motor, PIDFCoefficients coefficients) {
-//        if(!RUN_USING_ENCODER) {
-//            Log.i("config", "skipping RUE");
-//            return;
-//        }
-//
-//        if (!DEFAULT_GAINS) {
-//            Log.i("config", "setting custom gains");
-//            motor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(
-//                    coefficients.p, coefficients.i, coefficients.d, coefficients.f * 12 / batteryVoltageSensor.getVoltage()
-//            ));
-//        } else {
-//            Log.i("config", "setting default gains");
-//        }
-//    }
-//    private void setPIDFCoefficients2(DcMotorEx motor, PIDFCoefficients coefficients) {
-//        if(!RUN_USING_ENCODER) {
-//            Log.i("config", "skipping RUE");
-//            return;
-//        }
-//
-//        if (!DEFAULT_GAINS) {
-//            Log.i("config", "setting custom gains");
-//            motor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(
-//                    coefficients.p, coefficients.i, coefficients.d, coefficients.f * 12 / batteryVoltageSensor.getVoltage()
-//            ));
-//        } else {
-//            Log.i("config", "setting default gains");
-//        }
-//    }
-//
-//    public static double rpmToTicksPerSecond(double rpm) {
-//        return rpm * MOTOR_TICKS_PER_REV / MOTOR_GEAR_RATIO / 60;
-//    }
+    private void setPIDFCoefficients(DcMotorEx motor, PIDFCoefficients coefficients) {
+        if(!RUN_USING_ENCODER) {
+            Log.i("config", "skipping RUE");
+            return;
+        }
+
+        if (!DEFAULT_GAINS) {
+            Log.i("config", "setting custom gains");
+            motor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(
+                    coefficients.p, coefficients.i, coefficients.d, coefficients.f * 12 / batteryVoltageSensor.getVoltage()
+            ));
+        } else {
+            Log.i("config", "setting default gains");
+        }
+    }
+    private void setPIDFCoefficients2(DcMotorEx motor, PIDFCoefficients coefficients) {
+        if(!RUN_USING_ENCODER) {
+            Log.i("config", "skipping RUE");
+            return;
+        }
+
+        if (!DEFAULT_GAINS) {
+            Log.i("config", "setting custom gains");
+            motor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(
+                    coefficients.p, coefficients.i, coefficients.d, coefficients.f * 12 / batteryVoltageSensor.getVoltage()
+            ));
+        } else {
+            Log.i("config", "setting default gains");
+        }
+    }
+
+    public static double rpmToTicksPerSecond(double rpm) {
+        return rpm * MOTOR_TICKS_PER_REV / MOTOR_GEAR_RATIO / 60;
+    }
+
+    /*************************************************************************************************
+     *************************************************************************************************
+     *************************************************************************************************
+     */
 
     public abstract static class RingDetecting extends LinearOpMode {
         protected WebcamName webcamName;
