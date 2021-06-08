@@ -44,7 +44,7 @@ public class  PIDFTrial extends LinearOpMode {
 
     @Override
     public void runOpMode() throws InterruptedException {
-        DcMotorEx frontShoot = hardwareMap.get(DcMotorEx.class, "frontShoot");
+        DcMotorEx frontShoot = hardwareMap.get(DcMotorEx.class, "shooter1");
         //frontShoot.setDirection(DcMotorSimple.Direction.REVERSE);
         frontShoot.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 
@@ -52,7 +52,7 @@ public class  PIDFTrial extends LinearOpMode {
         motorConfigurationType.setAchieveableMaxRPMFraction(1.0);
         frontShoot.setMotorType(motorConfigurationType);
 
-        DcMotorEx backShoot = hardwareMap.get(DcMotorEx.class, "backShoot");
+        DcMotorEx backShoot = hardwareMap.get(DcMotorEx.class, "shooter2");
         //backShoot.setDirection(DcMotorSimple.Direction.REVERSE);
         backShoot.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 
