@@ -57,8 +57,8 @@ public class ZeroRingRed1 extends LinearOpMode {
     public static PIDFCoefficients MOTOR_VELO_PID = new PIDFCoefficients(45, 0, 0, 25);
     public static PIDFCoefficients MOTOR_VELO_PID_2 = new PIDFCoefficients(45, 0, 0, 25); // fix this
 
-    public static double lastKf = 16.7;
-    public static double lastKf_2 = 16.7; // fix this
+    public static double lastKf = 17;
+    public static double lastKf_2 = 17; // fix this
 
     /********************************************************************************************
      *
@@ -70,36 +70,34 @@ public class ZeroRingRed1 extends LinearOpMode {
     public void runOpMode() throws InterruptedException {
         batteryVoltageSensor = hardwareMap.voltageSensor.iterator().next();
 
-        DcMotorEx shooter1 = hardwareMap.get(DcMotorEx.class, "shooter1");
-        shooter1.setDirection(DcMotorSimple.Direction.REVERSE);
-        shooter1.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        DcMotorEx frontShoot = hardwareMap.get(DcMotorEx.class, "shooter1");
+        frontShoot.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 
-        MotorConfigurationType motorConfigurationType = shooter1.getMotorType().clone();
+        MotorConfigurationType motorConfigurationType = frontShoot.getMotorType().clone();
         motorConfigurationType.setAchieveableMaxRPMFraction(1.0);
-        shooter1.setMotorType(motorConfigurationType);
+        frontShoot.setMotorType(motorConfigurationType);
 
-        DcMotorEx shooter2 = hardwareMap.get(DcMotorEx.class, "shooter2");
-        shooter2.setDirection(DcMotorSimple.Direction.REVERSE);
-        shooter2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        DcMotorEx backShoot = hardwareMap.get(DcMotorEx.class, "shooter2");
+        backShoot.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 
-        MotorConfigurationType motorConfigurationType2 = shooter2.getMotorType().clone();
+        MotorConfigurationType motorConfigurationType2 = backShoot.getMotorType().clone();
         motorConfigurationType2.setAchieveableMaxRPMFraction(1.0);
-        shooter2.setMotorType(motorConfigurationType2);
+        backShoot.setMotorType(motorConfigurationType2);
 
         if (RUN_USING_ENCODER)
-            shooter1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            frontShoot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         else
-            shooter1.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            frontShoot.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         if (RUN_USING_ENCODER)
-            shooter2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            backShoot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         else
-            shooter2.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            backShoot.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         batteryVoltageSensor = hardwareMap.voltageSensor.iterator().next();
 
-        setPIDFCoefficients(shooter1, MOTOR_VELO_PID);
+        setPIDFCoefficients(frontShoot, MOTOR_VELO_PID);
 
-        setPIDFCoefficients2(shooter1, MOTOR_VELO_PID_2);
+        setPIDFCoefficients2(backShoot, MOTOR_VELO_PID_2);
 
         for (LynxModule module : hardwareMap.getAll(LynxModule.class)) {
             module.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
@@ -137,10 +135,10 @@ public class ZeroRingRed1 extends LinearOpMode {
         wobbleArm2.setPosition(0);
 
         turret.setPosition(.15);
-        flap.setPosition(.55);
+        flap.setPosition(.41);
 
         droptakeStopper.setPosition(.25);
-        //shooterStopper.setPosition();
+        shooterStopper.setPosition(.9);
 
         shootFlicker.setPosition(.35);
         sleep(250);
@@ -165,8 +163,8 @@ public class ZeroRingRed1 extends LinearOpMode {
                 lastKf = MOTOR_VELO_PID.f;
             }
 
-            setPIDFCoefficients2(shooter1, MOTOR_VELO_PID_2);
-            setPIDFCoefficients(shooter1, MOTOR_VELO_PID);
+            setPIDFCoefficients2(backShoot, MOTOR_VELO_PID_2);
+            setPIDFCoefficients(frontShoot, MOTOR_VELO_PID);
 
             lastVoltage = batteryVoltageSensor.getVoltage();
 
@@ -177,6 +175,82 @@ public class ZeroRingRed1 extends LinearOpMode {
             telemetry.addData("x", poseEstimate.getX());
             telemetry.addData("y", poseEstimate.getY());
             telemetry.addData("heading", Math.toDegrees(poseEstimate.getHeading()));
+
+            Trajectory traj0_0 = drive.trajectoryBuilder(startPose)
+                    .addTemporalMarker(0, () -> {
+                        setVelocity(frontShoot, 2700);
+                        setVelocity2(backShoot, 2700);
+                    })
+                    .splineToConstantHeading(new Vector2d(-15, 10), 0)
+                    .addDisplacementMarker(() -> {
+                        shooterStopper.setPosition(.4);
+                    })
+                    .build();
+
+            Trajectory traj1_0 = drive.trajectoryBuilder(traj0_0.end())
+                    .addTemporalMarker(0, () -> {
+                        frontShoot.setVelocity(0);
+                        backShoot.setVelocity(0);
+                                })
+                    .lineToLinearHeading(new Pose2d(45, -40, Math.toRadians(0)))
+                    .build();
+
+            Trajectory traj2_0 = drive.trajectoryBuilder(traj1_0.end())
+                    .lineToLinearHeading(new Pose2d(55, -40, Math.toRadians(0)))
+                    .build();
+
+            Trajectory traj3_0 = drive.trajectoryBuilder(traj2_0.end())
+                    .splineTo(new Vector2d(50, 20), Math.toRadians(0))
+                    .build();
+
+            Trajectory traj4_0 = drive.trajectoryBuilder(traj3_0.end())
+                    .lineToLinearHeading(new Pose2d(15, 20, Math.toRadians(0)))
+                    .build();
+
+
+
+            droptakeStopper.setPosition(0);
+
+            drive.followTrajectory(traj0_0);
+
+            turret.setPosition(.24);
+            sleep(500);
+            shoot();
+            turret.setPosition(.31);
+            sleep(500);
+            shoot();
+            turret.setPosition(.39);
+            sleep(500);
+            shoot();
+
+            drive.followTrajectory(traj1_0);
+
+            sleep(250);
+            wobbleDown();
+            sleep(700);
+
+            drive.followTrajectory(traj2_0);
+
+            while (wobbleArm1.getPosition() > 0) {
+                wobbleArm1.setPosition((wobbleArm1.getPosition()) - .01);
+                wobbleArm2.setPosition((wobbleArm2.getPosition()) - .01);
+                sleep(25);
+            }
+
+            drive.followTrajectory(traj3_0);
+
+            sleep(1000);
+
+            drive.followTrajectory(traj4_0);
+
+            turret.setPosition(.15);
+            flap.setPosition(.41);
+            shooterStopper.setPosition(.9);
+
+
+            PoseStorage.currentPose = drive.getPoseEstimate();
+            break;
+
 
 //            /*Trajectory traj0 = drive.trajectoryBuilder(startPose)
 //                    .addTemporalMarker(0, () -> {
@@ -492,7 +566,11 @@ public class ZeroRingRed1 extends LinearOpMode {
         sleep(350);
     }
 
-    public void setVelocity(DcMotorEx motor, double power) {
+    public static double rpmToTicksPerSecond(double rpm) {
+        return rpm * MOTOR_TICKS_PER_REV / MOTOR_GEAR_RATIO / 60;
+    }
+
+    private void setVelocity(DcMotorEx motor, double power) {
         if(RUN_USING_ENCODER) {
             motor.setVelocity(rpmToTicksPerSecond(power));
             Log.i("mode", "setting velocity");
@@ -502,45 +580,46 @@ public class ZeroRingRed1 extends LinearOpMode {
             motor.setPower(power / MOTOR_MAX_RPM);
         }
     }
-
-//    public void runShooterMotors(double targetVelocity) {
-//        setVelocity(shooter1, targetVelocity);
-//        setVelocity(shooter1, targetVelocity);
-//    }
-
-    private void setPIDFCoefficients(DcMotorEx motor, PIDFCoefficients coefficients) {
-        if(!RUN_USING_ENCODER) {
-            Log.i("config", "skipping RUE");
-            return;
-        }
-
-        if (!DEFAULT_GAINS) {
-            Log.i("config", "setting custom gains");
-            motor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(
-                    coefficients.p, coefficients.i, coefficients.d, coefficients.f * 12 / batteryVoltageSensor.getVoltage()
-            ));
+    private void setVelocity2(DcMotorEx motor, double power) {
+        if (RUN_USING_ENCODER) {
+            motor.setVelocity(rpmToTicksPerSecond(power));
+            Log.i("mode", "setting velocity");
         } else {
-            Log.i("config", "setting default gains");
-        }
-    }
-    private void setPIDFCoefficients2(DcMotorEx motor, PIDFCoefficients coefficients) {
-        if(!RUN_USING_ENCODER) {
-            Log.i("config", "skipping RUE");
-            return;
-        }
-
-        if (!DEFAULT_GAINS) {
-            Log.i("config", "setting custom gains");
-            motor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(
-                    coefficients.p, coefficients.i, coefficients.d, coefficients.f * 12 / batteryVoltageSensor.getVoltage()
-            ));
-        } else {
-            Log.i("config", "setting default gains");
+            Log.i("mode", "setting power");
+            motor.setPower(power / MOTOR_MAX_RPM);
         }
     }
 
-    public static double rpmToTicksPerSecond(double rpm) {
-        return rpm * MOTOR_TICKS_PER_REV / MOTOR_GEAR_RATIO / 60;
+        private void setPIDFCoefficients(DcMotorEx motor, PIDFCoefficients coefficients) {
+            if(!RUN_USING_ENCODER) {
+                Log.i("config", "skipping RUE");
+                return;
+            }
+
+            if (!DEFAULT_GAINS) {
+                Log.i("config", "setting custom gains");
+                motor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(
+                        coefficients.p, coefficients.i, coefficients.d, coefficients.f * 12 / batteryVoltageSensor.getVoltage()
+                ));
+            } else {
+                Log.i("config", "setting default gains");
+            }
+        }
+        private void setPIDFCoefficients2(DcMotorEx motor, PIDFCoefficients coefficients) {
+            if(!RUN_USING_ENCODER) {
+                Log.i("config", "skipping RUE");
+                return;
+            }
+
+            if (!DEFAULT_GAINS) {
+                Log.i("config", "setting custom gains");
+                motor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(
+                        coefficients.p, coefficients.i, coefficients.d, coefficients.f * 12 / batteryVoltageSensor.getVoltage()
+                ));
+            } else {
+                Log.i("config", "setting default gains");
+            }
     }
 }
+
 

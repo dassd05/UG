@@ -5,6 +5,7 @@ import androidx.annotation.NonNull;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.localization.ThreeTrackingWheelLocalizer;
+import com.acmerobotics.roadrunner.localization.TwoTrackingWheelLocalizer;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -34,7 +35,7 @@ public class StandardTrackingWheelLocalizer extends ThreeTrackingWheelLocalizer 
 
     public static double BACK_OFFSET = -2;
 
-    public static double LATERAL_DISTANCE = 13.051; // in; distance between the left and right wheels
+    public static double LATERAL_DISTANCE = 12.9277405556; // in; distance between the left and right wheels
     public static double FORWARD_OFFSET = -5.3125; // in; offset of the lateral wheel
 
     private Encoder leftEncoder, rightEncoder, horizontalEncoder;
@@ -44,8 +45,8 @@ public class StandardTrackingWheelLocalizer extends ThreeTrackingWheelLocalizer 
 
     public StandardTrackingWheelLocalizer(HardwareMap hardwareMap) {
         super(Arrays.asList(
-                new Pose2d(2.71875, LATERAL_DISTANCE / 2 + 0.28125, 0), // left
-                new Pose2d(2.71875, -LATERAL_DISTANCE / 2 + 0.28125, 0), // right
+                new Pose2d(2.71875, LATERAL_DISTANCE / 2 + .27, 0), // left
+                new Pose2d(2.71875, -LATERAL_DISTANCE / 2 + .27, 0), // right
                 new Pose2d(FORWARD_OFFSET, BACK_OFFSET, Math.toRadians(90)) // horizontal
         ));
 
