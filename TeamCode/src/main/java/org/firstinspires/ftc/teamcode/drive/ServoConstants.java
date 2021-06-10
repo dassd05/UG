@@ -5,8 +5,11 @@ public class ServoConstants {
     public static float dropTakeUp = 0.25f;
     public static float dropTakeDown = 0.0f;
 
-    public static float shootBlockerUp = Float.parseFloat(null);
-    public static float shootBlockerDown = Float.parseFloat(null);
+    public static float shootStopperUp = 0.9f;
+    public static float shootStopperDown = 0.4f;
+
+    public static float shootFlickerOut = 0.57f;
+    public static float shootFlickerShot = 0.35f;
 
     public static float turretStart = 0.0f;
     public static float turretInsert = 1.0f;

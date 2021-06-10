@@ -76,6 +76,8 @@ public class ZeroRingRed1 extends LinearOpMode {
         MotorConfigurationType motorConfigurationType = frontShoot.getMotorType().clone();
         motorConfigurationType.setAchieveableMaxRPMFraction(1.0);
         frontShoot.setMotorType(motorConfigurationType);
+        // can be reduce to v
+        // frontShoot.getMotorType().setAchieveableMaxRPMFraction(1.0);
 
         DcMotorEx backShoot = hardwareMap.get(DcMotorEx.class, "shooter2");
         backShoot.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
@@ -83,15 +85,16 @@ public class ZeroRingRed1 extends LinearOpMode {
         MotorConfigurationType motorConfigurationType2 = backShoot.getMotorType().clone();
         motorConfigurationType2.setAchieveableMaxRPMFraction(1.0);
         backShoot.setMotorType(motorConfigurationType2);
+        // can be reduce to v
+        // backShoot.getMotorType().setAchieveableMaxRPMFraction(1.0);
 
-        if (RUN_USING_ENCODER)
+        if (RUN_USING_ENCODER) {
             frontShoot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        else
-            frontShoot.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        if (RUN_USING_ENCODER)
             backShoot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        else
+        } else {
+            frontShoot.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             backShoot.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        }
 
         batteryVoltageSensor = hardwareMap.voltageSensor.iterator().next();
 
@@ -150,8 +153,8 @@ public class ZeroRingRed1 extends LinearOpMode {
 
         waitForStart();
 
-        if (isStopRequested()) return;
-        while (/*opModeIsActive() && */!isStopRequested()) {
+//        if (isStopRequested()) return;
+        if (/*opModeIsActive() && */!isStopRequested()) {
 
             if (lastKf_2 != MOTOR_VELO_PID_2.f) {
                 MOTOR_VELO_PID_2.f = lastKf_2 * 12 / batteryVoltageSensor.getVoltage();
@@ -170,11 +173,17 @@ public class ZeroRingRed1 extends LinearOpMode {
 
             drive.update();
 
-            Pose2d poseEstimate = drive.getPoseEstimate();
-
-            telemetry.addData("x", poseEstimate.getX());
-            telemetry.addData("y", poseEstimate.getY());
-            telemetry.addData("heading", Math.toDegrees(poseEstimate.getHeading()));
+            new Thread(() -> {
+                while (opModeIsActive()) {
+                    telemetry.addData("voltage", batteryVoltageSensor.getVoltage());
+                    Pose2d poseEstimate = drive.getPoseEstimate();
+                    telemetry.addData("x", poseEstimate.getX());
+                    telemetry.addData("y", poseEstimate.getY());
+                    telemetry.addData("heading", Math.toDegrees(poseEstimate.getHeading()));
+                    telemetry.update();
+                    sleep(50);
+                }
+            }).start();
 
             Trajectory traj0_0 = drive.trajectoryBuilder(startPose)
                     .addTemporalMarker(0, () -> {
@@ -249,7 +258,7 @@ public class ZeroRingRed1 extends LinearOpMode {
 
 
             PoseStorage.currentPose = drive.getPoseEstimate();
-            break;
+//            break;
 
 
 //            /*Trajectory traj0 = drive.trajectoryBuilder(startPose)

@@ -1,9 +1,8 @@
 package org.firstinspires.ftc.teamcode.drive.stuff;
 
 import java.util.EventListener;
-import java.awt.event.*;
 
-public abstract class GamepadListener {
+public abstract class GamepadListener implements EventListener {
 
     public enum Button {
         a, b, x, y,
