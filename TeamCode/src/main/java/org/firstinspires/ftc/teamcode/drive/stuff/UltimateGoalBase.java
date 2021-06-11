@@ -24,6 +24,10 @@ import java.util.List;
 @SuppressWarnings("unused")
 public class UltimateGoalBase extends BaseBase {
 
+    // https://github.com/ftc-9915/FtcRobotController
+    // https://github.com/ftc-9915/FtcRobotController/blob/master/TeamCode/src/main/java/org/firstinspires/ftc/teamcode/Vision/BlueGoalVisionPipeline.java
+
+
     protected UltimateGoalBase.Parameters params;
     public SampleMecanumDriveCancelable drive;
 
@@ -288,6 +292,7 @@ public class UltimateGoalBase extends BaseBase {
         public DcMotorEx shooter2;
         public DcMotor intake;
         public DcMotor bottomRoller;
+
         public Servo turret;
         public Servo flap;
         public Servo wobbleArm1;
@@ -312,6 +317,10 @@ public class UltimateGoalBase extends BaseBase {
 
         }
 
+        public void getAll() {
+
+        }
+
         public void getMotors() {
 
         }
@@ -325,6 +334,22 @@ public class UltimateGoalBase extends BaseBase {
             droptakeStopper = hardwareMap.get(Servo.class, "droptakeStopper");
             wobbleClaw = hardwareMap.get(Servo.class, "wobbleClaw");
             shooterStopper = hardwareMap.get(Servo.class, "shooterStopper");
+        }
+
+        public void getDriveTrain() {
+
+        }
+
+        public void getIntake() {
+
+        }
+
+        public void getShooter() {
+
+        }
+
+        public void getCameras() {
+
         }
     }
 }

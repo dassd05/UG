@@ -92,59 +92,59 @@ public class AutonRingDetectingRed1 extends LinearOpMode {
         webcam.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener() {
             @Override
             public void onOpened() {
-                webcam.startStreaming(960, 720, OpenCvCameraRotation.UPRIGHT);
+                webcam.startStreaming(1280, 960, OpenCvCameraRotation.UPRIGHT);
             }
         });
 
         batteryVoltageSensor = hardwareMap.voltageSensor.iterator().next();
 
 
-        DcMotorEx shooter1 = hardwareMap.get(DcMotorEx.class, "shooter1");
-        shooter1.setDirection(DcMotorSimple.Direction.REVERSE);
-        shooter1.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-
-        MotorConfigurationType motorConfigurationType = shooter1.getMotorType().clone();
-        motorConfigurationType.setAchieveableMaxRPMFraction(1.0);
-        shooter1.setMotorType(motorConfigurationType);
-
-        DcMotorEx shooter2 = hardwareMap.get(DcMotorEx.class, "shooter2");
-        shooter2.setDirection(DcMotorSimple.Direction.REVERSE);
-        shooter2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-
-        MotorConfigurationType motorConfigurationType2 = shooter2.getMotorType().clone();
-        motorConfigurationType2.setAchieveableMaxRPMFraction(1.0);
-        shooter2.setMotorType(motorConfigurationType2);
-
-        if (RUN_USING_ENCODER)
-            shooter1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        else
-            shooter1.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        if (RUN_USING_ENCODER)
-            shooter2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        else
-            shooter2.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-
-        batteryVoltageSensor = hardwareMap.voltageSensor.iterator().next();
-
-        setPIDFCoefficients(shooter1, MOTOR_VELO_PID);
-
-        setPIDFCoefficients2(shooter1, MOTOR_VELO_PID_2);
-
-        for (LynxModule module : hardwareMap.getAll(LynxModule.class)) {
-            module.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
-        }
-
-        turret = hardwareMap.get(Servo.class, "turret");
-        flap = hardwareMap.get(Servo.class, "flap");
-        wobbleArm1 = hardwareMap.get(Servo.class, "wobbleArm1");
-        wobbleArm2 = hardwareMap.get(Servo.class, "wobbleArm2");
-        shootFlicker = hardwareMap.get(Servo.class, "shootFlicker");
-        droptakeStopper = hardwareMap.get(Servo.class, "droptakeStopper");
-        wobbleClaw = hardwareMap.get(Servo.class, "wobbleClaw");
-        shooterStopper = hardwareMap.get(Servo.class, "shooterStopper");
-
-        intake = hardwareMap.dcMotor.get("intake");
-        bottomRoller = hardwareMap.dcMotor.get("bottomRoller");
+//        DcMotorEx shooter1 = hardwareMap.get(DcMotorEx.class, "shooter1");
+//        shooter1.setDirection(DcMotorSimple.Direction.REVERSE);
+//        shooter1.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+//
+//        MotorConfigurationType motorConfigurationType = shooter1.getMotorType().clone();
+//        motorConfigurationType.setAchieveableMaxRPMFraction(1.0);
+//        shooter1.setMotorType(motorConfigurationType);
+//
+//        DcMotorEx shooter2 = hardwareMap.get(DcMotorEx.class, "shooter2");
+//        shooter2.setDirection(DcMotorSimple.Direction.REVERSE);
+//        shooter2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+//
+//        MotorConfigurationType motorConfigurationType2 = shooter2.getMotorType().clone();
+//        motorConfigurationType2.setAchieveableMaxRPMFraction(1.0);
+//        shooter2.setMotorType(motorConfigurationType2);
+//
+//        if (RUN_USING_ENCODER)
+//            shooter1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+//        else
+//            shooter1.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+//        if (RUN_USING_ENCODER)
+//            shooter2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+//        else
+//            shooter2.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+//
+//        batteryVoltageSensor = hardwareMap.voltageSensor.iterator().next();
+//
+//        setPIDFCoefficients(shooter1, MOTOR_VELO_PID);
+//
+//        setPIDFCoefficients2(shooter1, MOTOR_VELO_PID_2);
+//
+//        for (LynxModule module : hardwareMap.getAll(LynxModule.class)) {
+//            module.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
+//        }
+//
+//        turret = hardwareMap.get(Servo.class, "turret");
+//        flap = hardwareMap.get(Servo.class, "flap");
+//        wobbleArm1 = hardwareMap.get(Servo.class, "wobbleArm1");
+//        wobbleArm2 = hardwareMap.get(Servo.class, "wobbleArm2");
+//        shootFlicker = hardwareMap.get(Servo.class, "shootFlicker");
+//        droptakeStopper = hardwareMap.get(Servo.class, "droptakeStopper");
+//        wobbleClaw = hardwareMap.get(Servo.class, "wobbleClaw");
+//        shooterStopper = hardwareMap.get(Servo.class, "shooterStopper");
+//
+//        intake = hardwareMap.dcMotor.get("intake");
+//        bottomRoller = hardwareMap.dcMotor.get("bottomRoller");
 
         telemetry = new MultipleTelemetry(telemetry, dashboard.getTelemetry());
 
@@ -152,30 +152,30 @@ public class AutonRingDetectingRed1 extends LinearOpMode {
         telemetry.clearAll();
 
 
-        SampleMecanumDriveCancelable drive = new SampleMecanumDriveCancelable(hardwareMap);
-
-        Pose2d startPose = new Pose2d(-50, -2, Math.toRadians(0));
-
-        drive.setPoseEstimate(startPose);
+//        SampleMecanumDriveCancelable drive = new SampleMecanumDriveCancelable(hardwareMap);
+//
+//        Pose2d startPose = new Pose2d(-50, -2, Math.toRadians(0));
+//
+//        drive.setPoseEstimate(startPose);
 /**
  *
  */
 
         //wobbleClaw.setPosition();
-        wobbleArm1.setPosition(0);
-        wobbleArm2.setPosition(0);
-
-        turret.setPosition(.15);
-        flap.setPosition(.55);
-
-        droptakeStopper.setPosition(.25);
-        //shooterStopper.setPosition();
-
-        shootFlicker.setPosition(.35);
-        sleep(250);
-        shootFlicker.setPosition(.57);
-
-        sleep(10000);
+//        wobbleArm1.setPosition(0);
+//        wobbleArm2.setPosition(0);
+//
+//        turret.setPosition(.15);
+//        flap.setPosition(.55);
+//
+//        droptakeStopper.setPosition(.25);
+//        //shooterStopper.setPosition();
+//
+//        shootFlicker.setPosition(.35);
+//        sleep(250);
+//        shootFlicker.setPosition(.57);
+//
+//        sleep(10000);
 
         //wobbleClaw.setPosition();
 
@@ -203,410 +203,410 @@ public class AutonRingDetectingRed1 extends LinearOpMode {
 
         waitForStart();
 
-        if (opModeIsActive()){
-            while (opModeIsActive()) {
-//                if (lastKf_2 != MOTOR_VELO_PID_2.f) {
-//                    MOTOR_VELO_PID_2.f = lastKf_2 * 12 / batteryVoltageSensor.getVoltage();
-//                    lastKf_2 = MOTOR_VELO_PID_2.f;
+//        if (opModeIsActive()){
+//            while (opModeIsActive()) {
+////                if (lastKf_2 != MOTOR_VELO_PID_2.f) {
+////                    MOTOR_VELO_PID_2.f = lastKf_2 * 12 / batteryVoltageSensor.getVoltage();
+////                    lastKf_2 = MOTOR_VELO_PID_2.f;
+////                }
+////
+////                if (lastKf != MOTOR_VELO_PID.f) {
+////                    MOTOR_VELO_PID.f = lastKf * 12 / batteryVoltageSensor.getVoltage();
+////                    lastKf = MOTOR_VELO_PID.f;
+////                }
+////
+////                setPIDFCoefficients2(backShoot, MOTOR_VELO_PID_2);
+////                setPIDFCoefficients(frontShoot, MOTOR_VELO_PID);
+////
+////                lastVoltage = batteryVoltageSensor.getVoltage();
+////
+////                drive.update();
+////
+////                Pose2d poseEstimate = drive.getPoseEstimate();
+//
+////                switch (HowManyRings) {
+////                    case FourRings:
+////                        telemetry.addData("4 rings detected", "wobble position C");
+////                        //autonFourRings();
+//                FourR1.runOpMode();
+////                        //runFinished = true;
+////                        Trajectory traj1_4 = drive.trajectoryBuilder(startPose)
+////                                //.splineToConstantHeading(new Vector2d(-45, -2), 0)
+////                                .addTemporalMarker(0, () -> {
+////                                    setVelocity(frontShoot, 2700);
+////                                    setVelocity(backShoot, 2700);
+////                                })
+////                                .splineToConstantHeading(new Vector2d(3, 13), 0)
+////                                .addDisplacementMarker(() -> {
+////                                    sleep(100);
+////                                    shootFlicker.setPosition(0.45);
+////                                    sleep(170);
+////                                    shootFlicker.setPosition(0.1);
+////                                })
+////                                .build();
+////
+////                        Trajectory traj2_4 = drive.trajectoryBuilder(traj1_4.end())
+////                                .lineToLinearHeading(new Pose2d(3, 21.5, Math.toRadians(0)))
+////                                .addDisplacementMarker(() -> {
+////                                    sleep(100);
+////                                    shootFlicker.setPosition(0.45);
+////                                    sleep(170);
+////                                    shootFlicker.setPosition(0.1);
+////                                })
+////                                .build();
+////
+////                        Trajectory traj3_4 = drive.trajectoryBuilder(traj2_4.end())
+////                                .lineToLinearHeading(new Pose2d(3, 29, Math.toRadians(0)))
+////                                .addDisplacementMarker(() -> {
+////                                    sleep(100);
+////                                    shootFlicker.setPosition(0.45);
+////                                    sleep(170);
+////                                    shootFlicker.setPosition(0.1);
+////                                    sleep(150);
+////                                })
+////                                .build();
+////                        Trajectory traj4_4 = drive.trajectoryBuilder(traj3_4.end())
+////                                .addTemporalMarker(0, () -> {
+////                                    frontShoot.setPower(0);
+////                                    backShoot.setPower(0);
+////                                    //liftServo.setPosition(.63);
+////                                })
+////                                .lineToLinearHeading(new Pose2d(65, -25, Math.toRadians(270))) //change pose
+////                                .addDisplacementMarker(() -> {
+////                                    sleep(250);
+////                                    wobbleArmServo.setPosition(.44);
+////                                    sleep(800);
+////                                    wobbleClawServo.setPosition(.51); //need to change position and time
+////                                    sleep(500);
+////                                    //wobbleUp();
+////                        /*wobbleArmServo.setPosition(.3);
+////                        sleep(700);
+////                        wobbleClawServo.setPosition(.5);
+////                        sleep(350);*/
+////                                })
+////                                .build();
+////                        Trajectory traj5_0_4 = drive.trajectoryBuilder(traj4_4.end())
+////                                /*.addTemporalMarker(1.5, () -> {
+////                                    wobbleDown();
+////                        })*/
+////                                .lineToLinearHeading(new Pose2d(65, -20, Math.toRadians(270)))
+////                                //.lineToLinearHeading(new Pose2d(-26.6, -12, Math.toRadians(0)))
+////                                /*.addTemporalMarker(1.5, () -> {
+////                                    wobbleArmServo.setPosition(0);
+////                                })*/
+////                                .build();
+////
+////                        Trajectory traj5_4 = drive.trajectoryBuilder(traj5_0_4.end())
+////                                .lineToLinearHeading(new Pose2d(-27, -17, Math.toRadians(180)))
+////                                //.lineToLinearHeading(new Pose2d(-26.6, -12, Math.toRadians(0)))
+////                                /*.addTemporalMarker(1.5, () -> {
+////                                    wobbleArmServo.setPosition(0);
+////                                })*/
+////                                .addDisplacementMarker(() -> {
+////                                    sleep(250);
+////                                    wobbleUp();
+////                                })
+////                                .build();
+////
+////                        Trajectory traj6_4 = drive.trajectoryBuilder(traj5_4.end())
+////                                .lineToLinearHeading(new Pose2d(64, -10, Math.toRadians(270))) //change pose
+////                                .addDisplacementMarker(() -> {
+////                                    sleep(250);
+////                                    wobbleArmServo.setPosition(.44);
+////                                    sleep(350);
+////                                    wobbleClawServo.setPosition(.51); //need to change position and time
+////                                    sleep(200);
+////                                })
+////                                .build();
+////
+////                        Trajectory traj7_4 = drive.trajectoryBuilder(traj6_4.end())
+////                                .lineToLinearHeading(new Pose2d(24, 8, 0))
+////                                .addDisplacementMarker(() -> {
+////                                    sleep(250);
+////                                    wobbleUp();
+////                                })
+////                                .build();
+////
+////                        drive.followTrajectory(traj1_4);
+////                        //sleep(400);
+////                        //shoot();
+////                        drive.followTrajectory(traj2_4);
+////                        //shoot();
+////                        drive.followTrajectory(traj3_4);
+////                        //shoot();
+////                        //
+////                        drive.followTrajectory(traj4_4);
+////            /*wobbleArmServo.setPosition(.5);
+////            sleep(100);*/
+////                        //wobble goal
+////                        //sleep(300);
+////                        drive.followTrajectory(traj5_0_4);
+////                        drive.followTrajectory(traj5_4);
+////                        //picking up 2nd wobble goal
+////                        drive.followTrajectory(traj6_4);
+////                        //dropping off the 2nd wobble goal
+////                        drive.followTrajectory(traj7_4);
+////                        //white line
+////                        //58, 63 2 x wobble 0 15,8 y wobble 0
+////                        //82, 88 x wobble 1 10, 18 7wobble 1
+////
+////                        // Transfer the current pose to PoseStorage so we can use it in TeleOp
+////                        PoseStorage.currentPose = drive.getPoseEstimate();
+////                        break;
+////                    case OneRing:
+////                        Trajectory traj1_1 = drive.trajectoryBuilder(startPose)
+////                                //.splineToConstantHeading(new Vector2d(-45, -2), 0)
+////                                .addTemporalMarker(0, () -> {
+////                                    setVelocity(frontShoot, 2700);
+////                                    setVelocity(backShoot, 2700);
+////                                })
+////                                .splineToConstantHeading(new Vector2d(3, 13), 0)
+////                                .addDisplacementMarker(() -> {
+////                                    sleep(100);
+////                                    shootFlicker.setPosition(0.45);
+////                                    sleep(170);
+////                                    shootFlicker.setPosition(0.1);
+////                                })
+////                                .build();
+////
+////                        Trajectory traj2_1 = drive.trajectoryBuilder(traj1_1.end())
+////                                .lineToLinearHeading(new Pose2d(3, 21.5, Math.toRadians(0)))
+////                                .addDisplacementMarker(() -> {
+////                                    sleep(100);
+////                                    shootFlicker.setPosition(0.45);
+////                                    sleep(170);
+////                                    shootFlicker.setPosition(0.1);
+////                                })
+////                                .build();
+////
+////                        Trajectory traj3_1 = drive.trajectoryBuilder(traj2_1.end())
+////                                .lineToLinearHeading(new Pose2d(3, 29, Math.toRadians(0)))
+////                                .addDisplacementMarker(() -> {
+////                                    sleep(100);
+////                                    shootFlicker.setPosition(0.45);
+////                                    sleep(170);
+////                                    shootFlicker.setPosition(0.1);
+////                                    sleep(150);
+////                                })
+////                                .build();
+////                        Trajectory traj4_1 = drive.trajectoryBuilder(traj3_1.end())
+////                                .addTemporalMarker(0, () -> {
+////                                    frontShoot.setPower(0);
+////                                    backShoot.setPower(0);
+////                                    //liftServo.setPosition(.63);
+////                                })
+////                                .lineToLinearHeading(new Pose2d(44, 0, Math.toRadians(270))) //change pose
+////                                .addDisplacementMarker(() -> {
+////                                    sleep(250);
+////                                    wobbleArmServo.setPosition(.44);
+////                                    sleep(900);
+////                                    wobbleClawServo.setPosition(.51); //need to change position and time
+////                                    sleep(500);
+////                                    //wobbleUp();
+////                        /*wobbleArmServo.setPosition(.3);
+////                        sleep(700);
+////                        wobbleClawServo.setPosition(.5);
+////                        sleep(350);*/
+////                                })
+////                                .build();
+////                        Trajectory traj5_0_1 = drive.trajectoryBuilder(traj4_1.end())
+////                                /*.addTemporalMarker(1.5, () -> {
+////                                    wobbleDown();
+////                        })*/
+////                                .lineToLinearHeading(new Pose2d(44, 4, Math.toRadians(270)))
+////                                //.lineToLinearHeading(new Pose2d(-26.6, -12, Math.toRadians(0)))
+////                                /*.addTemporalMarker(1.5, () -> {
+////                                    wobbleArmServo.setPosition(0);
+////                                })*/
+////                                .build();
+////
+////                        Trajectory traj5_1 = drive.trajectoryBuilder(traj5_0_1.end())
+////                                .lineToLinearHeading(new Pose2d(-26.6, -17, Math.toRadians(180)))
+////                                //.lineToLinearHeading(new Pose2d(-26.6, -12, Math.toRadians(0)))
+////                                /*.addTemporalMarker(1.5, () -> {
+////                                    wobbleArmServo.setPosition(0);
+////                                })*/
+////                                .addDisplacementMarker(() -> {
+////                                    sleep(250);
+////                                    wobbleUp();
+////                                })
+////                                .build();
+////
+////                        Trajectory traj6_1 = drive.trajectoryBuilder(traj5_1.end())
+////                                .lineToLinearHeading(new Pose2d(32, 12, Math.toRadians(270))) //change pose
+////                                .addDisplacementMarker(() -> {
+////                                    sleep(250);
+////                                    wobbleArmServo.setPosition(.44);
+////                                    sleep(350);
+////                                    wobbleClawServo.setPosition(.51); //need to change position and time
+////                                    sleep(200);
+////                                })
+////                                .build();
+////
+////                        Trajectory traj7_1 = drive.trajectoryBuilder(traj6_1.end())
+////                                .lineToLinearHeading(new Pose2d(24, 8, 0))
+////                                .addDisplacementMarker(() -> {
+////                                    sleep(250);
+////                                    wobbleUp();
+////                                })
+////                                .build();
+////
+////                        drive.followTrajectory(traj1_1);
+////                        //sleep(400);
+////                        //shoot();
+////                        drive.followTrajectory(traj2_1);
+////                        //shoot();
+////                        drive.followTrajectory(traj3_1);
+////                        //shoot();
+////                        //
+////                        drive.followTrajectory(traj4_1);
+////            /*wobbleArmServo.setPosition(.5);
+////            sleep(100);*/
+////                        //wobble goal
+////                        //sleep(300);
+////                        drive.followTrajectory(traj5_0_1);
+////                        drive.followTrajectory(traj5_1);
+////                        //picking up 2nd wobble goal
+////                        drive.followTrajectory(traj6_1);
+////                        //dropping off the 2nd wobble goal
+////                        drive.followTrajectory(traj7_1);
+////                        //white line
+////                        //58, 63 2 x wobble 0 15,8 y wobble 0
+////                        //82, 88 x wobble 1 10, 18 7wobble 1
+////
+////                        // Transfer the current pose to PoseStorage so we can use it in TeleOp
+////                        PoseStorage.currentPose = drive.getPoseEstimate();
+////                        break;
+////                    case ZeroRings:
+////                        Trajectory traj1 = drive.trajectoryBuilder(startPose)
+////                                //.splineToConstantHeading(new Vector2d(-45, -2), 0)
+////                                .addTemporalMarker(0, () -> {
+////                                    setVelocity(frontShoot, 2700);
+////                                    setVelocity(backShoot, 2700);
+////                                })
+////                                .splineToConstantHeading(new Vector2d(3, 13), 0)
+////                                .addDisplacementMarker(() -> {
+////                                    sleep(100);
+////                                    shootFlicker.setPosition(0.45);
+////                                    sleep(170);
+////                                    shootFlicker.setPosition(0.1);
+////                                })
+////                                .build();
+////
+////                        Trajectory traj2 = drive.trajectoryBuilder(traj1.end())
+////                                .lineToLinearHeading(new Pose2d(3, 21.5, Math.toRadians(0)))
+////                                .addDisplacementMarker(() -> {
+////                                    sleep(100);
+////                                    shootFlicker.setPosition(0.45);
+////                                    sleep(170);
+////                                    shootFlicker.setPosition(0.1);
+////                                })
+////                                .build();
+////
+////                        Trajectory traj3 = drive.trajectoryBuilder(traj2.end())
+////                                .lineToLinearHeading(new Pose2d(3, 29, Math.toRadians(0)))
+////                                .addDisplacementMarker(() -> {
+////                                    sleep(100);
+////                                    shootFlicker.setPosition(0.45);
+////                                    sleep(170);
+////                                    shootFlicker.setPosition(0.1);
+////                                    sleep(150);
+////                                })
+////                                .build();
+////                        Trajectory traj4 = drive.trajectoryBuilder(traj3.end())
+////                                .addTemporalMarker(0, () -> {
+////                                    frontShoot.setPower(0);
+////                                    backShoot.setPower(0);
+////                                    //liftServo.setPosition(.63);
+////                                })
+////                                .lineToLinearHeading(new Pose2d(20, -25, Math.toRadians(270))) //change pose
+////                                .addDisplacementMarker(() -> {
+////                                    sleep(250);
+////                                    wobbleArmServo.setPosition(.44);
+////                                    sleep(800);
+////                                    wobbleClawServo.setPosition(.51); //need to change position and time
+////                                    sleep(500);
+////                                    //wobbleUp();
+////                        /*wobbleArmServo.setPosition(.3);
+////                        sleep(700);
+////                        wobbleClawServo.setPosition(.5);
+////                        sleep(350);*/
+////                                })
+////                                .build();
+////                        Trajectory traj5_0 = drive.trajectoryBuilder(traj4.end())
+////                                /*.addTemporalMarker(1.5, () -> {
+////                                    wobbleDown();
+////                        })*/
+////                                .lineToLinearHeading(new Pose2d(21, -15, Math.toRadians(270)))
+////                                //.lineToLinearHeading(new Pose2d(-26.6, -12, Math.toRadians(0)))
+////                                /*.addTemporalMarker(1.5, () -> {
+////                                    wobbleArmServo.setPosition(0);
+////                                })*/
+////                                .build();
+////
+////                        Trajectory traj5 = drive.trajectoryBuilder(traj5_0.end())
+////                                .lineToLinearHeading(new Pose2d(-26.6, -17, Math.toRadians(180)))
+////                                //.lineToLinearHeading(new Pose2d(-26.6, -12, Math.toRadians(0)))
+////                                /*.addTemporalMarker(1.5, () -> {
+////                                    wobbleArmServo.setPosition(0);
+////                                })*/
+////                                .addDisplacementMarker(() -> {
+////                                    sleep(250);
+////                                    wobbleUp();
+////                                })
+////                                .build();
+////
+////                        Trajectory traj6 = drive.trajectoryBuilder(traj5.end())
+////                                .lineToLinearHeading(new Pose2d(18, -12, Math.toRadians(270))) //change pose
+////                                .addDisplacementMarker(() -> {
+////                                    sleep(250);
+////                                    wobbleArmServo.setPosition(.44);
+////                                    sleep(350);
+////                                    wobbleClawServo.setPosition(.51); //need to change position and time
+////                                    sleep(200);
+////                                })
+////                                .build();
+////
+////                        Trajectory traj7 = drive.trajectoryBuilder(traj6.end())
+////                                .lineToLinearHeading(new Pose2d(24, 8, 0))
+////                                .addDisplacementMarker(() -> {
+////                                    sleep(250);
+////                                    wobbleUp();
+////                                })
+////                                .build();
+////
+////                        drive.followTrajectory(traj1);
+////                        //sleep(400);
+////                        //shoot();
+////                        drive.followTrajectory(traj2);
+////                        //shoot();
+////                        drive.followTrajectory(traj3);
+////                        //shoot();
+////                        //
+////                        drive.followTrajectory(traj4);
+////            /*wobbleArmServo.setPosition(.5);
+////            sleep(100);*/
+////                        //wobble goal
+////                        //sleep(300);
+////                        drive.followTrajectory(traj5_0);
+////                        drive.followTrajectory(traj5);
+////                        //picking up 2nd wobble goal
+////                        drive.followTrajectory(traj6);
+////                        //dropping off the 2nd wobble goal
+////                        drive.followTrajectory(traj7);
+////                        //white line
+////                        //58, 63 2 x wobble 0 15,8 y wobble 0
+////                        //82, 88 x wobble 1 10, 18 7wobble 1
+////
+////                        // Transfer the current pose to PoseStorage so we can use it in TeleOp
+////                        PoseStorage.currentPose = drive.getPoseEstimate();
+////                        break;
+////                    case Default:
+////                        telemetry.addData("ERROR", "NUMBER OF RINGS NOT RECOGNIZED");
+////                        break;
 //                }
-//
-//                if (lastKf != MOTOR_VELO_PID.f) {
-//                    MOTOR_VELO_PID.f = lastKf * 12 / batteryVoltageSensor.getVoltage();
-//                    lastKf = MOTOR_VELO_PID.f;
-//                }
-//
-//                setPIDFCoefficients2(backShoot, MOTOR_VELO_PID_2);
-//                setPIDFCoefficients(frontShoot, MOTOR_VELO_PID);
-//
-//                lastVoltage = batteryVoltageSensor.getVoltage();
-//
-//                drive.update();
-//
-//                Pose2d poseEstimate = drive.getPoseEstimate();
-
-//                switch (HowManyRings) {
-//                    case FourRings:
-//                        telemetry.addData("4 rings detected", "wobble position C");
-//                        //autonFourRings();
-                FourR1.runOpMode();
-//                        //runFinished = true;
-//                        Trajectory traj1_4 = drive.trajectoryBuilder(startPose)
-//                                //.splineToConstantHeading(new Vector2d(-45, -2), 0)
-//                                .addTemporalMarker(0, () -> {
-//                                    setVelocity(frontShoot, 2700);
-//                                    setVelocity(backShoot, 2700);
-//                                })
-//                                .splineToConstantHeading(new Vector2d(3, 13), 0)
-//                                .addDisplacementMarker(() -> {
-//                                    sleep(100);
-//                                    shootFlicker.setPosition(0.45);
-//                                    sleep(170);
-//                                    shootFlicker.setPosition(0.1);
-//                                })
-//                                .build();
-//
-//                        Trajectory traj2_4 = drive.trajectoryBuilder(traj1_4.end())
-//                                .lineToLinearHeading(new Pose2d(3, 21.5, Math.toRadians(0)))
-//                                .addDisplacementMarker(() -> {
-//                                    sleep(100);
-//                                    shootFlicker.setPosition(0.45);
-//                                    sleep(170);
-//                                    shootFlicker.setPosition(0.1);
-//                                })
-//                                .build();
-//
-//                        Trajectory traj3_4 = drive.trajectoryBuilder(traj2_4.end())
-//                                .lineToLinearHeading(new Pose2d(3, 29, Math.toRadians(0)))
-//                                .addDisplacementMarker(() -> {
-//                                    sleep(100);
-//                                    shootFlicker.setPosition(0.45);
-//                                    sleep(170);
-//                                    shootFlicker.setPosition(0.1);
-//                                    sleep(150);
-//                                })
-//                                .build();
-//                        Trajectory traj4_4 = drive.trajectoryBuilder(traj3_4.end())
-//                                .addTemporalMarker(0, () -> {
-//                                    frontShoot.setPower(0);
-//                                    backShoot.setPower(0);
-//                                    //liftServo.setPosition(.63);
-//                                })
-//                                .lineToLinearHeading(new Pose2d(65, -25, Math.toRadians(270))) //change pose
-//                                .addDisplacementMarker(() -> {
-//                                    sleep(250);
-//                                    wobbleArmServo.setPosition(.44);
-//                                    sleep(800);
-//                                    wobbleClawServo.setPosition(.51); //need to change position and time
-//                                    sleep(500);
-//                                    //wobbleUp();
-//                        /*wobbleArmServo.setPosition(.3);
-//                        sleep(700);
-//                        wobbleClawServo.setPosition(.5);
-//                        sleep(350);*/
-//                                })
-//                                .build();
-//                        Trajectory traj5_0_4 = drive.trajectoryBuilder(traj4_4.end())
-//                                /*.addTemporalMarker(1.5, () -> {
-//                                    wobbleDown();
-//                        })*/
-//                                .lineToLinearHeading(new Pose2d(65, -20, Math.toRadians(270)))
-//                                //.lineToLinearHeading(new Pose2d(-26.6, -12, Math.toRadians(0)))
-//                                /*.addTemporalMarker(1.5, () -> {
-//                                    wobbleArmServo.setPosition(0);
-//                                })*/
-//                                .build();
-//
-//                        Trajectory traj5_4 = drive.trajectoryBuilder(traj5_0_4.end())
-//                                .lineToLinearHeading(new Pose2d(-27, -17, Math.toRadians(180)))
-//                                //.lineToLinearHeading(new Pose2d(-26.6, -12, Math.toRadians(0)))
-//                                /*.addTemporalMarker(1.5, () -> {
-//                                    wobbleArmServo.setPosition(0);
-//                                })*/
-//                                .addDisplacementMarker(() -> {
-//                                    sleep(250);
-//                                    wobbleUp();
-//                                })
-//                                .build();
-//
-//                        Trajectory traj6_4 = drive.trajectoryBuilder(traj5_4.end())
-//                                .lineToLinearHeading(new Pose2d(64, -10, Math.toRadians(270))) //change pose
-//                                .addDisplacementMarker(() -> {
-//                                    sleep(250);
-//                                    wobbleArmServo.setPosition(.44);
-//                                    sleep(350);
-//                                    wobbleClawServo.setPosition(.51); //need to change position and time
-//                                    sleep(200);
-//                                })
-//                                .build();
-//
-//                        Trajectory traj7_4 = drive.trajectoryBuilder(traj6_4.end())
-//                                .lineToLinearHeading(new Pose2d(24, 8, 0))
-//                                .addDisplacementMarker(() -> {
-//                                    sleep(250);
-//                                    wobbleUp();
-//                                })
-//                                .build();
-//
-//                        drive.followTrajectory(traj1_4);
-//                        //sleep(400);
-//                        //shoot();
-//                        drive.followTrajectory(traj2_4);
-//                        //shoot();
-//                        drive.followTrajectory(traj3_4);
-//                        //shoot();
-//                        //
-//                        drive.followTrajectory(traj4_4);
-//            /*wobbleArmServo.setPosition(.5);
-//            sleep(100);*/
-//                        //wobble goal
-//                        //sleep(300);
-//                        drive.followTrajectory(traj5_0_4);
-//                        drive.followTrajectory(traj5_4);
-//                        //picking up 2nd wobble goal
-//                        drive.followTrajectory(traj6_4);
-//                        //dropping off the 2nd wobble goal
-//                        drive.followTrajectory(traj7_4);
-//                        //white line
-//                        //58, 63 2 x wobble 0 15,8 y wobble 0
-//                        //82, 88 x wobble 1 10, 18 7wobble 1
-//
-//                        // Transfer the current pose to PoseStorage so we can use it in TeleOp
-//                        PoseStorage.currentPose = drive.getPoseEstimate();
-//                        break;
-//                    case OneRing:
-//                        Trajectory traj1_1 = drive.trajectoryBuilder(startPose)
-//                                //.splineToConstantHeading(new Vector2d(-45, -2), 0)
-//                                .addTemporalMarker(0, () -> {
-//                                    setVelocity(frontShoot, 2700);
-//                                    setVelocity(backShoot, 2700);
-//                                })
-//                                .splineToConstantHeading(new Vector2d(3, 13), 0)
-//                                .addDisplacementMarker(() -> {
-//                                    sleep(100);
-//                                    shootFlicker.setPosition(0.45);
-//                                    sleep(170);
-//                                    shootFlicker.setPosition(0.1);
-//                                })
-//                                .build();
-//
-//                        Trajectory traj2_1 = drive.trajectoryBuilder(traj1_1.end())
-//                                .lineToLinearHeading(new Pose2d(3, 21.5, Math.toRadians(0)))
-//                                .addDisplacementMarker(() -> {
-//                                    sleep(100);
-//                                    shootFlicker.setPosition(0.45);
-//                                    sleep(170);
-//                                    shootFlicker.setPosition(0.1);
-//                                })
-//                                .build();
-//
-//                        Trajectory traj3_1 = drive.trajectoryBuilder(traj2_1.end())
-//                                .lineToLinearHeading(new Pose2d(3, 29, Math.toRadians(0)))
-//                                .addDisplacementMarker(() -> {
-//                                    sleep(100);
-//                                    shootFlicker.setPosition(0.45);
-//                                    sleep(170);
-//                                    shootFlicker.setPosition(0.1);
-//                                    sleep(150);
-//                                })
-//                                .build();
-//                        Trajectory traj4_1 = drive.trajectoryBuilder(traj3_1.end())
-//                                .addTemporalMarker(0, () -> {
-//                                    frontShoot.setPower(0);
-//                                    backShoot.setPower(0);
-//                                    //liftServo.setPosition(.63);
-//                                })
-//                                .lineToLinearHeading(new Pose2d(44, 0, Math.toRadians(270))) //change pose
-//                                .addDisplacementMarker(() -> {
-//                                    sleep(250);
-//                                    wobbleArmServo.setPosition(.44);
-//                                    sleep(900);
-//                                    wobbleClawServo.setPosition(.51); //need to change position and time
-//                                    sleep(500);
-//                                    //wobbleUp();
-//                        /*wobbleArmServo.setPosition(.3);
-//                        sleep(700);
-//                        wobbleClawServo.setPosition(.5);
-//                        sleep(350);*/
-//                                })
-//                                .build();
-//                        Trajectory traj5_0_1 = drive.trajectoryBuilder(traj4_1.end())
-//                                /*.addTemporalMarker(1.5, () -> {
-//                                    wobbleDown();
-//                        })*/
-//                                .lineToLinearHeading(new Pose2d(44, 4, Math.toRadians(270)))
-//                                //.lineToLinearHeading(new Pose2d(-26.6, -12, Math.toRadians(0)))
-//                                /*.addTemporalMarker(1.5, () -> {
-//                                    wobbleArmServo.setPosition(0);
-//                                })*/
-//                                .build();
-//
-//                        Trajectory traj5_1 = drive.trajectoryBuilder(traj5_0_1.end())
-//                                .lineToLinearHeading(new Pose2d(-26.6, -17, Math.toRadians(180)))
-//                                //.lineToLinearHeading(new Pose2d(-26.6, -12, Math.toRadians(0)))
-//                                /*.addTemporalMarker(1.5, () -> {
-//                                    wobbleArmServo.setPosition(0);
-//                                })*/
-//                                .addDisplacementMarker(() -> {
-//                                    sleep(250);
-//                                    wobbleUp();
-//                                })
-//                                .build();
-//
-//                        Trajectory traj6_1 = drive.trajectoryBuilder(traj5_1.end())
-//                                .lineToLinearHeading(new Pose2d(32, 12, Math.toRadians(270))) //change pose
-//                                .addDisplacementMarker(() -> {
-//                                    sleep(250);
-//                                    wobbleArmServo.setPosition(.44);
-//                                    sleep(350);
-//                                    wobbleClawServo.setPosition(.51); //need to change position and time
-//                                    sleep(200);
-//                                })
-//                                .build();
-//
-//                        Trajectory traj7_1 = drive.trajectoryBuilder(traj6_1.end())
-//                                .lineToLinearHeading(new Pose2d(24, 8, 0))
-//                                .addDisplacementMarker(() -> {
-//                                    sleep(250);
-//                                    wobbleUp();
-//                                })
-//                                .build();
-//
-//                        drive.followTrajectory(traj1_1);
-//                        //sleep(400);
-//                        //shoot();
-//                        drive.followTrajectory(traj2_1);
-//                        //shoot();
-//                        drive.followTrajectory(traj3_1);
-//                        //shoot();
-//                        //
-//                        drive.followTrajectory(traj4_1);
-//            /*wobbleArmServo.setPosition(.5);
-//            sleep(100);*/
-//                        //wobble goal
-//                        //sleep(300);
-//                        drive.followTrajectory(traj5_0_1);
-//                        drive.followTrajectory(traj5_1);
-//                        //picking up 2nd wobble goal
-//                        drive.followTrajectory(traj6_1);
-//                        //dropping off the 2nd wobble goal
-//                        drive.followTrajectory(traj7_1);
-//                        //white line
-//                        //58, 63 2 x wobble 0 15,8 y wobble 0
-//                        //82, 88 x wobble 1 10, 18 7wobble 1
-//
-//                        // Transfer the current pose to PoseStorage so we can use it in TeleOp
-//                        PoseStorage.currentPose = drive.getPoseEstimate();
-//                        break;
-//                    case ZeroRings:
-//                        Trajectory traj1 = drive.trajectoryBuilder(startPose)
-//                                //.splineToConstantHeading(new Vector2d(-45, -2), 0)
-//                                .addTemporalMarker(0, () -> {
-//                                    setVelocity(frontShoot, 2700);
-//                                    setVelocity(backShoot, 2700);
-//                                })
-//                                .splineToConstantHeading(new Vector2d(3, 13), 0)
-//                                .addDisplacementMarker(() -> {
-//                                    sleep(100);
-//                                    shootFlicker.setPosition(0.45);
-//                                    sleep(170);
-//                                    shootFlicker.setPosition(0.1);
-//                                })
-//                                .build();
-//
-//                        Trajectory traj2 = drive.trajectoryBuilder(traj1.end())
-//                                .lineToLinearHeading(new Pose2d(3, 21.5, Math.toRadians(0)))
-//                                .addDisplacementMarker(() -> {
-//                                    sleep(100);
-//                                    shootFlicker.setPosition(0.45);
-//                                    sleep(170);
-//                                    shootFlicker.setPosition(0.1);
-//                                })
-//                                .build();
-//
-//                        Trajectory traj3 = drive.trajectoryBuilder(traj2.end())
-//                                .lineToLinearHeading(new Pose2d(3, 29, Math.toRadians(0)))
-//                                .addDisplacementMarker(() -> {
-//                                    sleep(100);
-//                                    shootFlicker.setPosition(0.45);
-//                                    sleep(170);
-//                                    shootFlicker.setPosition(0.1);
-//                                    sleep(150);
-//                                })
-//                                .build();
-//                        Trajectory traj4 = drive.trajectoryBuilder(traj3.end())
-//                                .addTemporalMarker(0, () -> {
-//                                    frontShoot.setPower(0);
-//                                    backShoot.setPower(0);
-//                                    //liftServo.setPosition(.63);
-//                                })
-//                                .lineToLinearHeading(new Pose2d(20, -25, Math.toRadians(270))) //change pose
-//                                .addDisplacementMarker(() -> {
-//                                    sleep(250);
-//                                    wobbleArmServo.setPosition(.44);
-//                                    sleep(800);
-//                                    wobbleClawServo.setPosition(.51); //need to change position and time
-//                                    sleep(500);
-//                                    //wobbleUp();
-//                        /*wobbleArmServo.setPosition(.3);
-//                        sleep(700);
-//                        wobbleClawServo.setPosition(.5);
-//                        sleep(350);*/
-//                                })
-//                                .build();
-//                        Trajectory traj5_0 = drive.trajectoryBuilder(traj4.end())
-//                                /*.addTemporalMarker(1.5, () -> {
-//                                    wobbleDown();
-//                        })*/
-//                                .lineToLinearHeading(new Pose2d(21, -15, Math.toRadians(270)))
-//                                //.lineToLinearHeading(new Pose2d(-26.6, -12, Math.toRadians(0)))
-//                                /*.addTemporalMarker(1.5, () -> {
-//                                    wobbleArmServo.setPosition(0);
-//                                })*/
-//                                .build();
-//
-//                        Trajectory traj5 = drive.trajectoryBuilder(traj5_0.end())
-//                                .lineToLinearHeading(new Pose2d(-26.6, -17, Math.toRadians(180)))
-//                                //.lineToLinearHeading(new Pose2d(-26.6, -12, Math.toRadians(0)))
-//                                /*.addTemporalMarker(1.5, () -> {
-//                                    wobbleArmServo.setPosition(0);
-//                                })*/
-//                                .addDisplacementMarker(() -> {
-//                                    sleep(250);
-//                                    wobbleUp();
-//                                })
-//                                .build();
-//
-//                        Trajectory traj6 = drive.trajectoryBuilder(traj5.end())
-//                                .lineToLinearHeading(new Pose2d(18, -12, Math.toRadians(270))) //change pose
-//                                .addDisplacementMarker(() -> {
-//                                    sleep(250);
-//                                    wobbleArmServo.setPosition(.44);
-//                                    sleep(350);
-//                                    wobbleClawServo.setPosition(.51); //need to change position and time
-//                                    sleep(200);
-//                                })
-//                                .build();
-//
-//                        Trajectory traj7 = drive.trajectoryBuilder(traj6.end())
-//                                .lineToLinearHeading(new Pose2d(24, 8, 0))
-//                                .addDisplacementMarker(() -> {
-//                                    sleep(250);
-//                                    wobbleUp();
-//                                })
-//                                .build();
-//
-//                        drive.followTrajectory(traj1);
-//                        //sleep(400);
-//                        //shoot();
-//                        drive.followTrajectory(traj2);
-//                        //shoot();
-//                        drive.followTrajectory(traj3);
-//                        //shoot();
-//                        //
-//                        drive.followTrajectory(traj4);
-//            /*wobbleArmServo.setPosition(.5);
-//            sleep(100);*/
-//                        //wobble goal
-//                        //sleep(300);
-//                        drive.followTrajectory(traj5_0);
-//                        drive.followTrajectory(traj5);
-//                        //picking up 2nd wobble goal
-//                        drive.followTrajectory(traj6);
-//                        //dropping off the 2nd wobble goal
-//                        drive.followTrajectory(traj7);
-//                        //white line
-//                        //58, 63 2 x wobble 0 15,8 y wobble 0
-//                        //82, 88 x wobble 1 10, 18 7wobble 1
-//
-//                        // Transfer the current pose to PoseStorage so we can use it in TeleOp
-//                        PoseStorage.currentPose = drive.getPoseEstimate();
-//                        break;
-//                    case Default:
-//                        telemetry.addData("ERROR", "NUMBER OF RINGS NOT RECOGNIZED");
-//                        break;
-                }
-                telemetry.update();
-            }
+//                telemetry.update();
+//            }
         }
 
 
