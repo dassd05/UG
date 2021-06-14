@@ -26,8 +26,11 @@ import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.robotcore.external.navigation.Position;
 import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
+import org.firstinspires.ftc.teamcode.drive.DriveConstants;
 import org.firstinspires.ftc.teamcode.drive.advanced.PoseStorage;
 import org.firstinspires.ftc.teamcode.drive.advanced.SampleMecanumDriveCancelable;
+
+import static org.firstinspires.ftc.teamcode.drive.DriveConstants.TRACK_WIDTH;
 
 
 @Autonomous(group = "R1")
@@ -56,11 +59,11 @@ public class FourRingRed1 extends LinearOpMode {
      *
      */
 
-    public static PIDFCoefficients MOTOR_VELO_PID = new PIDFCoefficients(45,0,0,25);
-    public static PIDFCoefficients MOTOR_VELO_PID_2 = new PIDFCoefficients(45,0,0,25);
+    public static PIDFCoefficients MOTOR_VELO_PID = new PIDFCoefficients(45,0,0,21.5);
+    public static PIDFCoefficients MOTOR_VELO_PID_2 = new PIDFCoefficients(45,0,0,21.5);
 
-    public static double lastKf = 16.7;
-    public static double lastKf_2 = 16.7;
+    public static double lastKf = 16;
+    public static double lastKf_2 = 16;
 
     /********************************************************************************************************************
      *
@@ -151,7 +154,9 @@ public class FourRingRed1 extends LinearOpMode {
         wobbleArm2.setPosition(0);
 
         turret.setPosition(.15);
-        flap.setPosition(.425);
+        flap.setPosition(.41);
+
+        shoot();
 
         droptakeStopper.setPosition(.25);
         shooterStopper.setPosition(.9);
@@ -183,10 +188,10 @@ public class FourRingRed1 extends LinearOpMode {
         /*******************************************************************************************
          *
          */
-        Trajectory traj1_0 = drive.trajectoryBuilder(startPose)
+        Trajectory traj1_4 = drive.trajectoryBuilder(startPose)
                 .addTemporalMarker(0, () -> {
-                    setVelocity(frontShoot,2700);
-                    setVelocity2(backShoot,2700);
+                    setVelocity(frontShoot,2540);
+                    setVelocity2(backShoot,2540);
                 })
                 .splineToConstantHeading(new Vector2d(-15, 10), 0)
                 .addDisplacementMarker(() -> {
@@ -194,33 +199,38 @@ public class FourRingRed1 extends LinearOpMode {
                 })
                 .build();
 
-        /*Trajectory traj2_0 = drive.trajectoryBuilder(traj1_0.end())
+        Trajectory traj2_4 = drive.trajectoryBuilder(traj1_4.end())
                 .addTemporalMarker(0, () -> {
                     frontShoot.setVelocity(0);
                     backShoot.setVelocity(0);
+                    intake.setPower(.8);
+                    bottomRoller.setPower(-.7);
                 })
-                .lineToLinearHeading(new Pose2d(45, -38, Math.toRadians(0)))
-                .build();*/
-
-        Trajectory traj3_0 = drive.trajectoryBuilder(traj1_0.end())
-                .lineToLinearHeading(new Pose2d(60, -32, Math.toRadians(90)))
+                .lineToLinearHeading(new Pose2d(65, -22, Math.toRadians(90)))
                 .build();
 
-        Trajectory traj4_0 = drive.trajectoryBuilder(traj3_0.end())
-                .lineToConstantHeading(new Vector2d(60, 10))
+//        Trajectory traj3_4 = drive.trajectoryBuilder(traj2_4.end())
+//                .lineToLinearHeading(new Pose2d(63, -38, Math.toRadians(90)))
+//                .build();
+
+        Trajectory traj4_4 = drive.trajectoryBuilder(traj2_4.end())
+                .lineToConstantHeading(new Vector2d(67.5, 10),
+                        SampleMecanumDriveCancelable.getVelocityConstraint(30, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
+                        SampleMecanumDriveCancelable.getAccelerationConstraint(DriveConstants.MAX_ACCEL)
+                )
                 .build();
 
-        Trajectory traj4point0_0 = drive.trajectoryBuilder(traj4_0.end())
+        Trajectory traj4point0_4 = drive.trajectoryBuilder(traj4_4.end())
                 .addTemporalMarker(0, () -> {
-                    flap.setPosition(.4);
-                    turret.setPosition(.15);
-                    setVelocity(frontShoot,2700);
-                    setVelocity2(backShoot,2700);
+                    flap.setPosition(.39);
+                    turret.setPosition(.1);
+                    setVelocity(frontShoot,2500);
+                    setVelocity2(backShoot,2500);
                 })
-                .lineToLinearHeading(new Pose2d(0, 10, Math.toRadians(330)))
+                .lineToLinearHeading(new Pose2d(0, 10, Math.toRadians(335)))
                 .build();
 
-        Trajectory traj5_0 = drive.trajectoryBuilder(traj4point0_0.end())
+        Trajectory traj5_4 = drive.trajectoryBuilder(traj4point0_4.end())
                 .lineToLinearHeading(new Pose2d(20, 10, Math.toRadians(0)))
                 .build();
 
@@ -230,21 +240,21 @@ public class FourRingRed1 extends LinearOpMode {
 
         droptakeStopper.setPosition(0);
 
-        drive.followTrajectory(traj1_0);
+        drive.followTrajectory(traj1_4);
 
         sleep(150);
 
-        turret.setPosition(.16);
+        turret.setPosition(.22);
         sleep(700);
         shoot();
-        turret.setPosition(.25);
+        turret.setPosition(.285);
         sleep(700);
         shoot();
-        turret.setPosition(.33);
+        turret.setPosition(.35);
         sleep(700);
         shoot();
 
-        drive.followTrajectory(traj3_0);
+        drive.followTrajectory(traj2_4);
 
         while (wobbleArm2.getPosition() < .54) {
             wobbleArm1.setPosition(wobbleArm1.getPosition() + .01);
@@ -260,42 +270,26 @@ public class FourRingRed1 extends LinearOpMode {
             sleep(25);
         }
 
-        //drive.followTrajectory(traj3_0);
 
-        while (Math.abs(getAngle() + 90) > .5) {
-            frontRight.setPower(-.03 * getAngle());
-            backRight.setPower(-.03 * getAngle());
-            frontLeft.setPower(.03 * getAngle());
-            backLeft.setPower(.03 * getAngle());
-        }
-        intake.setPower(.8);
-        bottomRoller.setPower(-.7);
+        drive.followTrajectory(traj4_4);
 
-        drive.followTrajectory(traj4_0);
-
-        drive.followTrajectory(traj4point0_0);
+        drive.followTrajectory(traj4point0_4);
         sleep(1000);
 
-        while (Math.abs(getAngle() - 30) > .5) {
-            frontRight.setPower(-.03 * getAngle());
-            backRight.setPower(-.03 * getAngle());
-            frontLeft.setPower(.03 * getAngle());
-            backLeft.setPower(.03 * getAngle());
-        }
-
-        sleep(1500);
-        for (int i = 0; i < 3; i++) {
-            shoot();
-        }
+        shoot();
+        sleep(200);
+        shoot();
+        sleep(200);
+        shoot();
 
         frontShoot.setVelocity(0);
         backShoot.setVelocity(0);
+        intake.setPower(0);
+        bottomRoller.setPower(0);
 
-        sleep(3000);
+        drive.followTrajectory(traj5_4);
 
-        drive.followTrajectory(traj5_0);
-
-        flap.setPosition(.4);
+        flap.setPosition(.39);
         turret.setPosition(.15);
         shooterStopper.setPosition(.9);
 
@@ -371,4 +365,3 @@ public class FourRingRed1 extends LinearOpMode {
         return imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle;
     }
 }
-

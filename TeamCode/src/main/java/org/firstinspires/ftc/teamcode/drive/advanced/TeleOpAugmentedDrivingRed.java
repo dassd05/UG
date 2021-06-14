@@ -140,6 +140,10 @@ public class TeleOpAugmentedDrivingRed extends LinearOpMode {
         // See AutoTransferPose.java for further details
         drive.setPoseEstimate(PoseStorage.currentPose);
 
+        boolean intakeOn = false;
+        boolean reversed = false;
+
+        double reverse = 1;
 
         waitForStart();
 
@@ -147,20 +151,46 @@ public class TeleOpAugmentedDrivingRed extends LinearOpMode {
 
         while (opModeIsActive() && !isStopRequested()) {
 
+            if (gamepad2.left_bumper && reversed) {
+                reversed = false;
+            } else if (gamepad2.left_bumper && !reversed) {
+                reversed = true;
+            }
+
+            if (reversed) {
+                reverse = 1;
+            } else if (!reversed) {
+                reverse = -1;
+            }
+
+            if (gamepad2.right_bumper && intakeOn) {
+                intakeOn = false;
+            } else if (gamepad2.right_bumper && !intakeOn) {
+                intakeOn = true;
+            }
+
             drive.update();
 
             Pose2d poseEstimate = drive.getPoseEstimate();
 
+            if (intakeOn) {
+                intake.setPower(.8 * reverse);
+                bottomRoller.setPower(-.7 * reverse);
+            } else if (!intakeOn) {
+                intake.setPower(0);
+                bottomRoller.setPower(0);
+            }
+
             Vector2d input = new Vector2d(
-                    -gamepad1.left_stick_y,
-                    -gamepad1.left_stick_x
+                    -gamepad1.right_stick_y,
+                    gamepad1.right_stick_x
             ).rotated(-poseEstimate.getHeading() - Math.toRadians(270));
 
             drive.setWeightedDrivePower(
                     new Pose2d(
                             input.getX() * .7,
                             input.getY() * .7,
-                            (-gamepad1.right_stick_x * .7)
+                            (-gamepad1.left_stick_x * .7)
                     )
             );
 

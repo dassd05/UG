@@ -60,6 +60,12 @@ import static org.firstinspires.ftc.teamcode.drive.DriveConstants.kV;
  */
 @Config
 public class SampleMecanumDrive extends MecanumDrive {
+
+    private static final TrajectoryVelocityConstraint VEL_CONSTRAINT = getVelocityConstraint(MAX_VEL, MAX_ANG_VEL, TRACK_WIDTH);
+    private static final TrajectoryAccelerationConstraint ACCEL_CONSTRAINT = getAccelerationConstraint(MAX_ACCEL);
+
+    private TrajectoryFollower follower;
+
     public static PIDCoefficients TRANSLATIONAL_PID = new PIDCoefficients(7, 0, .5);
     public static PIDCoefficients HEADING_PID = new PIDCoefficients(8, 0, 0);
 
@@ -88,7 +94,7 @@ public class SampleMecanumDrive extends MecanumDrive {
 
     private TrajectoryVelocityConstraint velConstraint;
     private TrajectoryAccelerationConstraint accelConstraint;
-    private TrajectoryFollower follower;
+    //private TrajectoryFollower follower;
 
     private LinkedList<Pose2d> poseHistory;
 
@@ -418,5 +424,15 @@ public class SampleMecanumDrive extends MecanumDrive {
         // flat on a surface
 
         return (double) imu.getAngularVelocity().zRotationRate;
+    }
+    public static TrajectoryVelocityConstraint getVelocityConstraint(double maxVel, double maxAngularVel, double trackWidth) {
+        return new MinVelocityConstraint(Arrays.asList(
+                new AngularVelocityConstraint(maxAngularVel),
+                new MecanumVelocityConstraint(maxVel, trackWidth)
+        ));
+    }
+
+    public static TrajectoryAccelerationConstraint getAccelerationConstraint(double maxAccel) {
+        return new ProfileAccelerationConstraint(maxAccel);
     }
 }

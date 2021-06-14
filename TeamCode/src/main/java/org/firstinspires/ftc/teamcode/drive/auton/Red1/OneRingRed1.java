@@ -7,6 +7,8 @@ import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.geometry.Vector2d;
 import com.acmerobotics.roadrunner.trajectory.Trajectory;
+import com.qualcomm.hardware.bosch.BNO055IMU;
+import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -17,12 +19,27 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.qualcomm.robotcore.hardware.configuration.typecontainers.MotorConfigurationType;
 
+import org.firstinspires.ftc.robotcore.external.navigation.Acceleration;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
+import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
+import org.firstinspires.ftc.robotcore.external.navigation.Position;
+import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
+import org.firstinspires.ftc.teamcode.drive.DriveConstants;
 import org.firstinspires.ftc.teamcode.drive.advanced.PoseStorage;
 import org.firstinspires.ftc.teamcode.drive.advanced.SampleMecanumDriveCancelable;
+
+import static org.firstinspires.ftc.teamcode.drive.DriveConstants.TRACK_WIDTH;
 
 
 @Autonomous(group = "R1")
 public class OneRingRed1 extends LinearOpMode {
+
+    public BNO055IMU imu;
+
+    Orientation angles;
+    Acceleration gravity;
 
     public static double MOTOR_TICKS_PER_REV = 28;
     public static double MOTOR_GEAR_RATIO = 1;
@@ -36,15 +53,17 @@ public class OneRingRed1 extends LinearOpMode {
 
     private DcMotor intake, bottomRoller;
 
+    private DcMotor frontLeft, backRight, backLeft, frontRight;
+
     /********************************************************************************************************************
      *
      */
 
-    public static PIDFCoefficients MOTOR_VELO_PID = new PIDFCoefficients(45,0,0,25);
-    public static PIDFCoefficients MOTOR_VELO_PID_2 = new PIDFCoefficients(45,0,0,25);
+    public static PIDFCoefficients MOTOR_VELO_PID = new PIDFCoefficients(45,0,0,21.5);
+    public static PIDFCoefficients MOTOR_VELO_PID_2 = new PIDFCoefficients(45,0,0,21.5);
 
-    public static double lastKf = 16.7;
-    public static double last_Kf_2 = 16.7;
+    public static double lastKf = 16;
+    public static double lastKf_2 = 16;
 
     /********************************************************************************************************************
      *
@@ -94,6 +113,28 @@ public class OneRingRed1 extends LinearOpMode {
         intake = hardwareMap.get(DcMotor.class, "intake");
         bottomRoller = hardwareMap.get(DcMotor.class, "bottomRoller");
 
+        frontLeft = hardwareMap.get(DcMotor.class, "frontLeft");
+        backRight = hardwareMap.get(DcMotor.class, "backRight");
+        backLeft = hardwareMap.get(DcMotor.class, "backLeft");
+        frontRight = hardwareMap.get(DcMotor.class, "frontRight");
+
+
+        BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
+        parameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
+        parameters.accelUnit = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
+        parameters.calibrationDataFile = "BNO055IMUCalibration.json"; // see the calibration sample opmode
+        parameters.loggingEnabled = true;
+        parameters.loggingTag = "IMU";
+        parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
+
+
+        imu = hardwareMap.get(BNO055IMU.class, "imu");
+        imu.initialize(parameters);
+
+        composeTelemetry();
+
+        imu.startAccelerationIntegration(new Position(), new Velocity(), 1000);
+
 
         telemetry = new MultipleTelemetry(telemetry, dashboard.getTelemetry());
 
@@ -108,15 +149,14 @@ public class OneRingRed1 extends LinearOpMode {
         drive.setPoseEstimate(startPose);
 
 
-        wobbleClaw.setPosition(.7);
+        wobbleClaw.setPosition(.68);
         wobbleArm1.setPosition(0);
         wobbleArm2.setPosition(0);
 
-        turret.setPosition(.2);
-        flap.setPosition(.425);
-        /**
-         * change flap
-         */
+        turret.setPosition(.15);
+        flap.setPosition(.41);
+
+        shoot();
 
         droptakeStopper.setPosition(.25);
         shooterStopper.setPosition(.9);
@@ -131,24 +171,33 @@ public class OneRingRed1 extends LinearOpMode {
 
         if (isStopRequested()) return;
 
+        if (lastKf_2 != MOTOR_VELO_PID_2.f) {
+            MOTOR_VELO_PID_2.f = lastKf_2 * 12 / batteryVoltageSensor.getVoltage();
+            lastKf_2 = MOTOR_VELO_PID_2.f;
+        }
+
+        if (lastKf != MOTOR_VELO_PID.f) {
+            MOTOR_VELO_PID.f = lastKf * 12 / batteryVoltageSensor.getVoltage();
+            lastKf = MOTOR_VELO_PID.f;
+        }
+
+        setPIDFCoefficients2(backShoot, MOTOR_VELO_PID_2);
+        setPIDFCoefficients(frontShoot, MOTOR_VELO_PID);
+
+
         /*******************************************************************************************
          *
          */
         Trajectory traj1_1 = drive.trajectoryBuilder(startPose)
-                .addTemporalMarker(700, () -> {
-                    shootFlicker.setPosition(.35);
+                .addTemporalMarker(0, () -> {
+                    setVelocity(frontShoot,2540);
+                    setVelocity2(backShoot,2540);
                 })
-                .addTemporalMarker(980, () -> {
-                    shootFlicker.setPosition(.57);
-                })
-                .splineTo(new Vector2d(-24, -17), 0)
+                .splineToConstantHeading(new Vector2d(-15, 10), 0)
                 .addDisplacementMarker(() -> {
-                    flap.setPosition(.4);
+                    shooterStopper.setPosition(.4);
                 })
-                .splineTo(new Vector2d(-24, 10), 0)
-                .splineTo(new Vector2d(-15, 10), 0)
                 .build();
-
 
         Trajectory traj2_1 = drive.trajectoryBuilder(traj1_1.end())
                 .addTemporalMarker(0, () -> {
@@ -159,10 +208,27 @@ public class OneRingRed1 extends LinearOpMode {
                 .build();
 
         Trajectory traj3_1 = drive.trajectoryBuilder(traj2_1.end())
-                .lineToLinearHeading(new Pose2d(45, 10, Math.toRadians(90)))
+                .lineToLinearHeading(new Pose2d(65, -5, Math.toRadians(90)))
                 .build();
 
         Trajectory traj4_1 = drive.trajectoryBuilder(traj3_1.end())
+                .lineToConstantHeading(new Vector2d(67.5, 23),
+                        SampleMecanumDriveCancelable.getVelocityConstraint(30, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
+                        SampleMecanumDriveCancelable.getAccelerationConstraint(DriveConstants.MAX_ACCEL)
+                )
+                .build();
+
+        Trajectory traj4point0_1 = drive.trajectoryBuilder(traj4_1.end())
+                .addTemporalMarker(0, () -> {
+                    flap.setPosition(.39);
+                    turret.setPosition(.18);
+                    setVelocity(frontShoot,2500);
+                    setVelocity2(backShoot,2500);
+                })
+                .lineToLinearHeading(new Pose2d(0, 10, Math.toRadians(337)))
+                .build();
+
+        Trajectory traj5_1 = drive.trajectoryBuilder(traj4point0_1.end())
                 .lineToLinearHeading(new Pose2d(20, 10, Math.toRadians(0)))
                 .build();
 
@@ -171,24 +237,19 @@ public class OneRingRed1 extends LinearOpMode {
          */
 
         droptakeStopper.setPosition(0);
-        setVelocity(frontShoot, 2700);
-        setVelocity(frontShoot, 2700);
-        sleep(350);
-        intake.setPower(.8);
-        bottomRoller.setPower(-.7);
 
         drive.followTrajectory(traj1_1);
 
         sleep(150);
 
-        turret.setPosition(.2);
-        sleep(300);
+        turret.setPosition(.22);
+        sleep(700);
         shoot();
-        turret.setPosition(.26);
-        sleep(300);
+        turret.setPosition(.285);
+        sleep(700);
         shoot();
-        turret.setPosition(.32);
-        sleep(300);
+        turret.setPosition(.35);
+        sleep(700);
         shoot();
 
         drive.followTrajectory(traj2_1);
@@ -198,23 +259,63 @@ public class OneRingRed1 extends LinearOpMode {
             wobbleArm2.setPosition(wobbleArm2.getPosition() + .01);
             sleep(25);
         }
-
-        drive.followTrajectory(traj3_1);
+        wobbleClaw.setPosition(.7);
+        sleep(500);
 
         while (wobbleArm2.getPosition() > 0) {
             wobbleArm1.setPosition(wobbleArm1.getPosition() - .01);
             wobbleArm2.setPosition(wobbleArm2.getPosition() - .01);
             sleep(25);
         }
-        wobbleClaw.setPosition(.7);
+
+        intake.setPower(.8);
+        bottomRoller.setPower(-.7);
+
+        drive.followTrajectory(traj3_1);
+
+//        while (Math.abs(getAngle() + 90) > .5) {
+//            frontRight.setPower(-.03 * getAngle());
+//            backRight.setPower(-.03 * getAngle());
+//            frontLeft.setPower(.03 * getAngle());
+//            backLeft.setPower(.03 * getAngle());
+//        }
 
         drive.followTrajectory(traj4_1);
 
-        flap.setPosition(.4);
+        drive.followTrajectory(traj4point0_1);
+        sleep(1000);
+
+//        while (Math.abs(getAngle() - 30) > .5) {
+//            frontRight.setPower(-.03 * getAngle());
+//            backRight.setPower(-.03 * getAngle());
+//            frontLeft.setPower(.03 * getAngle());
+//            backLeft.setPower(.03 * getAngle());
+//        }
+        shoot();
+        sleep(200);
+        shoot();
+        sleep(200);
+        shoot();
+
+        frontShoot.setVelocity(0);
+        backShoot.setVelocity(0);
+        intake.setPower(0);
+        bottomRoller.setPower(0);
+
+        drive.followTrajectory(traj5_1);
+
+        flap.setPosition(.39);
         turret.setPosition(.15);
         shooterStopper.setPosition(.9);
 
         PoseStorage.currentPose = drive.getPoseEstimate();
+
+        while (Math.abs(getAngle()) > .5) {
+            frontRight.setPower(-.03 * getAngle());
+            backRight.setPower(-.03 * getAngle());
+            frontLeft.setPower(.03 * getAngle());
+            backLeft.setPower(.03 * getAngle());
+        }
     }
 
     public void shoot() {
@@ -265,6 +366,18 @@ public class OneRingRed1 extends LinearOpMode {
         motor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(
                 coefficients.p, coefficients.i, coefficients.d, coefficients.f * 12 / batteryVoltageSensor.getVoltage()
         ));
+    }
+    void composeTelemetry() {
+        telemetry.addAction(new Runnable() {
+            @Override
+            public void run() {
+                angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+                gravity = imu.getGravity();
+            }
+        });
+    }
+    public double getAngle() {
+        return imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle;
     }
 }
 

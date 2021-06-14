@@ -30,6 +30,8 @@ import org.firstinspires.ftc.teamcode.drive.DriveConstants;
 import org.firstinspires.ftc.teamcode.drive.advanced.PoseStorage;
 import org.firstinspires.ftc.teamcode.drive.advanced.SampleMecanumDriveCancelable;
 
+import static org.firstinspires.ftc.teamcode.drive.DriveConstants.TRACK_WIDTH;
+
 
 @Autonomous(group = "R1")
 public class ZeroRingRed1 extends LinearOpMode {
@@ -57,11 +59,11 @@ public class ZeroRingRed1 extends LinearOpMode {
      *
      */
 
-    public static PIDFCoefficients MOTOR_VELO_PID = new PIDFCoefficients(45,0,0,25);
-    public static PIDFCoefficients MOTOR_VELO_PID_2 = new PIDFCoefficients(45,0,0,25);
+    public static PIDFCoefficients MOTOR_VELO_PID = new PIDFCoefficients(45,0,0,21.5);
+    public static PIDFCoefficients MOTOR_VELO_PID_2 = new PIDFCoefficients(45,0,0,21.5);
 
-    public static double lastKf = 16.7;
-    public static double lastKf_2 = 16.7;
+    public static double lastKf = 15.9;
+    public static double lastKf_2 = 15.9;
 
     /********************************************************************************************************************
      *
@@ -152,7 +154,9 @@ public class ZeroRingRed1 extends LinearOpMode {
         wobbleArm2.setPosition(0);
 
         turret.setPosition(.15);
-        flap.setPosition(.425);
+        flap.setPosition(.41);
+
+        shoot();
 
         droptakeStopper.setPosition(.25);
         shooterStopper.setPosition(.9);
@@ -186,8 +190,8 @@ public class ZeroRingRed1 extends LinearOpMode {
          */
         Trajectory traj1_0 = drive.trajectoryBuilder(startPose)
                 .addTemporalMarker(0, () -> {
-                    setVelocity(frontShoot,2700);
-                    setVelocity2(backShoot,2700);
+                    setVelocity(frontShoot,2540);
+                    setVelocity2(backShoot,2540);
                 })
                 .splineToConstantHeading(new Vector2d(-15, 10), 0)
                 .addDisplacementMarker(() -> {
@@ -204,24 +208,24 @@ public class ZeroRingRed1 extends LinearOpMode {
                 .build();
 
         Trajectory traj3_0 = drive.trajectoryBuilder(traj2_0.end())
-                .lineToLinearHeading(new Pose2d(60, -38, Math.toRadians(90)))
+                .lineToLinearHeading(new Pose2d(65, -38, Math.toRadians(90)))
                 .build();
 
         Trajectory traj4_0 = drive.trajectoryBuilder(traj3_0.end())
-                .lineToConstantHeading(new Vector2d(60, 10)
-//                        SampleMecanumDriveCancelable.getVelocityConstraint(15, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
-//                        SampleMecanumDriveCancelable.getAccelerationConstraint(DriveConstants.MAX_ACCEL)
+                .lineToConstantHeading(new Vector2d(67.5, 23),
+                        SampleMecanumDriveCancelable.getVelocityConstraint(30, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
+                        SampleMecanumDriveCancelable.getAccelerationConstraint(DriveConstants.MAX_ACCEL)
                 )
                 .build();
 
         Trajectory traj4point0_0 = drive.trajectoryBuilder(traj4_0.end())
                 .addTemporalMarker(0, () -> {
-                    flap.setPosition(.4);
-                    turret.setPosition(.15);
-                    setVelocity(frontShoot,2700);
-                    setVelocity2(backShoot,2700);
+                    flap.setPosition(.39);
+                    turret.setPosition(.18);
+                    setVelocity(frontShoot,2500);
+                    setVelocity2(backShoot,2500);
                 })
-                .lineToLinearHeading(new Pose2d(0, 10, Math.toRadians(330)))
+                .lineToLinearHeading(new Pose2d(0, 10, Math.toRadians(337)))
                 .build();
 
         Trajectory traj5_0 = drive.trajectoryBuilder(traj4point0_0.end())
@@ -238,13 +242,13 @@ public class ZeroRingRed1 extends LinearOpMode {
 
         sleep(150);
 
-        turret.setPosition(.16);
+        turret.setPosition(.22);
         sleep(700);
         shoot();
-        turret.setPosition(.25);
+        turret.setPosition(.285);
         sleep(700);
         shoot();
-        turret.setPosition(.33);
+        turret.setPosition(.35);
         sleep(700);
         shoot();
 
@@ -264,42 +268,30 @@ public class ZeroRingRed1 extends LinearOpMode {
             sleep(25);
         }
 
-        drive.followTrajectory(traj3_0);
-
-        while (Math.abs(getAngle() + 90) > .5) {
-            frontRight.setPower(-.03 * getAngle());
-            backRight.setPower(-.03 * getAngle());
-            frontLeft.setPower(.03 * getAngle());
-            backLeft.setPower(.03 * getAngle());
-        }
         intake.setPower(.8);
         bottomRoller.setPower(-.7);
+
+        drive.followTrajectory(traj3_0);
 
         drive.followTrajectory(traj4_0);
 
         drive.followTrajectory(traj4point0_0);
         sleep(1000);
 
-        while (Math.abs(getAngle() - 30) > .5) {
-            frontRight.setPower(-.03 * getAngle());
-            backRight.setPower(-.03 * getAngle());
-            frontLeft.setPower(.03 * getAngle());
-            backLeft.setPower(.03 * getAngle());
-        }
-
-        sleep(1500);
-        for (int i = 0; i < 3; i++) {
-            shoot();
-        }
+        shoot();
+        sleep(200);
+        shoot();
+        sleep(200);
+        shoot();
 
         frontShoot.setVelocity(0);
         backShoot.setVelocity(0);
-
-        sleep(3000);
+        intake.setPower(0);
+        bottomRoller.setPower(0);
 
         drive.followTrajectory(traj5_0);
 
-        flap.setPosition(.4);
+        flap.setPosition(.39);
         turret.setPosition(.15);
         shooterStopper.setPosition(.9);
 
