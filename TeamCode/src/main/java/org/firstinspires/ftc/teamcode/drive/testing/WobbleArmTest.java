@@ -6,75 +6,30 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
 
-@Disabled
 @TeleOp (name = "WobbleArmTest", group = "testing" )
 public class WobbleArmTest extends LinearOpMode {
 
-    private Servo wobbleClawServo, wobbleArmServo;
-    private DcMotor intake1, intake2;
-    private DcMotor frontShoot, backShoot;
+    private Servo wobbleArm1, wobbleArm2;
 
     @Override
     public void runOpMode() {
 
-        wobbleClawServo = hardwareMap.servo.get("wobbleClawServo");
-        wobbleArmServo = hardwareMap.servo.get("wobbleArmServo");
-
-        intake1 = hardwareMap.dcMotor.get("intake1");
-        intake2 = hardwareMap.dcMotor.get("intake2");
-
-        frontShoot = hardwareMap.dcMotor.get("frontShoot");
-        backShoot = hardwareMap.dcMotor.get("backShoot");
+        wobbleArm2 = hardwareMap.servo.get("wobbleArm2");
+        wobbleArm1 = hardwareMap.servo.get("wobbleArm1");
 
 
         waitForStart();
 
         if (opModeIsActive()) {
             while(opModeIsActive()) {
-                intake1.setPower(0);
-                intake2.setPower(0);
+                wobbleArm1.setPosition(0);
+                wobbleArm2.setPosition(0);
+                sleep(3000);
 
-                frontShoot.setPower(0);
-                backShoot.setPower(0);
-
-                if (gamepad1.dpad_up) {
-                    wobbleClawServo.setPosition(.8);
-                    sleep(300);
-                    wobbleArmServo.setPosition(.8);
-                }
-                //lifting wobble goal
-
-                if (gamepad1.dpad_down) {
-                    wobbleArmServo.setPosition(.3);
-                    wobbleClawServo.setPosition(.3);
-                }
-                //setting wobble goal down
-
-                if (gamepad1.dpad_right) {
-                    wobbleArmServo.setPosition(.5);
-                    sleep(200);
-                    wobbleClawServo.setPosition(.3);
-                }
-                //dropping wobble goal down
+                wobbleArm1.setPosition(.2);
+                wobbleArm2.setPosition(.2);
+                sleep(3000);
             }
-        }
-    }
-    public void moveWobbleArm (double targetPosition, long wait) {
-        double movement;
-
-        while (wobbleArmServo.getPosition() !=  targetPosition) {
-            double currentPosition = wobbleArmServo.getPosition();
-            double difference = currentPosition - targetPosition;
-            if (difference > 0) {
-                movement = -.01;
-            } else if (difference < 0) {
-                movement = .01;
-            } else {
-                movement = 0; //shouldn't happen
-            }
-            wobbleArmServo.setPosition(currentPosition + movement);
-            wobbleArmServo/*2*/.setPosition(currentPosition + movement);
-            sleep(wait);
         }
     }
 }

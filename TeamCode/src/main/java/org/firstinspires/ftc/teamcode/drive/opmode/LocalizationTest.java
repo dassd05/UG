@@ -43,8 +43,8 @@ public class LocalizationTest extends LinearOpMode {
 
         drive.setPoseEstimate(startPose);
 
-        double offsetRight = encoderTicksToInches(rightEncoder.getCurrentPosition());
-        double offsetLeft = encoderTicksToInches(leftEncoder.getCurrentPosition());
+        double offsetRight = encoderTicksToInches(1.00254307207 * rightEncoder.getCurrentPosition());
+        double offsetLeft = encoderTicksToInches(1.0058325526 * leftEncoder.getCurrentPosition());
         double offsetHorizontal = encoderTicksToInches(horizontalEncoder.getCurrentPosition());
 
 
@@ -62,8 +62,8 @@ public class LocalizationTest extends LinearOpMode {
             drive.update();
 
             Pose2d poseEstimate = drive.getPoseEstimate();
-            telemetry.addData("right", encoderTicksToInches(rightEncoder.getCurrentPosition()) - offsetRight);
-            telemetry.addData("left", encoderTicksToInches(leftEncoder.getCurrentPosition()) - offsetLeft);
+            telemetry.addData("right", 1.00254307207 * encoderTicksToInches(rightEncoder.getCurrentPosition()) - offsetRight);
+            telemetry.addData("left", 1.0058325526 * encoderTicksToInches(leftEncoder.getCurrentPosition()) - offsetLeft);
             telemetry.addData("horizontal", encoderTicksToInches(horizontalEncoder.getCurrentPosition()) - offsetHorizontal);
             telemetry.addData("x", poseEstimate.getX());
             telemetry.addData("y", poseEstimate.getY());
