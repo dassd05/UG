@@ -44,8 +44,9 @@ import org.openftc.easyopencv.OpenCvPipeline;
 import org.openftc.easyopencv.OpenCvWebcam;
 
 import static org.firstinspires.ftc.teamcode.drive.auton.Red1.AutonRingDetectingRed1.RingDetecting.pipeline;
+import static org.firstinspires.ftc.teamcode.drive.auton.Red1.AutonRingDetectingRed1.RingDetecting.RingDetection.avg1;
 
-@Autonomous(group = "R1")
+@Autonomous(group = "R2")
 public class AutonRingDetectingRed1 extends LinearOpMode {
 
     protected WebcamName webcamName;
@@ -86,8 +87,8 @@ public class AutonRingDetectingRed1 extends LinearOpMode {
     public static PIDFCoefficients MOTOR_VELO_PID = new PIDFCoefficients(45,0,0,21.5);
     public static PIDFCoefficients MOTOR_VELO_PID_2 = new PIDFCoefficients(45,0,0,21.5);
 
-    public static double lastKf = 17.3;
-    public static double lastKf_2 = 17.3;
+    public static double lastKf = 16.45;
+    public static double lastKf_2 = 16.45;
 
     /********************************************************************************************************************
      *
@@ -105,13 +106,22 @@ public class AutonRingDetectingRed1 extends LinearOpMode {
         webcamName = hardwareMap.get(WebcamName.class, "Webcam 1");
         webcam = OpenCvCameraFactory.getInstance().createWebcam(webcamName, cameraMonitorViewId);
         webcam.setPipeline(pipeline);
+
         webcam.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener() {
             @Override
             public void onOpened() {
+                webcam.openCameraDevice();
                 webcam.startStreaming(1280, 960, OpenCvCameraRotation.UPRIGHT);
                 FtcDashboard.getInstance().startCameraStream(webcam, 0);
             }
         });
+
+//        webcam.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener() {
+//            @Override
+//            public void onOpened() {
+//                webcam.startStreaming(1280, 960, OpenCvCameraRotation.UPRIGHT);
+//            }
+//        });
 
         batteryVoltageSensor = hardwareMap.voltageSensor.iterator().next();
 
@@ -189,7 +199,7 @@ public class AutonRingDetectingRed1 extends LinearOpMode {
         drive.setPoseEstimate(startPose);
 
 
-        wobbleClaw.setPosition(.68);
+        wobbleClaw.setPosition(.6);
         wobbleArm1.setPosition(0);
         wobbleArm2.setPosition(0);
 
@@ -243,349 +253,240 @@ public class AutonRingDetectingRed1 extends LinearOpMode {
         setPIDFCoefficients2(backShoot, MOTOR_VELO_PID_2);
         setPIDFCoefficients(frontShoot, MOTOR_VELO_PID);
 
-
-                switch (HowManyRings) {
-                    case FourRings:
-                        Trajectory traj1_4 = drive.trajectoryBuilder(startPose)
-                                .addTemporalMarker(0, () -> {
-                                    setVelocity(frontShoot,2540);
-                                    setVelocity2(backShoot,2540);
-                                })
-                                .splineToConstantHeading(new Vector2d(-15, 10), 0)
-                                .addDisplacementMarker(() -> {
-                                    shooterStopper.setPosition(.4);
-                                })
-                                .build();
-
-                        Trajectory traj2_4 = drive.trajectoryBuilder(traj1_4.end())
-                                .addTemporalMarker(0, () -> {
-                                    frontShoot.setVelocity(0);
-                                    backShoot.setVelocity(0);
-                                    intake.setPower(.8);
-                                    bottomRoller.setPower(-.7);
-                                })
-                                .lineToLinearHeading(new Pose2d(65, -22, Math.toRadians(90)))
-                                .build();
-
-                        Trajectory traj4_4 = drive.trajectoryBuilder(traj2_4.end())
-                                .lineToConstantHeading(new Vector2d(67.5, 10),
-                                        SampleMecanumDriveCancelable.getVelocityConstraint(30, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
-                                        SampleMecanumDriveCancelable.getAccelerationConstraint(DriveConstants.MAX_ACCEL)
-                                )
-                                .build();
-
-                        Trajectory traj4point0_4 = drive.trajectoryBuilder(traj4_4.end())
-                                .addTemporalMarker(0, () -> {
-                                    flap.setPosition(.39);
-                                    turret.setPosition(.18);
-                                    setVelocity(frontShoot,2500);
-                                    setVelocity2(backShoot,2500);
-                                })
-                                .lineToLinearHeading(new Pose2d(0, 10, Math.toRadians(335)))
-                                .build();
-
-                        Trajectory traj5_4 = drive.trajectoryBuilder(traj4point0_4.end())
-                                .lineToLinearHeading(new Pose2d(20, 10, Math.toRadians(0)))
-                                .build();
-
-                        droptakeStopper.setPosition(0);
-
-                        drive.followTrajectory(traj1_4);
-
-                        sleep(150);
-
-                        turret.setPosition(.21);
-                        sleep(700);
-                        shoot();
-                        turret.setPosition(.285);
-                        sleep(700);
-                        shoot();
-                        turret.setPosition(.35);
-                        sleep(700);
-                        shoot();
-
-                        drive.followTrajectory(traj2_4);
-
-                        while (wobbleArm2.getPosition() < .54) {
-                            wobbleArm1.setPosition(wobbleArm1.getPosition() + .01);
-                            wobbleArm2.setPosition(wobbleArm2.getPosition() + .01);
-                            sleep(25);
-                        }
-                        wobbleClaw.setPosition(.7);
-                        sleep(500);
-
-                        while (wobbleArm2.getPosition() > 0) {
-                            wobbleArm1.setPosition(wobbleArm1.getPosition() - .01);
-                            wobbleArm2.setPosition(wobbleArm2.getPosition() - .01);
-                            sleep(25);
-                        }
-
-
-                        drive.followTrajectory(traj4_4);
-
-                        drive.followTrajectory(traj4point0_4);
-                        sleep(1000);
-
-                        shoot();
-                        sleep(200);
-                        shoot();
-                        sleep(200);
-                        shoot();
-
-                        frontShoot.setVelocity(0);
-                        backShoot.setVelocity(0);
-                        intake.setPower(0);
-                        bottomRoller.setPower(0);
-
-                        drive.followTrajectory(traj5_4);
-
-                        flap.setPosition(.39);
-                        turret.setPosition(.15);
-                        shooterStopper.setPosition(.9);
-
-                        PoseStorage.currentPose = drive.getPoseEstimate();
-
-                        while (Math.abs(getAngle()) > .5) {
-                            frontRight.setPower(-.03 * getAngle());
-                            backRight.setPower(-.03 * getAngle());
-                            frontLeft.setPower(.03 * getAngle());
-                            backLeft.setPower(.03 * getAngle());
-                        }
-                        break;
-
-                    case OneRing:
-                        Trajectory traj1_1 = drive.trajectoryBuilder(startPose)
-                                .addTemporalMarker(0, () -> {
-                                    setVelocity(frontShoot,2540);
-                                    setVelocity2(backShoot,2540);
-                                })
-                                .splineToConstantHeading(new Vector2d(-15, 10), 0)
-                                .addDisplacementMarker(() -> {
-                                    shooterStopper.setPosition(.4);
-                                })
-                                .build();
-
-                        Trajectory traj2_1 = drive.trajectoryBuilder(traj1_1.end())
-                                .addTemporalMarker(0, () -> {
-                                    frontShoot.setVelocity(0);
-                                    backShoot.setVelocity(0);
-                                })
-                                .lineToLinearHeading(new Pose2d(45, 0, Math.toRadians(90)))
-                                .build();
-
-                        Trajectory traj3_1 = drive.trajectoryBuilder(traj2_1.end())
-                                .lineToLinearHeading(new Pose2d(65, -5, Math.toRadians(90)))
-                                .build();
-
-                        Trajectory traj4_1 = drive.trajectoryBuilder(traj3_1.end())
-                                .lineToConstantHeading(new Vector2d(67.5, 23),
-                                        SampleMecanumDriveCancelable.getVelocityConstraint(30, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
-                                        SampleMecanumDriveCancelable.getAccelerationConstraint(DriveConstants.MAX_ACCEL)
-                                )
-                                .build();
-
-                        Trajectory traj4point0_1 = drive.trajectoryBuilder(traj4_1.end())
-                                .addTemporalMarker(0, () -> {
-                                    flap.setPosition(.39);
-                                    turret.setPosition(.18);
-                                    setVelocity(frontShoot,2500);
-                                    setVelocity2(backShoot,2500);
-                                })
-                                .lineToLinearHeading(new Pose2d(0, 10, Math.toRadians(337)))
-                                .build();
-
-                        Trajectory traj5_1 = drive.trajectoryBuilder(traj4point0_1.end())
-                                .lineToLinearHeading(new Pose2d(20, 10, Math.toRadians(0)))
-                                .build();
-
-                        droptakeStopper.setPosition(0);
-
-                        drive.followTrajectory(traj1_1);
-
-                        sleep(150);
-
-                        turret.setPosition(.21);
-                        sleep(700);
-                        shoot();
-                        turret.setPosition(.285);
-                        sleep(700);
-                        shoot();
-                        turret.setPosition(.35);
-                        sleep(700);
-                        shoot();
-
-                        drive.followTrajectory(traj2_1);
-
-                        while (wobbleArm2.getPosition() < .54) {
-                            wobbleArm1.setPosition(wobbleArm1.getPosition() + .01);
-                            wobbleArm2.setPosition(wobbleArm2.getPosition() + .01);
-                            sleep(25);
-                        }
-                        wobbleClaw.setPosition(.7);
-                        sleep(500);
-
-                        while (wobbleArm2.getPosition() > 0) {
-                            wobbleArm1.setPosition(wobbleArm1.getPosition() - .01);
-                            wobbleArm2.setPosition(wobbleArm2.getPosition() - .01);
-                            sleep(25);
-                        }
-
-                        intake.setPower(.8);
-                        bottomRoller.setPower(-.7);
-
-                        drive.followTrajectory(traj3_1);
-
-
-                        drive.followTrajectory(traj4_1);
-
-                        drive.followTrajectory(traj4point0_1);
-                        sleep(1000);
-
-                        shoot();
-                        sleep(200);
-                        shoot();
-                        sleep(200);
-                        shoot();
-
-                        frontShoot.setVelocity(0);
-                        backShoot.setVelocity(0);
-                        intake.setPower(0);
-                        bottomRoller.setPower(0);
-
-                        drive.followTrajectory(traj5_1);
-
-                        flap.setPosition(.39);
-                        turret.setPosition(.15);
-                        shooterStopper.setPosition(.9);
-
-                        PoseStorage.currentPose = drive.getPoseEstimate();
-
-                        while (Math.abs(getAngle()) > .5) {
-                            frontRight.setPower(-.03 * getAngle());
-                            backRight.setPower(-.03 * getAngle());
-                            frontLeft.setPower(.03 * getAngle());
-                            backLeft.setPower(.03 * getAngle());
-                        }
-
-                    case ZeroRings:
-                        Trajectory traj1_0 = drive.trajectoryBuilder(startPose)
-                                .addTemporalMarker(0, () -> {
-                                    setVelocity(frontShoot,2540);
-                                    setVelocity2(backShoot,2540);
-                                })
-                                .splineToConstantHeading(new Vector2d(-15, 10), 0)
-                                .addDisplacementMarker(() -> {
-                                    shooterStopper.setPosition(.4);
-                                })
-                                .build();
-
-                        Trajectory traj2_0 = drive.trajectoryBuilder(traj1_0.end())
-                                .addTemporalMarker(0, () -> {
-                                    frontShoot.setVelocity(0);
-                                    backShoot.setVelocity(0);
-                                })
-                                .lineToLinearHeading(new Pose2d(45, -38, Math.toRadians(0)))
-                                .build();
-
-                        Trajectory traj3_0 = drive.trajectoryBuilder(traj2_0.end())
-                                .lineToLinearHeading(new Pose2d(65, -38, Math.toRadians(90)))
-                                .build();
-
-                        Trajectory traj4_0 = drive.trajectoryBuilder(traj3_0.end())
-                                .lineToConstantHeading(new Vector2d(67.5, 23),
-                                        SampleMecanumDriveCancelable.getVelocityConstraint(30, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
-                                        SampleMecanumDriveCancelable.getAccelerationConstraint(DriveConstants.MAX_ACCEL)
-                                )
-                                .build();
-
-                        Trajectory traj4point0_0 = drive.trajectoryBuilder(traj4_0.end())
-                                .addTemporalMarker(0, () -> {
-                                    flap.setPosition(.39);
-                                    turret.setPosition(.18);
-                                    setVelocity(frontShoot,2500);
-                                    setVelocity2(backShoot,2500);
-                                })
-                                .lineToLinearHeading(new Pose2d(0, 10, Math.toRadians(337)))
-                                .build();
-
-                        Trajectory traj5_0 = drive.trajectoryBuilder(traj4point0_0.end())
-                                .lineToLinearHeading(new Pose2d(20, 10, Math.toRadians(0)))
-                                .build();
-
-                        droptakeStopper.setPosition(0);
-
-                        drive.followTrajectory(traj1_0);
-
-                        sleep(150);
-
-                        turret.setPosition(.21);
-                        sleep(700);
-                        shoot();
-                        turret.setPosition(.285);
-                        sleep(700);
-                        shoot();
-                        turret.setPosition(.35);
-                        sleep(700);
-                        shoot();
-
-                        drive.followTrajectory(traj2_0);
-
-                        while (wobbleArm2.getPosition() < .54) {
-                            wobbleArm1.setPosition(wobbleArm1.getPosition() + .01);
-                            wobbleArm2.setPosition(wobbleArm2.getPosition() + .01);
-                            sleep(25);
-                        }
-                        wobbleClaw.setPosition(.7);
-                        sleep(500);
-
-                        while (wobbleArm2.getPosition() > 0) {
-                            wobbleArm1.setPosition(wobbleArm1.getPosition() - .01);
-                            wobbleArm2.setPosition(wobbleArm2.getPosition() - .01);
-                            sleep(25);
-                        }
-
-                        intake.setPower(.8);
-                        bottomRoller.setPower(-.7);
-
-                        drive.followTrajectory(traj3_0);
-
-                        drive.followTrajectory(traj4_0);
-
-                        drive.followTrajectory(traj4point0_0);
-                        sleep(1000);
-
-                        shoot();
-                        sleep(200);
-                        shoot();
-                        sleep(200);
-                        shoot();
-
-                        frontShoot.setVelocity(0);
-                        backShoot.setVelocity(0);
-                        intake.setPower(0);
-                        bottomRoller.setPower(0);
-
-                        drive.followTrajectory(traj5_0);
-
-                        flap.setPosition(.39);
-                        turret.setPosition(.15);
-                        shooterStopper.setPosition(.9);
-
-                        PoseStorage.currentPose = drive.getPoseEstimate();
-
-                        while (Math.abs(getAngle()) > .5) {
-                            frontRight.setPower(-.03 * getAngle());
-                            backRight.setPower(-.03 * getAngle());
-                            frontLeft.setPower(.03 * getAngle());
-                            backLeft.setPower(.03 * getAngle());
-                        }
-
-                        break;
-
-                    case Default:
+        boolean gyro = true;
+
+
+        switch (HowManyRings) {
+            case FourRings:
+                Trajectory traj1_4 = drive.trajectoryBuilder(startPose)
+                        .addTemporalMarker(0, () -> {
+                            flap.setPosition(.4);
+                            turret.setPosition(.26);
+                            setVelocity(frontShoot, 2620);
+                            setVelocity2(backShoot, 2620);
+                        })
+                        .lineToLinearHeading(new Pose2d(-1, 10, Math.toRadians(345)))
+                        .addDisplacementMarker(() -> {
+                            shooterStopper.setPosition(.4);
+                        })
+                        .build();
+
+                Trajectory traj2_4 = drive.trajectoryBuilder(traj1_4.end())
+                        .addTemporalMarker(0, () -> {
+                            frontShoot.setVelocity(0);
+                            backShoot.setVelocity(0);
+                        })
+                        .lineToLinearHeading(new Pose2d(65,-22, Math.toRadians(90)))
+                        .build();
+
+
+                Trajectory traj4_4 = drive.trajectoryBuilder(traj2_4.end())
+                        .lineToLinearHeading(new Pose2d(15, 10, Math.toRadians(0)))
+                        .build();
+
+                droptakeStopper.setPosition(0);
+
+                drive.followTrajectory(traj1_4);
+
+                sleep(1000);
+
+                shoot();
+                sleep(500);
+                shoot();
+                sleep(500);
+                shoot();
+                sleep(500);
+
+                drive.followTrajectory(traj2_4);
+
+                while (wobbleArm2.getPosition() < .54) {
+                    wobbleArm1.setPosition(wobbleArm1.getPosition() + .01);
+                    wobbleArm2.setPosition(wobbleArm2.getPosition() + .01);
+                    sleep(20);
                 }
-                telemetry.update();
-            }
+                wobbleClaw.setPosition(.6);
+                sleep(500);
+
+                while (wobbleArm2.getPosition() > 0) {
+                    wobbleArm1.setPosition(wobbleArm1.getPosition() - .01);
+                    wobbleArm2.setPosition(wobbleArm2.getPosition() - .01);
+                    sleep(25);
+                }
+
+
+                drive.followTrajectory(traj4_4);
+
+                flap.setPosition(.39);
+                turret.setPosition(.15);
+                shooterStopper.setPosition(.9);
+
+                while (!isStopRequested()) {
+                    while (Math.abs(getAngle()) > .5) {
+                        frontRight.setPower(-.04 * getAngle());
+                        backRight.setPower(-.04 * getAngle());
+                        frontLeft.setPower(.04 * getAngle());
+                        backLeft.setPower(.04 * getAngle());
+                    }
+                }
+                PoseStorage.currentPose = drive.getPoseEstimate();
+
+                break;
+
+            case OneRing:
+
+                Trajectory traj1_1 = drive.trajectoryBuilder(startPose)
+                        .addTemporalMarker(0, () -> {
+                            flap.setPosition(.4);
+                            turret.setPosition(.26);
+                            setVelocity(frontShoot, 2620);
+                            setVelocity2(backShoot, 2620);
+                        })
+                        .lineToLinearHeading(new Pose2d(-1, 10, Math.toRadians(345)))
+                        .addDisplacementMarker(() -> {
+                            shooterStopper.setPosition(.4);
+                        })
+                        .build();
+
+                Trajectory traj2_1 = drive.trajectoryBuilder(traj1_1.end())
+                        .addTemporalMarker(0, () -> {
+                            frontShoot.setVelocity(0);
+                            backShoot.setVelocity(0);
+                        })
+                        .lineToLinearHeading(new Pose2d(40,0, Math.toRadians(90)))
+                        .build();
+
+
+                Trajectory traj4_1 = drive.trajectoryBuilder(traj2_1.end())
+                        .lineToLinearHeading(new Pose2d(15, 10, Math.toRadians(0)))
+                        .build();
+
+                droptakeStopper.setPosition(0);
+
+                drive.followTrajectory(traj1_1);
+
+                sleep(1000);
+
+                shoot();
+                sleep(500);
+                shoot();
+                sleep(500);
+                shoot();
+                sleep(500);
+
+                drive.followTrajectory(traj2_1);
+
+                while (wobbleArm2.getPosition() < .54) {
+                    wobbleArm1.setPosition(wobbleArm1.getPosition() + .01);
+                    wobbleArm2.setPosition(wobbleArm2.getPosition() + .01);
+                    sleep(20);
+                }
+                wobbleClaw.setPosition(.6);
+                sleep(500);
+
+                while (wobbleArm2.getPosition() > 0) {
+                    wobbleArm1.setPosition(wobbleArm1.getPosition() - .01);
+                    wobbleArm2.setPosition(wobbleArm2.getPosition() - .01);
+                    sleep(25);
+                }
+
+
+                drive.followTrajectory(traj4_1);
+
+                flap.setPosition(.39);
+                turret.setPosition(.15);
+                shooterStopper.setPosition(.9);
+
+                while (!isStopRequested()) {
+                    while (Math.abs(getAngle()) > .5) {
+                        frontRight.setPower(-.04 * getAngle());
+                        backRight.setPower(-.04 * getAngle());
+                        frontLeft.setPower(.04 * getAngle());
+                        backLeft.setPower(.04 * getAngle());
+                    }
+                }
+                PoseStorage.currentPose = drive.getPoseEstimate();
+
+                break;
+            case ZeroRings:
+
+                Trajectory traj1_0 = drive.trajectoryBuilder(startPose)
+                        .addTemporalMarker(0, () -> {
+                            flap.setPosition(.4);
+                            turret.setPosition(.26);
+                            setVelocity(frontShoot, 2620);
+                            setVelocity2(backShoot, 2620);
+                        })
+                        .lineToLinearHeading(new Pose2d(-1, 10, Math.toRadians(345)))
+                        .addDisplacementMarker(() -> {
+                            shooterStopper.setPosition(.4);
+                        })
+                        .build();
+
+                Trajectory traj2_0 = drive.trajectoryBuilder(traj1_0.end())
+                        .addTemporalMarker(0, () -> {
+                            frontShoot.setVelocity(0);
+                            backShoot.setVelocity(0);
+                        })
+                        .lineToLinearHeading(new Pose2d(15,-20, Math.toRadians(90)))
+                        .build();
+
+
+                Trajectory traj4_0 = drive.trajectoryBuilder(traj2_0.end())
+                        .lineToLinearHeading(new Pose2d(15, 15, Math.toRadians(0)))
+                        .build();
+
+                droptakeStopper.setPosition(0);
+
+                drive.followTrajectory(traj1_0);
+
+
+                sleep(1000);
+
+                shoot();
+                sleep(500);
+                shoot();
+                sleep(500);
+                shoot();
+                sleep(500);
+
+                drive.followTrajectory(traj2_0);
+
+                while (wobbleArm2.getPosition() < .54) {
+                    wobbleArm1.setPosition(wobbleArm1.getPosition() + .01);
+                    wobbleArm2.setPosition(wobbleArm2.getPosition() + .01);
+                    sleep(20);
+                }
+                wobbleClaw.setPosition(.6);
+                sleep(500);
+
+                while (wobbleArm2.getPosition() > 0) {
+                    wobbleArm1.setPosition(wobbleArm1.getPosition() - .01);
+                    wobbleArm2.setPosition(wobbleArm2.getPosition() - .01);
+                    sleep(25);
+                }
+
+                drive.followTrajectory(traj4_0);
+
+                flap.setPosition(.39);
+                turret.setPosition(.15);
+                shooterStopper.setPosition(.9);
+
+                while (!isStopRequested()) {
+                    while (Math.abs(getAngle()) > .5) {
+                        frontRight.setPower(-.04 * getAngle());
+                        backRight.setPower(-.04 * getAngle());
+                        frontLeft.setPower(.04 * getAngle());
+                        backLeft.setPower(.04 * getAngle());
+                    }
+                }
+                PoseStorage.currentPose = drive.getPoseEstimate();
+
+                break;
+
+            case Default:
+        }
+        telemetry.update();
+    }
 
 
 
@@ -596,7 +497,7 @@ public class AutonRingDetectingRed1 extends LinearOpMode {
     }
 
     public void wobbleUp() {
-        wobbleClaw.setPosition(.38);
+        wobbleClaw.setPosition(.19);
         sleep(500);
         wobbleArm1.setPosition(.2);
         wobbleArm2.setPosition(.2);
@@ -607,7 +508,7 @@ public class AutonRingDetectingRed1 extends LinearOpMode {
         wobbleArm1.setPosition(.54);
         wobbleArm2.setPosition(.54);
         sleep(500);
-        wobbleClaw.setPosition(.7);
+        wobbleClaw.setPosition(.6);
         sleep(600);
     }
 
@@ -728,34 +629,34 @@ public class AutonRingDetectingRed1 extends LinearOpMode {
 
             @Override
             public Mat processFrame(Mat input) {
-                    inputToCb(input);
+                inputToCb(input);
 
-                    avg1 = (int) Core.mean(region1_Cb).val[0];
+                avg1 = (int) Core.mean(region1_Cb).val[0];
 
-                    Imgproc.rectangle(
-                            input, // Buffer to draw on
-                            region1_pointA, // First point which defines the rectangle
-                            region1_pointB, // Second point which defines the rectangle
-                            BLUE, // The color the rectangle is drawn in
-                            2); // Thickness of the rectangle lines
+                Imgproc.rectangle(
+                        input, // Buffer to draw on
+                        region1_pointA, // First point which defines the rectangle
+                        region1_pointB, // Second point which defines the rectangle
+                        BLUE, // The color the rectangle is drawn in
+                        2); // Thickness of the rectangle lines
 
 
-                    if (avg1 > FOUR_RING_THRESHOLD) {
-                        position = RingPosition.FOUR;
-                    } else if (avg1 > ONE_RING_THRESHOLD) {
-                        position = RingPosition.ONE;
-                    } else {
-                        position = RingPosition.NONE;
-                    }
+                if (avg1 > FOUR_RING_THRESHOLD) {
+                    position = RingPosition.FOUR;
+                } else if (avg1 > ONE_RING_THRESHOLD) {
+                    position = RingPosition.ONE;
+                } else {
+                    position = RingPosition.NONE;
+                }
 
-                    Imgproc.rectangle(
-                            input, // Buffer to draw on
-                            region1_pointA, // First point which defines the rectangle
-                            region1_pointB, // Second point which defines the rectangle
-                            GREEN, // The color the rectangle is drawn in
-                            -1); // Negative thickness means solid fill
+                Imgproc.rectangle(
+                        input, // Buffer to draw on
+                        region1_pointA, // First point which defines the rectangle
+                        region1_pointB, // Second point which defines the rectangle
+                        GREEN, // The color the rectangle is drawn in
+                        -1); // Negative thickness means solid fill
 
-                    return input;
+                return input;
             }
         }
     }
