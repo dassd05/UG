@@ -92,8 +92,6 @@ public class TeleOpAugmentedDrivingBlue extends LinearOpMode {
     public void runOpMode() throws InterruptedException {
 
         double driveTurn;
-        double driveVertical;
-        double driveHorizontal;
 
         double gamepadXCoordinate;
         double gamepadYCoordinate;
