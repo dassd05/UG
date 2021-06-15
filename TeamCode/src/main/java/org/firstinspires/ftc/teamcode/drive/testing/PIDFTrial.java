@@ -109,13 +109,7 @@ public class  PIDFTrial extends LinearOpMode {
             if (lastKf != MOTOR_VELO_PID.f) {
                 MOTOR_VELO_PID.f = lastKf * 12 / batteryVoltageSensor.getVoltage();
                 lastKf = MOTOR_VELO_PID.f;
-            } //might need to change the way we adjust the feedforward value
-
-            /*if (gamepad1.b) {
-                shootFlicker.setPosition(.6);
-                sleep(200);
-                shootFlicker.setPosition(.3);
-            }*/
+            }
 
             setPIDFCoefficients2(backShoot, MOTOR_VELO_PID_2);
             setPIDFCoefficients(frontShoot, MOTOR_VELO_PID);

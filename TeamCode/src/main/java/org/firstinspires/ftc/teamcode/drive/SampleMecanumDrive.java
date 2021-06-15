@@ -60,8 +60,14 @@ import static org.firstinspires.ftc.teamcode.drive.DriveConstants.kV;
  */
 @Config
 public class SampleMecanumDrive extends MecanumDrive {
+
+    private static final TrajectoryVelocityConstraint VEL_CONSTRAINT = getVelocityConstraint(MAX_VEL, MAX_ANG_VEL, TRACK_WIDTH);
+    private static final TrajectoryAccelerationConstraint ACCEL_CONSTRAINT = getAccelerationConstraint(MAX_ACCEL);
+
+    private TrajectoryFollower follower;
+
     public static PIDCoefficients TRANSLATIONAL_PID = new PIDCoefficients(7, 0, .5);
-    public static PIDCoefficients HEADING_PID = new PIDCoefficients(11, 0, 0);
+    public static PIDCoefficients HEADING_PID = new PIDCoefficients(8, 0, 0);
 
     public static double LATERAL_MULTIPLIER = 1.48;
 
@@ -88,7 +94,7 @@ public class SampleMecanumDrive extends MecanumDrive {
 
     private TrajectoryVelocityConstraint velConstraint;
     private TrajectoryAccelerationConstraint accelConstraint;
-    private TrajectoryFollower follower;
+    //private TrajectoryFollower follower;
 
     private LinkedList<Pose2d> poseHistory;
 
@@ -155,8 +161,8 @@ public class SampleMecanumDrive extends MecanumDrive {
             setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         }
 
-        setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-        //setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        //setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         if (RUN_USING_ENCODER && MOTOR_VELO_PID != null) {
             setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, MOTOR_VELO_PID);
@@ -418,5 +424,15 @@ public class SampleMecanumDrive extends MecanumDrive {
         // flat on a surface
 
         return (double) imu.getAngularVelocity().zRotationRate;
+    }
+    public static TrajectoryVelocityConstraint getVelocityConstraint(double maxVel, double maxAngularVel, double trackWidth) {
+        return new MinVelocityConstraint(Arrays.asList(
+                new AngularVelocityConstraint(maxAngularVel),
+                new MecanumVelocityConstraint(maxVel, trackWidth)
+        ));
+    }
+
+    public static TrajectoryAccelerationConstraint getAccelerationConstraint(double maxAccel) {
+        return new ProfileAccelerationConstraint(maxAccel);
     }
 }

@@ -27,7 +27,7 @@ import java.util.*;
 
 
 @TeleOp(group = "advanced")
-public class TeleOpAugmentedDriving extends LinearOpMode {
+public class TeleOpAugmentedDrivingBlue extends LinearOpMode {
     enum Mode {
         INTAKING,
         TELEOP_SHOOTING,
@@ -47,16 +47,25 @@ public class TeleOpAugmentedDriving extends LinearOpMode {
 
     private VoltageSensor batteryVoltageSensor;
 
-    //private DcMotorEx frontShoot, backShoot;
-    private Servo wobbleClawServo, wobbleArmServo;
-    private Servo /*liftServo,*/ shootFlicker;
-    //private DcMotor intake1, intake2;
+
+    private Servo shooterStopper, wobbleArm1, wobbleArm2, shootFlicker, flap, turret, droptakeStopper, wobbleClaw;
+
+    private DcMotor intake, bottomRoller;
+
+
+    /********************************************************************************************
+     *
+     */
 
     public static PIDFCoefficients MOTOR_VELO_PID = new PIDFCoefficients(45, 0, 0, 25);
     public static PIDFCoefficients MOTOR_VELO_PID_2 = new PIDFCoefficients(45, 0, 0, 25); // fix this
 
-    public static double lastKf = 16.7;
-    public static double lastKf_2 = 16.7; // fix this
+    public static double lastKf = 17;
+    public static double lastKf_2 = 17; // fix this
+
+    /********************************************************************************************
+     *
+     */
 
     double lastVoltage = 0;
 
@@ -93,37 +102,35 @@ public class TeleOpAugmentedDriving extends LinearOpMode {
 
         batteryVoltageSensor = hardwareMap.voltageSensor.iterator().next();
 
-        /*frontShoot.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(
-                MOTOR_VELO_PID.p, MOTOR_VELO_PID.i, MOTOR_VELO_PID.d,
-                MOTOR_VELO_PID.f * 12 / hardwareMap.voltageSensor.iterator().next().getVoltage()
-        ));*/
+
         setPIDFCoefficients(frontShoot, MOTOR_VELO_PID);
 
-        /*backShoot.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(
-                MOTOR_VELO_PID_2.p, MOTOR_VELO_PID_2.i, MOTOR_VELO_PID_2.d,
-                MOTOR_VELO_PID_2.f * 12 / hardwareMap.voltageSensor.iterator().next().getVoltage()
-        ));*/
+
         setPIDFCoefficients2(backShoot, MOTOR_VELO_PID_2);
 
         for (LynxModule module : hardwareMap.getAll(LynxModule.class)) {
             module.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
         }
 
+        turret = hardwareMap.get(Servo.class, "turret");
+        flap = hardwareMap.get(Servo.class, "flap");
+        wobbleArm1 = hardwareMap.get(Servo.class, "wobbleArm1");
+        wobbleArm2 = hardwareMap.get(Servo.class, "wobbleArm2");
+        shootFlicker = hardwareMap.get(Servo.class, "shootFlicker");
+        droptakeStopper = hardwareMap.get(Servo.class, "droptakeStopper");
+        wobbleClaw = hardwareMap.get(Servo.class, "wobbleClaw");
+        shooterStopper = hardwareMap.get(Servo.class, "shooterStopper");
+
+        intake = hardwareMap.dcMotor.get("intake");
+        bottomRoller = hardwareMap.dcMotor.get("bottomRoller");
+
+        bottomRoller.setDirection(DcMotorSimple.Direction.REVERSE);
+
         telemetry = new MultipleTelemetry(telemetry, dashboard.getTelemetry());
 
         telemetry.update();
         telemetry.clearAll();
 
-        /*intake1 = hardwareMap.dcMotor.get("intake1");
-        intake2 = hardwareMap.dcMotor.get("intake2");
-
-        liftServo = hardwareMap.servo.get("liftServo");*/
-        wobbleClawServo = hardwareMap.servo.get("wobbleClawServo");
-        wobbleArmServo = hardwareMap.servo.get("wobbleArmServo");
-        shootFlicker = hardwareMap.servo.get("shootFlicker");
-
-        //intake1.setDirection(DcMotorSimple.Direction.REVERSE);
-        //intake2.setDirection(DcMotorSimple.Direction.REVERSE);
 
         SampleMecanumDriveCancelable drive = new SampleMecanumDriveCancelable(hardwareMap);
 
@@ -281,36 +288,52 @@ public class TeleOpAugmentedDriving extends LinearOpMode {
             }
         }
 
-            telemetry.update();
-        }
+        telemetry.update();
+    }
 
     public void shoot() {
-        shootFlicker.setPosition(0.4);
-        sleep(100);
-        shootFlicker.setPosition(0.1);
+        shootFlicker.setPosition(0.35);
+        sleep(280);
+        shootFlicker.setPosition(0.57);
     }
     public void wobbleUp () {
-        wobbleClawServo.setPosition(.07); // need to change position and time
+        //wobbleClaw.setPosition(.07); // need to change position and time
         sleep(700);
-        wobbleArmServo.setPosition(.8);
+        wobbleArm1.setPosition(.2);
+        wobbleArm2.setPosition(.2);
+        sleep(500);
     }
     public void wobbleDown () {
-        wobbleArmServo.setPosition(.44);
-        wobbleClawServo.setPosition(.51); //need to change position and time
-        sleep(1200);
-    }
-    public void wobbleDeploy () {
-        wobbleArmServo.setPosition(.7);
-        wobbleClawServo.setPosition(.51); //need to change position and time
-        sleep(1200);
+        wobbleArm1.setPosition(.54);
+        wobbleArm2.setPosition(.54);
+        sleep(500);
+        //wobbleClaw.setPosition(.07); // need to change position and time
+        sleep(350);
     }
 
-    public void setVelocity(DcMotorEx motor, double power) {
+    public void wobbleDeploy() {
+
+    }
+
+    public static double rpmToTicksPerSecond(double rpm) {
+        return rpm * MOTOR_TICKS_PER_REV / MOTOR_GEAR_RATIO / 60;
+    }
+
+    private void setVelocity(DcMotorEx motor, double power) {
         if(RUN_USING_ENCODER) {
             motor.setVelocity(rpmToTicksPerSecond(power));
             Log.i("mode", "setting velocity");
         }
         else {
+            Log.i("mode", "setting power");
+            motor.setPower(power / MOTOR_MAX_RPM);
+        }
+    }
+    private void setVelocity2(DcMotorEx motor, double power) {
+        if (RUN_USING_ENCODER) {
+            motor.setVelocity(rpmToTicksPerSecond(power));
+            Log.i("mode", "setting velocity");
+        } else {
             Log.i("mode", "setting power");
             motor.setPower(power / MOTOR_MAX_RPM);
         }
@@ -346,9 +369,4 @@ public class TeleOpAugmentedDriving extends LinearOpMode {
             Log.i("config", "setting default gains");
         }
     }
-
-    public static double rpmToTicksPerSecond(double rpm) {
-        return rpm * MOTOR_TICKS_PER_REV / MOTOR_GEAR_RATIO / 60;
-    }
 }
-
