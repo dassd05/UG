@@ -72,27 +72,27 @@ public class BlueGoalVisionPipeline extends OpenCvPipeline {
 
     public PIDController headingController = new PIDController(kP, kI, kD);
 
-    public static double CAMERA_HEIGHT = 0; //camera height inches for distance calculation
-    public static double HIGH_GOAL_CENTER_HEIGHT = 35.875;//40.625; //camera height inches for distance calculation
+    public static double CAMERA_HEIGHT = 29.5;//0; //camera height inches for distance calculation
+    public static double HIGH_GOAL_CENTER_HEIGHT = 35.875; //camera height inches for distance calculation
 
     //in degrees
-    public static int CAMERA_PITCH_OFFSET = 0;
+    public static int CAMERA_PITCH_OFFSET = 12; // GAH WHY DOES THIS HAVE TO BE SO PRECISE. one deg off, and whole thing changes by several inches
     public static int CAMERA_YAW_OFFSET = 0;
 
     public static double CENTER_X_OFFSET = 0;
     public static double CENTER_Y_OFFSET = 0;
 
 
-    public static double FOV = 90;
+    public static double FOV = 55;//90;
 
 
     //Boundary Line (Only detects above this to eliminate field tape)
-    public static int BOUNDARY = 130    ;
+    public static int BOUNDARY = 500;//130;
 
 
     //Mask constants to isolate blue coloured subjects
-    public static double UPPER_BLUE_THRESH = 200;
-    public static double LOWER_BLUE_THRESH = 145;
+    public static double UPPER_BLUE_THRESH = 250;//200;
+    public static double LOWER_BLUE_THRESH = 170;//145;
 
 
     //Countour Filter Constants
@@ -186,11 +186,11 @@ public class BlueGoalVisionPipeline extends OpenCvPipeline {
 
 
         // pinhole model calculations
-        double diagonalView = Math.toRadians(FOV);
+        double diagonalView = Math.toRadians(FOV); // 55
         Fraction aspectFraction = new Fraction(this.imageWidth, this.imageHeight);
-        int horizontalRatio = aspectFraction.getNumerator();
-        int verticalRatio = aspectFraction.getDenominator();
-        double diagonalAspect = Math.hypot(horizontalRatio, verticalRatio);
+        int horizontalRatio = aspectFraction.getNumerator(); // 4
+        int verticalRatio = aspectFraction.getDenominator(); // 3
+        double diagonalAspect = Math.hypot(horizontalRatio, verticalRatio); // 5
         double horizontalView = Math.atan(Math.tan(diagonalView / 2) * (horizontalRatio / diagonalAspect)) * 2;
         double verticalView = Math.atan(Math.tan(diagonalView / 2) * (verticalRatio / diagonalAspect)) * 2;
         horizontalFocalLength = this.imageWidth / (2 * Math.tan(horizontalView / 2));
@@ -382,8 +382,9 @@ public class BlueGoalVisionPipeline extends OpenCvPipeline {
         double targetCenterY = getCenterofRect(blueRect).y;
 
         return -Math.toDegrees(
-                Math.atan((targetCenterY - (centerY + CENTER_Y_OFFSET)) / verticalFocalLength)  + CAMERA_PITCH_OFFSET
-        );
+                Math.atan(((targetCenterY - centerY + CENTER_Y_OFFSET)) / verticalFocalLength) // should be right idk
+        ) + CAMERA_PITCH_OFFSET;
+        // this.imageHeight / (2 * Math.tan(fov(55) / 2) * (verticalRatio(3) / diagonalAspect(5)))
     }
 
     public double getMotorPower() {

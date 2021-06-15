@@ -1,49 +1,60 @@
 package org.firstinspires.ftc.teamcode.drive.testing;
 
+import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.teamcode.drive.stuff.BlueGoalVisionPipeline;
 import org.firstinspires.ftc.teamcode.drive.stuff.Camera;
+import org.openftc.easyopencv.OpenCvCamera;
+import org.openftc.easyopencv.OpenCvCameraFactory;
+import org.openftc.easyopencv.OpenCvCameraRotation;
 
+@Config
 @TeleOp(group = "testing")
 public class CameraTest extends LinearOpMode {
 
-    Camera camera;
+    public static int camPixelHeight = 240;
 
-    double xPos;
-    double yPos;
-    double zPos;
-    double roll;
-    double pitch;
-    double heading;
+    OpenCvCamera webcam1;
+
+    FtcDashboard dashboard;
 
     @Override
     public void runOpMode() throws InterruptedException {
-        camera = new Camera(hardwareMap, new Camera.CamType.Webcam(null, null),  Camera.TrackingType.RING_DETECTION);
 
-//        camera.vuforia = camera.new Vuforia();
-//        Camera.Vuforia vuf = camera.new Vuforia();
-//        vuf.activate();
+        dashboard = FtcDashboard.getInstance();
 
-//        waitForStart();
+        BlueGoalVisionPipeline pipeline = new BlueGoalVisionPipeline();
 
-//        camera.vuforia.activate();
+        int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
+        webcam1 = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
+        webcam1.setPipeline(pipeline);
+
+        webcam1.openCameraDeviceAsync(() -> {
+            webcam1.startStreaming(camPixelHeight * 4/3, camPixelHeight, OpenCvCameraRotation.UPRIGHT);
+            dashboard.startCameraStream(webcam1, 0);
+        });
+
+        telemetry = new MultipleTelemetry(telemetry, dashboard.getTelemetry());
+
+        waitForStart();
+
 
         while(!isStopRequested()) {
-//            camera.vuforia.update();
-//            xPos = camera.vuforia.xPos;
-//            yPos = camera.vuforia.yPos;
-//            zPos = camera.vuforia.zPos;
-//            roll = camera.vuforia.roll;
-//            pitch = camera.vuforia.pitch;
-//            heading = camera.vuforia.heading;
-//
-//            telemetry.addData("position", "{x, y, z} = %.0f, %.0f, %.0f", xPos, yPos, zPos);
-//            telemetry.addData("angles", "{roll, pitch, heading} = %.0f, %.0f, %.0f",
-//                    roll, pitch, heading);
-            telemetry.addData("num rings", camera.pipeline.position);
-            telemetry.addData("avg1", camera.pipeline.avg1);
-            telemetry.addData("avg2", camera.pipeline.avgs2);
+
+            telemetry.addData("get distance to goal wall", pipeline.getDistanceToGoalWall());
+            telemetry.addData("get field pos", pipeline.getFieldPositionFromGoal());
+            telemetry.addData("get goal height", pipeline.getGoalHeight());
+            telemetry.addData("get pitch", pipeline.getPitch());
+            telemetry.addData("get yaw", pipeline.getYaw());
+//            telemetry.addData("", pipeline.getPowerShotAngles(pipeline.getDistanceToGoalWall()));
+            telemetry.addData("is goal visible", pipeline.isGoalVisible());
+            telemetry.addData("is corners visible", pipeline.isCornersVisible());
+            telemetry.addData("is goal centered", pipeline.isGoalCentered());
             telemetry.update();
         }
 
