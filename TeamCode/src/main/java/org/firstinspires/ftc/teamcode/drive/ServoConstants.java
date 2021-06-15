@@ -21,6 +21,6 @@ public class ServoConstants {
     public static float wobbleArmDown = 0.54f;
     public static float wobbleArmRest = 0.0f;
 
-    public static float wobbleClawClose = 0.3f;
-    public static float wobbleClawOpen = 0.62f;
+    public static float wobbleClawClose = 0.19f;
+    public static float wobbleClawOpen = 0.45f;
 }

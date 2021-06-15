@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.drive.auton.Red2;
+package org.firstinspires.ftc.teamcode.drive.auton.Blue1;
 
 import android.util.Log;
 
@@ -43,11 +43,11 @@ import org.openftc.easyopencv.OpenCvCameraRotation;
 import org.openftc.easyopencv.OpenCvPipeline;
 import org.openftc.easyopencv.OpenCvWebcam;
 
-import static org.firstinspires.ftc.teamcode.drive.auton.Red2.AutonRingDetectingRed2.RingDetecting.pipeline;
-import static org.firstinspires.ftc.teamcode.drive.auton.Red2.AutonRingDetectingRed2.RingDetecting.RingDetection.avg1;
+import static org.firstinspires.ftc.teamcode.drive.auton.Blue1.AutonRingDetectingBlue1.RingDetecting.pipeline;
+import static org.firstinspires.ftc.teamcode.drive.auton.Blue1.AutonRingDetectingBlue1.RingDetecting.RingDetection.avg1;
 
 @Autonomous(group = "R2")
-public class AutonRingDetectingRed2 extends LinearOpMode {
+public class AutonRingDetectingBlue1 extends LinearOpMode {
 
     protected WebcamName webcamName;
     protected OpenCvWebcam webcam;
@@ -87,8 +87,8 @@ public class AutonRingDetectingRed2 extends LinearOpMode {
     public static PIDFCoefficients MOTOR_VELO_PID = new PIDFCoefficients(45,0,0,21.5);
     public static PIDFCoefficients MOTOR_VELO_PID_2 = new PIDFCoefficients(45,0,0,21.5);
 
-    public static double lastKf = 16.45;
-    public static double lastKf_2 = 16.45;
+    public static double lastKf = 15.9;
+    public static double lastKf_2 = 15.9;
 
     /********************************************************************************************************************
      *
@@ -114,13 +114,6 @@ public class AutonRingDetectingRed2 extends LinearOpMode {
                 webcam.startStreaming(1280, 960, OpenCvCameraRotation.UPRIGHT);
             }
         });
-
-//        webcam.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener() {
-//            @Override
-//            public void onOpened() {
-//                webcam.startStreaming(1280, 960, OpenCvCameraRotation.UPRIGHT);
-//            }
-//        });
 
         batteryVoltageSensor = hardwareMap.voltageSensor.iterator().next();
 
@@ -216,7 +209,6 @@ public class AutonRingDetectingRed2 extends LinearOpMode {
 
 
         while (!opModeIsActive()) {
-            telemetry.addData("analysis", avg1);
             if (pipeline.position == null) {
                 telemetry.addData("still working on it", "gimme a sec");
                 HowManyRings = ThisManyRings.Default;
@@ -261,11 +253,11 @@ public class AutonRingDetectingRed2 extends LinearOpMode {
                 Trajectory traj1_4 = drive.trajectoryBuilder(startPose)
                         .addTemporalMarker(0, () -> {
                             flap.setPosition(.4);
-                            turret.setPosition(.2);
-                            setVelocity(frontShoot, 2580);
-                            setVelocity2(backShoot, 2580);
+                            turret.setPosition(.18);
+                            setVelocity(frontShoot, 2620);
+                            setVelocity2(backShoot, 2620);
                         })
-                        .lineToLinearHeading(new Pose2d(-1, -10, Math.toRadians(12)))
+                        .lineToLinearHeading(new Pose2d(-1, -5, Math.toRadians(345)))
                         .addDisplacementMarker(() -> {
                             shooterStopper.setPosition(.4);
                         })
@@ -276,11 +268,12 @@ public class AutonRingDetectingRed2 extends LinearOpMode {
                             frontShoot.setVelocity(0);
                             backShoot.setVelocity(0);
                         })
-                        .lineToLinearHeading(new Pose2d(45,-10, Math.toRadians(135)))
+                        .lineToLinearHeading(new Pose2d(45,-2, Math.toRadians(180)))
                         .build();
 
+
                 Trajectory traj4_4 = drive.trajectoryBuilder(traj2_4.end())
-                        .lineToLinearHeading(new Pose2d(15, -10, Math.toRadians(0)))
+                        .lineToLinearHeading(new Pose2d(15, -2, Math.toRadians(0)))
                         .build();
 
                 droptakeStopper.setPosition(0);
@@ -303,7 +296,6 @@ public class AutonRingDetectingRed2 extends LinearOpMode {
                     wobbleArm2.setPosition(wobbleArm2.getPosition() + .01);
                     sleep(20);
                 }
-
                 wobbleClaw.setPosition(.6);
                 sleep(500);
 
@@ -312,6 +304,7 @@ public class AutonRingDetectingRed2 extends LinearOpMode {
                     wobbleArm2.setPosition(wobbleArm2.getPosition() - .01);
                     sleep(25);
                 }
+
 
                 drive.followTrajectory(traj4_4);
 
@@ -337,11 +330,11 @@ public class AutonRingDetectingRed2 extends LinearOpMode {
                 Trajectory traj1_1 = drive.trajectoryBuilder(startPose)
                         .addTemporalMarker(0, () -> {
                             flap.setPosition(.4);
-                            turret.setPosition(.2);
-                            setVelocity(frontShoot, 2580);
-                            setVelocity2(backShoot, 2580);
+                            turret.setPosition(.18);
+                            setVelocity(frontShoot, 2620);
+                            setVelocity2(backShoot, 2620);
                         })
-                        .lineToLinearHeading(new Pose2d(-1, -10, Math.toRadians(15)))
+                        .lineToLinearHeading(new Pose2d(-1, -5, Math.toRadians(345)))
                         .addDisplacementMarker(() -> {
                             shooterStopper.setPosition(.4);
                         })
@@ -352,37 +345,12 @@ public class AutonRingDetectingRed2 extends LinearOpMode {
                             frontShoot.setVelocity(0);
                             backShoot.setVelocity(0);
                         })
-                        .lineToLinearHeading(new Pose2d(28,10, Math.toRadians(180)))
+                        .lineToLinearHeading(new Pose2d(30,-4, Math.toRadians(120)))
                         .build();
 
-                Trajectory traj3_1 = drive.trajectoryBuilder(traj2_1.end())
-                        .addTemporalMarker(0, () -> {
-                            intake.setPower(.8);
-                            bottomRoller.setPower(-.7);
-                        })
-                        .lineToLinearHeading(new Pose2d(-40, 10, Math.toRadians(180)))
-                        .build();
 
-                Trajectory traj3PointOh_1 = drive.trajectoryBuilder(traj3_1.end())
-                        .addTemporalMarker(0, () -> {
-                            flap.setPosition(.4);
-                            setVelocity(frontShoot, 2580);
-                            setVelocity2(backShoot, 2580);
-                        })
-                        .lineToLinearHeading(new Pose2d(-1, -10, Math.toRadians(10)))
-                        .addDisplacementMarker(() -> {
-                            shooterStopper.setPosition(.4);
-                        })
-                        .build();
-
-                Trajectory traj4_1 = drive.trajectoryBuilder(traj3PointOh_1.end())
-                        .addTemporalMarker(0, () -> {
-                            intake.setPower(0);
-                            bottomRoller.setPower(0);
-                            frontShoot.setVelocity(0);
-                            backShoot.setVelocity(0);
-                        })
-                        .lineToLinearHeading(new Pose2d(15, -10, Math.toRadians(0)))
+                Trajectory traj4_1 = drive.trajectoryBuilder(traj2_1.end())
+                        .lineToLinearHeading(new Pose2d(15, 0, Math.toRadians(0)))
                         .build();
 
                 droptakeStopper.setPosition(0);
@@ -414,14 +382,6 @@ public class AutonRingDetectingRed2 extends LinearOpMode {
                     sleep(25);
                 }
 
-                drive.followTrajectory(traj3_1);
-
-                drive.followTrajectory(traj3PointOh_1);
-
-                sleep(1000);
-
-                shoot();
-                sleep(300);
 
                 drive.followTrajectory(traj4_1);
 
@@ -440,41 +400,42 @@ public class AutonRingDetectingRed2 extends LinearOpMode {
                 PoseStorage.currentPose = drive.getPoseEstimate();
 
                 break;
-
             case ZeroRings:
 
                 Trajectory traj1_0 = drive.trajectoryBuilder(startPose)
                         .addTemporalMarker(0, () -> {
                             flap.setPosition(.4);
-                            turret.setPosition(.2);
-                            setVelocity(frontShoot, 2580);
-                            setVelocity2(backShoot, 2580);
+                            turret.setPosition(.18);
+                            setVelocity(frontShoot, 2620);
+                            setVelocity2(backShoot, 2620);
                         })
-                        .lineToLinearHeading(new Pose2d(-1, -10, Math.toRadians(15)))
+                        .lineToLinearHeading(new Pose2d(-1, -5, Math.toRadians(345)))
                         .addDisplacementMarker(() -> {
                             shooterStopper.setPosition(.4);
                         })
                         .build();
 
-                Trajectory traj2_0 = drive.trajectoryBuilder(traj1_0.end())
+                Trajectory traj2PointOh_0 = drive.trajectoryBuilder(traj1_0.end())
                         .addTemporalMarker(0, () -> {
                             frontShoot.setVelocity(0);
                             backShoot.setVelocity(0);
                         })
-                        .lineToLinearHeading(new Pose2d(6,-10, Math.toRadians(180)))
+                        .lineToLinearHeading(new Pose2d(-30,-5, Math.toRadians(180)))
                         .build();
 
-                Trajectory traj3_0 = drive.trajectoryBuilder(traj2_0.end())
-                        .lineToLinearHeading(new Pose2d(-45, 0, Math.toRadians(0)))
+                Trajectory traj2_0 = drive.trajectoryBuilder(traj2PointOh_0.end())
+                        .lineToLinearHeading(new Pose2d(0,-5, Math.toRadians(180)))
                         .build();
 
-                Trajectory traj4_0 = drive.trajectoryBuilder(traj3_0.end())
-                        .lineToLinearHeading(new Pose2d(15, 4, Math.toRadians(0)))
+
+                Trajectory traj4_0 = drive.trajectoryBuilder(traj2_0.end())
+                        .lineToLinearHeading(new Pose2d(15, -18, Math.toRadians(0)))
                         .build();
 
                 droptakeStopper.setPosition(0);
 
                 drive.followTrajectory(traj1_0);
+
 
                 sleep(1000);
 
@@ -484,6 +445,8 @@ public class AutonRingDetectingRed2 extends LinearOpMode {
                 sleep(500);
                 shoot();
                 sleep(500);
+
+                drive.followTrajectory(traj2PointOh_0);
 
                 drive.followTrajectory(traj2_0);
 
@@ -501,9 +464,7 @@ public class AutonRingDetectingRed2 extends LinearOpMode {
                     sleep(25);
                 }
 
-                drive.followTrajectory(traj3_0);
-
-                sleep(7000);
+                sleep(10000);
 
                 drive.followTrajectory(traj4_0);
 
@@ -519,6 +480,7 @@ public class AutonRingDetectingRed2 extends LinearOpMode {
                         backLeft.setPower(.04 * getAngle());
                     }
                 }
+
                 PoseStorage.currentPose = drive.getPoseEstimate();
 
                 break;
@@ -537,7 +499,7 @@ public class AutonRingDetectingRed2 extends LinearOpMode {
     }
 
     public void wobbleUp() {
-        wobbleClaw.setPosition(.19);
+        wobbleClaw.setPosition(.38);
         sleep(500);
         wobbleArm1.setPosition(.2);
         wobbleArm2.setPosition(.2);
@@ -633,13 +595,13 @@ public class AutonRingDetectingRed2 extends LinearOpMode {
             private final Scalar BLUE = new Scalar(0, 0, 255);
             private final Scalar GREEN = new Scalar(0, 255, 0);
 
-            private final Point REGION1_TOPLEFT_ANCHOR_POINT = new Point(0, 760);
+            private final Point REGION1_TOPLEFT_ANCHOR_POINT = new Point(930, 780);
 
-            private final int REGION_WIDTH = 50;
-            private final int REGION_HEIGHT = 200;
+            private final int REGION_WIDTH = 280;
+            private final int REGION_HEIGHT = 180;
 
-            private int FOUR_RING_THRESHOLD = 133;
-            private int ONE_RING_THRESHOLD = 127;
+            private int FOUR_RING_THRESHOLD = 145;
+            private int ONE_RING_THRESHOLD = 132;
 
             Point region1_pointA = new Point(
                     REGION1_TOPLEFT_ANCHOR_POINT.x,
@@ -651,7 +613,7 @@ public class AutonRingDetectingRed2 extends LinearOpMode {
             Mat region1_Cb;
             Mat YCrCb = new Mat();
             Mat Cb = new Mat();
-            public static int avg1;
+            static int avg1;
 
             public volatile RingPosition position;
 
@@ -701,3 +663,4 @@ public class AutonRingDetectingRed2 extends LinearOpMode {
         }
     }
 }
+
