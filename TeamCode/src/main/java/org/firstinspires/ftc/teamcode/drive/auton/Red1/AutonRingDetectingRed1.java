@@ -93,6 +93,7 @@ public class AutonRingDetectingRed1 extends LinearOpMode {
             @Override
             public void onOpened() {
                 webcam.startStreaming(1280, 960, OpenCvCameraRotation.UPRIGHT);
+                FtcDashboard.getInstance().startCameraStream(webcam, 0);
             }
         });
 

@@ -18,7 +18,6 @@ import org.firstinspires.ftc.teamcode.drive.advanced.SampleMecanumDriveCancelabl
 import java.util.List;
 
 @SuppressWarnings("unused")
-@Disabled
 public class RobotBase {
     /*
     TODO:
@@ -79,24 +78,24 @@ public class RobotBase {
         servos = new Servo[]{liftServo, wobbleClawServo, wobbleArmServo, shootFlicker};
     }
 
-    public RobotBase(@Nullable DcMotor frontLeft, @Nullable DcMotor frontRight,
-                     @Nullable DcMotor backLeft, @Nullable DcMotor backRight,
-                     @Nullable DcMotor frontShoot, @Nullable DcMotor backShoot) {
-
-    }
-
-    DcMotor motor0;
-    DcMotor motor1;
-    DcMotor motor2;
-    DcMotor motor3;
-    DcMotor motor4;
-    DcMotor motor5;
-    RobotBase robit = new RobotBase(motor0, motor1, motor2, motor3, motor4);
-    public RobotBase(DcMotor... motors) {
-
-    }
-
-    RobotBase robot = new RobotBase(frontLeft, backRight, null, null, null, null);
+//    public RobotBase(@Nullable DcMotor frontLeft, @Nullable DcMotor frontRight,
+//                     @Nullable DcMotor backLeft, @Nullable DcMotor backRight,
+//                     @Nullable DcMotor frontShoot, @Nullable DcMotor backShoot) {
+//
+//    }
+//
+//    DcMotor motor0;
+//    DcMotor motor1;
+//    DcMotor motor2;
+//    DcMotor motor3;
+//    DcMotor motor4;
+//    DcMotor motor5;
+//    RobotBase robit = new RobotBase(motor0, motor1, motor2, motor3, motor4);
+//    public RobotBase(DcMotor... motors) {
+//
+//    }
+//
+//    RobotBase robot = new RobotBase(frontLeft, backRight, null, null, null, null);
 
     public void grabWobbleGoal() {
         wobbleClawServo.setPosition(0.8);

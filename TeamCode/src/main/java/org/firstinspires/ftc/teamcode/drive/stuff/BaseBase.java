@@ -37,14 +37,11 @@ public abstract class BaseBase {
 
         public FtcDashboard dashboard;
         public Drive drive;
-        public boolean hardwareNullable;
 
-        public Parameters(OpMode opMode, boolean hardwareNullable) {
+        public Parameters(OpMode opMode) {
             this.opMode = opMode;
             this.hardwareMap = opMode.hardwareMap;
             this.telemetry = opMode.telemetry;
-
-            this.hardwareNullable = hardwareNullable;
         }
 
         @NotNull @NonNull

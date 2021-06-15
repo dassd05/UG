@@ -2,7 +2,6 @@ package org.firstinspires.ftc.teamcode.drive.stuff;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
-import com.acmerobotics.roadrunner.drive.MecanumDrive;
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.geometry.Vector2d;
 import com.qualcomm.hardware.bosch.BNO055IMU;
@@ -12,14 +11,17 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 
-import org.firstinspires.ftc.robotcore.external.hardware.camera.Camera;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.teamcode.drive.ServoConstants;
 import org.firstinspires.ftc.teamcode.drive.advanced.SampleMecanumDriveCancelable;
-
-import java.util.List;
+import org.openftc.easyopencv.OpenCvCamera;
+import org.openftc.easyopencv.OpenCvCameraFactory;
+import org.openftc.easyopencv.OpenCvCameraRotation;
+import org.openftc.easyopencv.OpenCvPipeline;
 
 @SuppressWarnings("unused")
 public class UltimateGoalBase extends BaseBase {
@@ -27,8 +29,11 @@ public class UltimateGoalBase extends BaseBase {
     // https://github.com/ftc-9915/FtcRobotController
     // https://github.com/ftc-9915/FtcRobotController/blob/master/TeamCode/src/main/java/org/firstinspires/ftc/teamcode/Vision/BlueGoalVisionPipeline.java
 
+    // https://www.firstinspires.org/sites/default/files/uploads/resource_library/ftc/game-manual-part-2-traditional-events.pdf
+
 
     protected UltimateGoalBase.Parameters params;
+    public Hardware hardware;
     public SampleMecanumDriveCancelable drive;
 
     private int shotsQueued = 0;
@@ -43,6 +48,7 @@ public class UltimateGoalBase extends BaseBase {
 //        }
 
         this.params.internalInit();
+        this.hardware = this.params.hardware;
         this.drive = this.params.drive;
     }
 
@@ -72,51 +78,51 @@ public class UltimateGoalBase extends BaseBase {
 
 
     public void dropIntake() {
-        params.droptakeStopper.setPosition(ServoConstants.dropTakeDown);
+        hardware.droptakeStopper.setPosition(ServoConstants.dropTakeDown);
     }
     public void startIntake() {
         // todo adjust as necessary
-        params.intake.setPower(1);
-        params.bottomRoller.setPower(1);
+        hardware.intake.setPower(1);
+        hardware.bottomRoller.setPower(1);
     }
     public void stopIntake() {
-        params.intake.setPower(0);
-        params.bottomRoller.setPower(0);
+        hardware.intake.setPower(0);
+        hardware.bottomRoller.setPower(0);
     }
 
     public void wobbleUp() {
-        double pos = params.wobbleArm1.getPosition();
+        double pos = hardware.wobbleArm1.getPosition();
         while (pos > ServoConstants.wobbleArmUp) {
             pos -= 0.01;
-            params.wobbleArm1.setPosition(pos);
-            params.wobbleArm2.setPosition(pos);
+            hardware.wobbleArm1.setPosition(pos);
+            hardware.wobbleArm2.setPosition(pos);
             sleep(20);
         }
     }
     public void wobbleDown() {
-        double pos = params.wobbleArm1.getPosition();
+        double pos = hardware.wobbleArm1.getPosition();
         while (pos < ServoConstants.wobbleArmDown) {
             pos += 0.01;
-            params.wobbleArm1.setPosition(pos);
-            params.wobbleArm2.setPosition(pos);
+            hardware.wobbleArm1.setPosition(pos);
+            hardware.wobbleArm2.setPosition(pos);
             sleep(20);
         }
     }
     public void grabWobble() {
-        params.wobbleClaw.setPosition(ServoConstants.wobbleClawClose);
+        hardware.wobbleClaw.setPosition(ServoConstants.wobbleClawClose);
     }
     public void releaseWobble() {
-        params.wobbleClaw.setPosition(ServoConstants.wobbleClawOpen);
+        hardware.wobbleClaw.setPosition(ServoConstants.wobbleClawOpen);
     }
 
     public void startShooter() { //Vector3D target) {
         //todo
     }
     public void stopShooter() {
-        params.shooter1.setPower(0);
-        params.shooter2.setPower(0);
+        hardware.shooter1.setPower(0);
+        hardware.shooter2.setPower(0);
 
-        params.shooterStopper.setPosition(ServoConstants.shootStopperUp);
+        hardware.shooterStopper.setPosition(ServoConstants.shootStopperUp);
     }
 
     /*
@@ -125,12 +131,12 @@ public class UltimateGoalBase extends BaseBase {
     */
     protected Thread shoot = new Thread(() -> {
         try {
-            params.shootFlicker.setPosition(ServoConstants.shootFlickerShot);
+            hardware.shootFlicker.setPosition(ServoConstants.shootFlickerShot);
             Thread.sleep(280);
-            params.shootFlicker.setPosition(ServoConstants.shootFlickerOut);
+            hardware.shootFlicker.setPosition(ServoConstants.shootFlickerOut);
             Thread.sleep(280);
         } catch (InterruptedException e) {
-            params.shootFlicker.setPosition(ServoConstants.shootFlickerOut);
+            hardware.shootFlicker.setPosition(ServoConstants.shootFlickerOut);
             Thread.currentThread().interrupt();
         }
     });
@@ -208,30 +214,11 @@ public class UltimateGoalBase extends BaseBase {
 
         public SampleMecanumDriveCancelable drive;
         public LinearOpMode opMode;
-        
-        public List<DcMotor> shooters;
-        public DcMotorEx shooter1;
-        public DcMotorEx shooter2;
-        public DcMotor intake;
-        public DcMotor bottomRoller;
-        public Servo turret;
-        public Servo flap;
-        public Servo wobbleArm1;
-        public Servo wobbleArm2;
-        public Servo shootFlicker;
-        public Servo droptakeStopper;
-        public Servo wobbleClaw;
-        public Servo shooterStopper;
-
-        public VoltageSensor voltageSensor;
+        public Hardware hardware;
 
 
         public Parameters(OpMode opMode) {
-            this(opMode, true);
-        }
-
-        public Parameters(OpMode opMode, boolean hardwareNullable) {
-            super(opMode, hardwareNullable);
+            super(opMode);
         }
 
 
@@ -239,37 +226,9 @@ public class UltimateGoalBase extends BaseBase {
             for (LynxModule module : hardwareMap.getAll(LynxModule.class)) {
                 module.setBulkCachingMode(LynxModule.BulkCachingMode.MANUAL);
             }
-            if (voltageSensor == null) voltageSensor = hardwareMap.voltageSensor.iterator().next();
 
             if (drive == null) drive = new SampleMecanumDriveCancelable(hardwareMap);
 
-            shooter1 = hardwareMap.get(DcMotorEx.class, "shooter1");
-            shooter1.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-            shooter1.getMotorType().setAchieveableMaxRPMFraction(1.0);
-            shooter2 = hardwareMap.get(DcMotorEx.class, "shooter2");
-            shooter2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-            shooter2.getMotorType().setAchieveableMaxRPMFraction(1.0);
-//            if (RUN_USING_ENCODER) {
-//                frontShoot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-//                backShoot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-//            } else {
-//                frontShoot.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-//                backShoot.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-//            }
-//            setPIDFCoefficients(frontShoot, MOTOR_VELO_PID);
-//            setPIDFCoefficients2(backShoot, MOTOR_VELO_PID_2);
-
-            intake = hardwareMap.dcMotor.get("intake");
-            bottomRoller = hardwareMap.dcMotor.get("bottomRoller");
-
-            turret = hardwareMap.get(Servo.class, "turret");
-            flap = hardwareMap.get(Servo.class, "flap");
-            wobbleArm1 = hardwareMap.get(Servo.class, "wobbleArm1");
-            wobbleArm2 = hardwareMap.get(Servo.class, "wobbleArm2");
-            shootFlicker = hardwareMap.get(Servo.class, "shootFlicker");
-            droptakeStopper = hardwareMap.get(Servo.class, "droptakeStopper");
-            wobbleClaw = hardwareMap.get(Servo.class, "wobbleClaw");
-            shooterStopper = hardwareMap.get(Servo.class, "shooterStopper");
 
             dashboard = FtcDashboard.getInstance();
             telemetry = new MultipleTelemetry(telemetry, dashboard.getTelemetry());
@@ -287,9 +246,11 @@ public class UltimateGoalBase extends BaseBase {
         public DcMotor backLeft;
         public DcMotor frontRight;
         public DcMotor backRight;
+        public SampleMecanumDriveCancelable drive;
 
         public DcMotorEx shooter1;
         public DcMotorEx shooter2;
+        public Shooter shooter;
         public DcMotor intake;
         public DcMotor bottomRoller;
 
@@ -304,7 +265,9 @@ public class UltimateGoalBase extends BaseBase {
 
         public VoltageSensor voltageSensor;
         public BNO055IMU imu;
-        public Camera camera;
+
+        public OpenCvCamera webcam1;
+        public OpenCvCamera webcam2;
 
 
         public Hardware(HardwareMap hardwareMap) {
@@ -312,43 +275,94 @@ public class UltimateGoalBase extends BaseBase {
         }
 
 
-
-        public void assertHardware() {
-
-        }
-
         public void getAll() {
-
+            getMotors();
+            getServos();
         }
-
         public void getMotors() {
-
+            getDrive();
+            getIntakeMotors();
+            getShooterMotors();
         }
-
         public void getServos() {
-            turret = hardwareMap.get(Servo.class, "turret");
-            flap = hardwareMap.get(Servo.class, "flap");
-            wobbleArm1 = hardwareMap.get(Servo.class, "wobbleArm1");
-            wobbleArm2 = hardwareMap.get(Servo.class, "wobbleArm2");
-            shootFlicker = hardwareMap.get(Servo.class, "shootFlicker");
-            droptakeStopper = hardwareMap.get(Servo.class, "droptakeStopper");
-            wobbleClaw = hardwareMap.get(Servo.class, "wobbleClaw");
-            shooterStopper = hardwareMap.get(Servo.class, "shooterStopper");
+            getShooterServos();
+            getIntakeServos();
+            getWobble();
         }
 
-        public void getDriveTrain() {
+        public void getDrive() {
+            frontLeft = hardwareMap.get(DcMotorEx.class, "frontLeft");
+            backLeft = hardwareMap.get(DcMotorEx.class, "backLeft");
+            backRight = hardwareMap.get(DcMotorEx.class, "backRight");
+            frontRight = hardwareMap.get(DcMotorEx.class, "frontRight");
 
+            drive = new SampleMecanumDriveCancelable(hardwareMap);
         }
 
         public void getIntake() {
-
+            getIntakeMotors();
+            getIntakeServos();
+        }
+        public void getIntakeMotors() {
+            intake = hardwareMap.dcMotor.get("intake");
+            bottomRoller = hardwareMap.dcMotor.get("bottomRoller");
+        }
+        public void getIntakeServos() {
+            droptakeStopper = hardwareMap.get(Servo.class, "droptakeStopper");
         }
 
         public void getShooter() {
+            getShooterMotors();
+            getShooterServos();
+        }
+        public void getShooterMotors() {
+            shooter1 = hardwareMap.get(DcMotorEx.class, "shooter1");
+            shooter2 = hardwareMap.get(DcMotorEx.class, "shooter2");
 
+            shooter = new Shooter(shooter1, shooter2);
+        }
+        public void getShooterServos() {
+            turret = hardwareMap.get(Servo.class, "turret");
+            flap = hardwareMap.get(Servo.class, "flap");
+            shootFlicker = hardwareMap.get(Servo.class, "shootFlicker");
+            shooterStopper = hardwareMap.get(Servo.class, "shooterStopper");
         }
 
-        public void getCameras() {
+        public void getWobble() {
+            wobbleArm1 = hardwareMap.get(Servo.class, "wobbleArm1");
+            wobbleArm2 = hardwareMap.get(Servo.class, "wobbleArm2");
+            wobbleClaw = hardwareMap.get(Servo.class, "wobbleClaw");
+        }
+
+        public void getCameras(OpenCvPipeline pipeline1, OpenCvPipeline pipeline2) {
+            getCamera1(pipeline1);
+            getCamera2(pipeline2);
+        }
+        public void getCamera1(OpenCvPipeline pipeline) {
+            int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
+            webcam1 = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
+            webcam1.setPipeline(pipeline);
+
+            webcam1.openCameraDeviceAsync(() -> {
+                webcam1.startStreaming(320, 240, OpenCvCameraRotation.UPRIGHT);
+                FtcDashboard.getInstance().startCameraStream(webcam1, 0);
+            });
+        }
+        public void getCamera2(OpenCvPipeline pipeline) {
+            int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
+            webcam2 = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 2"), cameraMonitorViewId);
+            webcam2.setPipeline(pipeline);
+
+            webcam2.openCameraDeviceAsync(() -> {
+                webcam2.startStreaming(320, 240, OpenCvCameraRotation.UPRIGHT);
+                FtcDashboard.getInstance().startCameraStream(webcam2, 0);
+            });
+        }
+
+        public void getVoltageSensor() {
+            voltageSensor = hardwareMap.voltageSensor.iterator().next();
+        }
+        public void getIMU() {
 
         }
     }

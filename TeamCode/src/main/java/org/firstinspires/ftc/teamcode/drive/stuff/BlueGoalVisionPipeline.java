@@ -72,8 +72,8 @@ public class BlueGoalVisionPipeline extends OpenCvPipeline {
 
     public PIDController headingController = new PIDController(kP, kI, kD);
 
-    public static double CAMERA_HEIGHT = 8.25; //camera height inches for distance calculation
-    public static double HIGH_GOAL_CENTER_HEIGHT = 40.625; //camera height inches for distance calculation
+    public static double CAMERA_HEIGHT = 0; //camera height inches for distance calculation
+    public static double HIGH_GOAL_CENTER_HEIGHT = 35.875;//40.625; //camera height inches for distance calculation
 
     //in degrees
     public static int CAMERA_PITCH_OFFSET = 0;
@@ -166,8 +166,8 @@ public class BlueGoalVisionPipeline extends OpenCvPipeline {
         lowerLeftCorner = new Point();
         lowerRightCorner = new Point();
 
-        upperMiddle  = new Point();;
-        lowerMiddle  = new Point();;
+        upperMiddle  = new Point();
+        lowerMiddle  = new Point();
         leftMiddle = new Point();
         rightMiddle = new Point();
 
