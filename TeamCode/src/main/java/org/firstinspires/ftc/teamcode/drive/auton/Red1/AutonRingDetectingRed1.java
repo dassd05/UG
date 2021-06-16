@@ -87,8 +87,8 @@ public class AutonRingDetectingRed1 extends LinearOpMode {
     public static PIDFCoefficients MOTOR_VELO_PID = new PIDFCoefficients(45,0,0,21.5);
     public static PIDFCoefficients MOTOR_VELO_PID_2 = new PIDFCoefficients(45,0,0,21.5);
 
-    public static double lastKf = 16.45;
-    public static double lastKf_2 = 16.45;
+    public static double lastKf = 17.7;
+    public static double lastKf_2 = 17.7;
 
     /********************************************************************************************************************
      *
@@ -252,13 +252,13 @@ public class AutonRingDetectingRed1 extends LinearOpMode {
         switch (HowManyRings) {
             case FourRings:
                 Trajectory traj1_4 = drive.trajectoryBuilder(startPose)
+                        .lineToLinearHeading(new Pose2d(-25, -17, 0))
                         .addTemporalMarker(0, () -> {
                             flap.setPosition(.4);
-                            turret.setPosition(.26);
-                            setVelocity(frontShoot, 2620);
-                            setVelocity2(backShoot, 2620);
+                            turret.setPosition(.14);
+                            setVelocity(frontShoot, 2650);
+                            setVelocity2(backShoot, 2650);
                         })
-                        .lineToLinearHeading(new Pose2d(-1, 10, Math.toRadians(345)))
                         .addDisplacementMarker(() -> {
                             shooterStopper.setPosition(.4);
                         })
@@ -269,11 +269,43 @@ public class AutonRingDetectingRed1 extends LinearOpMode {
                             frontShoot.setVelocity(0);
                             backShoot.setVelocity(0);
                         })
+                        .lineToLinearHeading(new Pose2d(-5,-17, Math.toRadians(0)))
+                        .build();
+
+                Trajectory traj3_4 = drive.trajectoryBuilder(traj2_4.end())
+                        .lineToLinearHeading(new Pose2d(-14, -17, 0))
+                        .addDisplacementMarker(() -> {
+                            setVelocity(frontShoot, 2590);
+                            setVelocity2(backShoot, 2590);
+                            intake.setPower(.8);
+                            bottomRoller.setPower(-.7);
+                        })
+                        .build();
+
+                Trajectory traj4_4 = drive.trajectoryBuilder(traj3_4.end())
+                        .lineToLinearHeading(new Pose2d(-5, -17, 0),
+                                SampleMecanumDriveCancelable.getVelocityConstraint(4, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
+                                SampleMecanumDriveCancelable.getAccelerationConstraint(4))
+                        .build();
+
+                Trajectory traj4PointOh_4 = drive.trajectoryBuilder(traj4_4.end())
+                        .lineToLinearHeading(new Pose2d(0, -17, 0),
+                                SampleMecanumDriveCancelable.getVelocityConstraint(4, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
+                                SampleMecanumDriveCancelable.getAccelerationConstraint(4))
+                        .build();
+
+                Trajectory traj5_4 = drive.trajectoryBuilder(traj4PointOh_4.end())
+                        .addTemporalMarker(0, () -> {
+                            intake.setPower(0);
+                            bottomRoller.setPower(0);
+                            frontShoot.setVelocity(0);
+                            backShoot.setVelocity(0);
+                        })
                         .lineToLinearHeading(new Pose2d(65,-22, Math.toRadians(90)))
                         .build();
 
 
-                Trajectory traj4_4 = drive.trajectoryBuilder(traj2_4.end())
+                Trajectory traj6_4 = drive.trajectoryBuilder(traj5_4.end())
                         .lineToLinearHeading(new Pose2d(15, 10, Math.toRadians(0)))
                         .build();
 
@@ -292,6 +324,25 @@ public class AutonRingDetectingRed1 extends LinearOpMode {
 
                 drive.followTrajectory(traj2_4);
 
+                drive.followTrajectory(traj3_4);
+
+                drive.followTrajectory(traj4_4);
+
+                shoot();
+                sleep(200);
+                shoot();
+                sleep(200);
+                shoot();
+                sleep(200);
+
+                drive.followTrajectory(traj4PointOh_4);
+
+                shoot();
+                sleep(200);
+                shoot();
+
+                drive.followTrajectory(traj5_4);
+
                 while (wobbleArm2.getPosition() < .54) {
                     wobbleArm1.setPosition(wobbleArm1.getPosition() + .01);
                     wobbleArm2.setPosition(wobbleArm2.getPosition() + .01);
@@ -307,7 +358,7 @@ public class AutonRingDetectingRed1 extends LinearOpMode {
                 }
 
 
-                drive.followTrajectory(traj4_4);
+                drive.followTrajectory(traj6_4);
 
                 flap.setPosition(.39);
                 turret.setPosition(.15);
@@ -328,20 +379,32 @@ public class AutonRingDetectingRed1 extends LinearOpMode {
             case OneRing:
 
                 Trajectory traj1_1 = drive.trajectoryBuilder(startPose)
+                        .lineToLinearHeading(new Pose2d(-25, -17, 0))
                         .addTemporalMarker(0, () -> {
                             flap.setPosition(.4);
-                            turret.setPosition(.26);
-                            setVelocity(frontShoot, 2620);
-                            setVelocity2(backShoot, 2620);
-                        })
-                        .lineToLinearHeading(new Pose2d(-1, 10, Math.toRadians(345)))
-                        .addDisplacementMarker(() -> {
-                            shooterStopper.setPosition(.4);
+                            turret.setPosition(.14);
+                            setVelocity(frontShoot, 2650);
+                            setVelocity2(backShoot, 2650);
                         })
                         .build();
 
+
                 Trajectory traj2_1 = drive.trajectoryBuilder(traj1_1.end())
                         .addTemporalMarker(0, () -> {
+                            setVelocity(frontShoot, 2590);
+                            setVelocity2(backShoot, 2590);
+                            intake.setPower(.8);
+                            bottomRoller.setPower(-.7);
+                        })
+                        .lineToLinearHeading(new Pose2d(-5, -17, 0),
+                                SampleMecanumDriveCancelable.getVelocityConstraint(4, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
+                                SampleMecanumDriveCancelable.getAccelerationConstraint(4))
+                        .build();
+
+                Trajectory traj3_1 = drive.trajectoryBuilder(traj2_1.end())
+                        .addTemporalMarker(0, () -> {
+                            intake.setPower(0);
+                            bottomRoller.setPower(0);
                             frontShoot.setVelocity(0);
                             backShoot.setVelocity(0);
                         })
@@ -349,7 +412,7 @@ public class AutonRingDetectingRed1 extends LinearOpMode {
                         .build();
 
 
-                Trajectory traj4_1 = drive.trajectoryBuilder(traj2_1.end())
+                Trajectory traj4_1 = drive.trajectoryBuilder(traj3_1.end())
                         .lineToLinearHeading(new Pose2d(15, 10, Math.toRadians(0)))
                         .build();
 
@@ -368,6 +431,15 @@ public class AutonRingDetectingRed1 extends LinearOpMode {
 
                 drive.followTrajectory(traj2_1);
 
+                shoot();
+                sleep(200);
+                shoot();
+                sleep(200);
+                shoot();
+                sleep(200);
+
+                drive.followTrajectory(traj3_1);
+
                 while (wobbleArm2.getPosition() < .54) {
                     wobbleArm1.setPosition(wobbleArm1.getPosition() + .01);
                     wobbleArm2.setPosition(wobbleArm2.getPosition() + .01);
@@ -381,7 +453,6 @@ public class AutonRingDetectingRed1 extends LinearOpMode {
                     wobbleArm2.setPosition(wobbleArm2.getPosition() - .01);
                     sleep(25);
                 }
-
 
                 drive.followTrajectory(traj4_1);
 
@@ -400,6 +471,7 @@ public class AutonRingDetectingRed1 extends LinearOpMode {
                 PoseStorage.currentPose = drive.getPoseEstimate();
 
                 break;
+
             case ZeroRings:
 
                 Trajectory traj1_0 = drive.trajectoryBuilder(startPose)
@@ -586,7 +658,7 @@ public class AutonRingDetectingRed1 extends LinearOpMode {
             private final Scalar BLUE = new Scalar(0, 0, 255);
             private final Scalar GREEN = new Scalar(0, 255, 0);
 
-            private final Point REGION1_TOPLEFT_ANCHOR_POINT = new Point(930, 780);
+            private final Point REGION1_TOPLEFT_ANCHOR_POINT = new Point(1000, 780);
 
             private final int REGION_WIDTH = 280;
             private final int REGION_HEIGHT = 180;

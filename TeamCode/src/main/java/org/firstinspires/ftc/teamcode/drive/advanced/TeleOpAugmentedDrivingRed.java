@@ -70,8 +70,8 @@ public class TeleOpAugmentedDrivingRed extends LinearOpMode {
     public static PIDFCoefficients MOTOR_VELO_PID = new PIDFCoefficients(45, 0, 0, 25);
     public static PIDFCoefficients MOTOR_VELO_PID_2 = new PIDFCoefficients(45, 0, 0, 25); // fix this
 
-    public static double lastKf = 15.9;
-    public static double lastKf_2 = 15.9; // fix this
+    public static double lastKf = 17.7;
+    public static double lastKf_2 = 17.7; // fix this
 
     /********************************************************************************************
      *

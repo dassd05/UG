@@ -70,8 +70,8 @@ public class TeleOpAugmentedDrivingBlue extends LinearOpMode {
     public static PIDFCoefficients MOTOR_VELO_PID = new PIDFCoefficients(45, 0, 0, 25);
     public static PIDFCoefficients MOTOR_VELO_PID_2 = new PIDFCoefficients(45, 0, 0, 25); // fix this
 
-    public static double lastKf = 15.9;
-    public static double lastKf_2 = 15.9; // fix this
+    public static double lastKf = 17.7;
+    public static double lastKf_2 = 17.7; // fix this
 
     /********************************************************************************************
      *
@@ -210,7 +210,7 @@ public class TeleOpAugmentedDrivingBlue extends LinearOpMode {
 
                 if (button == Button.right_bumper) intakeOn = !intakeOn;
 
-                if (button == Button.left_bumper) reversed = !reversed;
+                //if (button == Button.left_bumper) reversed = !reversed;
 
             }
         };
@@ -222,6 +222,11 @@ public class TeleOpAugmentedDrivingBlue extends LinearOpMode {
         if (isStopRequested()) return;
 
         while (opModeIsActive() && !isStopRequested()) {
+
+            while (gamepad2.left_bumper) {
+                intake.setPower(-.8);
+                bottomRoller.setPower(.7);
+            }
 
             if (lastKf_2 != MOTOR_VELO_PID_2.f) {
                 MOTOR_VELO_PID_2.f = lastKf_2 * 12 / batteryVoltageSensor.getVoltage();
@@ -259,15 +264,9 @@ public class TeleOpAugmentedDrivingBlue extends LinearOpMode {
             Pose2d poseEstimate = drive.getPoseEstimate();
 
 
-            if (reversed) {
-                reverse = 1;
-            } else if (!reversed) {
-                reverse = -1;
-            }
-
             if (intakeOn) {
-                intake.setPower(.8 * reverse);
-                bottomRoller.setPower(-.7 * reverse);
+                intake.setPower(.8);
+                bottomRoller.setPower(-.7);
             } else if (!intakeOn) {
                 intake.setPower(0);
                 bottomRoller.setPower(0);
