@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.drive.stuff;
+package org.firstinspires.ftc.teamcode.drive.pogcode;
 
 import androidx.annotation.NonNull;
 
@@ -36,7 +36,6 @@ public abstract class BaseBase {
         public Telemetry telemetry;
 
         public FtcDashboard dashboard;
-        public Drive drive;
 
         public Parameters(OpMode opMode) {
             this.opMode = opMode;

@@ -15,12 +15,13 @@ public class ServoConstants {
     public static float turretInsert = 1.0f;
     public static float turretShoot = 0.15f;
 
-    public static float flapHG = 0.55f;
+    public static float flapMG = 0.55f;
+    public static float flapHG = 0.40f;
 
     public static float wobbleArmUp = 0.2f;
     public static float wobbleArmDown = 0.54f;
     public static float wobbleArmRest = 0.0f;
 
-    public static float wobbleClawClose = 0.19f;
-    public static float wobbleClawOpen = 0.45f;
+    public static float wobbleClawClose = 0.38f;
+    public static float wobbleClawOpen = 0.68f;
 }

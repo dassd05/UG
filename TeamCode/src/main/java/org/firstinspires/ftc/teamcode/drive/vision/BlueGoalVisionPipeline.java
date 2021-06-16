@@ -7,12 +7,13 @@ are then used to determine the most accurate Ring Position.
 
 
 
-package org.firstinspires.ftc.teamcode.drive.stuff;
+package org.firstinspires.ftc.teamcode.drive.vision;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.qualcomm.robotcore.util.Range;
 
+import org.firstinspires.ftc.teamcode.drive.stuff.PIDController;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;

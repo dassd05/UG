@@ -3,27 +3,19 @@ package org.firstinspires.ftc.teamcode.drive.stuff;
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
-import com.acmerobotics.roadrunner.geometry.Pose2d;
-import com.acmerobotics.roadrunner.geometry.Vector2d;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
-import com.qualcomm.robotcore.hardware.VoltageSensor;
-import com.qualcomm.robotcore.util.Range;
 
-import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Position;
 import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
 import org.firstinspires.ftc.teamcode.drive.ServoConstants;
-import org.openftc.easyopencv.OpenCvCamera;
-import org.openftc.easyopencv.OpenCvCameraFactory;
-import org.openftc.easyopencv.OpenCvCameraRotation;
+import org.firstinspires.ftc.teamcode.drive.pogcode.UltimateGoalBase;
 
 
 @Config
@@ -59,13 +51,12 @@ public class Tele extends LinearOpMode {
 
 //        BlueGoalVisionPipeline pipeline = new BlueGoalVisionPipeline();
 
-        UltimateGoalBase.Parameters params = new UltimateGoalBase.Parameters(this);
         UltimateGoalBase.Hardware hardware = new UltimateGoalBase.Hardware(hardwareMap);
         hardware.getVoltageSensor();
         hardware.getShooter();
         hardware.shooter.setPIDFCoefficients(shooterPIDF, hardware.voltageSensor.getVoltage());
 //        hardware.getCamera1(pipeline);
-        params.hardware = hardware;
+        UltimateGoalBase.Parameters params = new UltimateGoalBase.Parameters(this, hardware);
         params.dashboard = dashboard;
         params.telemetry = telemetry;
 

@@ -1,21 +1,26 @@
-package org.firstinspires.ftc.teamcode.drive.stuff;
+package org.firstinspires.ftc.teamcode.drive.pogcode;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.geometry.Vector2d;
 import com.qualcomm.hardware.bosch.BNO055IMU;
+import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
-import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
+import org.firstinspires.ftc.robotcore.external.navigation.Position;
+import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
 import org.firstinspires.ftc.teamcode.drive.ServoConstants;
 import org.firstinspires.ftc.teamcode.drive.advanced.SampleMecanumDriveCancelable;
 import org.openftc.easyopencv.OpenCvCamera;
@@ -37,8 +42,10 @@ public class UltimateGoalBase extends BaseBase {
     public SampleMecanumDriveCancelable drive;
 
     private int shotsQueued = 0;
+    private boolean wobbleBusy = false;
 
-    public Pose2d currentPose;
+    private Pose2d position;
+    private double angle;
 
     public UltimateGoalBase(UltimateGoalBase.Parameters params) {
         super(params);
@@ -47,25 +54,62 @@ public class UltimateGoalBase extends BaseBase {
 //            throw new IllegalArgumentException("Currently only accepts drive of type MecanumDrive, as the others haven't been implemented yet.");
 //        }
 
-        this.params.internalInit();
         this.hardware = this.params.hardware;
-        this.drive = this.params.drive;
+        this.drive = this.hardware.drive;
     }
 
 
     @Override
     public Pose2d getPosition() {
-        return currentPose;
+        return position;
+    }
+    public double getAngle() {
+        return angle;
+    }
+
+
+    public void init() {
+        params.opMode.telemetry.update();
+        params.opMode.telemetry.clearAll();
+
+        hardware.wobbleClaw.setPosition(ServoConstants.wobbleClawOpen);
+        hardware.wobbleArm1.setPosition(ServoConstants.wobbleArmRest);
+        hardware.wobbleArm2.setPosition(ServoConstants.wobbleArmRest);
+
+        hardware.turret.setPosition(ServoConstants.turretShoot);
+        hardware.flap.setPosition(ServoConstants.flapHG);
+
+        hardware.shootFlicker.setPosition(ServoConstants.shootFlickerOut);
+
+        hardware.droptakeStopper.setPosition(ServoConstants.dropTakeUp);
+        hardware.shooterStopper.setPosition(ServoConstants.shootStopperUp);
+
+        sleep(5000);
+
+        hardware.wobbleClaw.setPosition(ServoConstants.wobbleClawClose);
+    }
+    public void update() {
+        if (!shoot.isAlive() && shotsQueued > 0) {
+            shotsQueued --;
+            shoot.start();
+        }
+
+        params.telemetry.update();
+
+        for (LynxModule module : params.hardwareMap.getAll(LynxModule.class)) {
+            module.clearBulkCache();
+        }
+        angle = hardware.imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle;
     }
 
 
     public void startFieldCentricDriving(double driverAngleOffset) { // counterclockwise
-        currentPose = drive.getPoseEstimate();
+        position = drive.getPoseEstimate();
 
         Vector2d input = new Vector2d(
                 -params.opMode.gamepad1.left_stick_y,
                 -params.opMode.gamepad1.left_stick_x
-        ).rotated(-currentPose.getHeading() - Math.toRadians(270));
+        ).rotated(-position.getHeading() - Math.toRadians(270));
 
         drive.setWeightedDrivePower(
                 new Pose2d(
@@ -90,7 +134,7 @@ public class UltimateGoalBase extends BaseBase {
         hardware.bottomRoller.setPower(0);
     }
 
-    public void wobbleUp() {
+    protected Thread wobbleUp = new Thread(() -> {
         double pos = hardware.wobbleArm1.getPosition();
         while (pos > ServoConstants.wobbleArmUp) {
             pos -= 0.01;
@@ -98,8 +142,9 @@ public class UltimateGoalBase extends BaseBase {
             hardware.wobbleArm2.setPosition(pos);
             sleep(20);
         }
-    }
-    public void wobbleDown() {
+        wobbleBusy = false;
+    });
+    protected Thread wobbleDown = new Thread(() -> {
         double pos = hardware.wobbleArm1.getPosition();
         while (pos < ServoConstants.wobbleArmDown) {
             pos += 0.01;
@@ -107,6 +152,23 @@ public class UltimateGoalBase extends BaseBase {
             hardware.wobbleArm2.setPosition(pos);
             sleep(20);
         }
+        wobbleBusy = false;
+    });
+    public void wobbleUp() {
+        if (wobbleBusy) {
+            wobbleUp.interrupt();
+            wobbleDown.interrupt();
+        }
+        wobbleBusy = true;
+        wobbleUp.start();
+    }
+    public void wobbleDown() {
+        if (wobbleBusy) {
+            wobbleUp.interrupt();
+            wobbleDown.interrupt();
+        }
+        wobbleBusy = true;
+        wobbleDown.start();
     }
     public void grabWobble() {
         hardware.wobbleClaw.setPosition(ServoConstants.wobbleClawClose);
@@ -115,8 +177,8 @@ public class UltimateGoalBase extends BaseBase {
         hardware.wobbleClaw.setPosition(ServoConstants.wobbleClawOpen);
     }
 
-    public void startShooter() { //Vector3D target) {
-        //todo
+    public void startShooter(int velocity) { //Vector3D target) {
+        hardware.shooter.setVelocity(velocity);
     }
     public void stopShooter() {
         hardware.shooter1.setPower(0);
@@ -130,37 +192,19 @@ public class UltimateGoalBase extends BaseBase {
         it will shoot x times successively, even if it's still shooting
     */
     protected Thread shoot = new Thread(() -> {
-        try {
-            hardware.shootFlicker.setPosition(ServoConstants.shootFlickerShot);
-            Thread.sleep(280);
-            hardware.shootFlicker.setPosition(ServoConstants.shootFlickerOut);
-            Thread.sleep(280);
-        } catch (InterruptedException e) {
-            hardware.shootFlicker.setPosition(ServoConstants.shootFlickerOut);
-            Thread.currentThread().interrupt();
-        }
+        hardware.shootFlicker.setPosition(ServoConstants.shootFlickerShot);
+        sleep(280);
+        hardware.shootFlicker.setPosition(ServoConstants.shootFlickerOut);
+        sleep(280);
     });
     public void queueShot() {
         shotsQueued ++;
     }
 
-    public void update() {
-        if (!shoot.isAlive() && shotsQueued > 0) {
-            shotsQueued --;
-            shoot.start();
-        }
-
-        params.telemetry.update();
-
-        for (LynxModule module : params.hardwareMap.getAll(LynxModule.class)) {
-            module.clearBulkCache();
-        }
-    }
-
-    public void sleep(long ms) {
+    public static void sleep(long ms) {
         sleep(ms, 0);
     }
-    public void sleep(long ms, int nanos) {
+    public static void sleep(long ms, int nanos) {
         try {
             Thread.sleep(ms, nanos);
         } catch (InterruptedException e) {
@@ -168,72 +212,16 @@ public class UltimateGoalBase extends BaseBase {
         }
     }
 
-//    public static double rpmToTicksPerSecond(double rpm) {
-//        return rpm * MOTOR_TICKS_PER_REV / MOTOR_GEAR_RATIO / 60;
-//    }
-//
-//    private void setVelocity(DcMotorEx motor, double power) {
-//        if(RUN_USING_ENCODER) {
-//            motor.setVelocity(rpmToTicksPerSecond(power));
-//            Log.i("mode", "setting velocity");
-//        }
-//        else {
-//            Log.i("mode", "setting power");
-//            motor.setPower(power / MOTOR_MAX_RPM);
-//        }
-//    }
-//    private void setVelocity2(DcMotorEx motor, double power) {
-//        if (RUN_USING_ENCODER) {
-//            motor.setVelocity(rpmToTicksPerSecond(power));
-//            Log.i("mode", "setting velocity");
-//        } else {
-//            Log.i("mode", "setting power");
-//            motor.setPower(power / MOTOR_MAX_RPM);
-//        }
-//    }
-//
-//    private void setPIDFCoefficients(DcMotorEx motor, PIDFCoefficients coefficients) {
-//        if(!RUN_USING_ENCODER) {
-//            Log.i("config", "skipping RUE");
-//            return;
-//        }
-//
-//        if (!DEFAULT_GAINS) {
-//            Log.i("config", "setting custom gains");
-//            motor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(
-//                    coefficients.p, coefficients.i, coefficients.d, coefficients.f * 12 / batteryVoltageSensor.getVoltage()
-//            ));
-//        } else {
-//            Log.i("config", "setting default gains");
-//        }
-//    }
-
 
     @SuppressWarnings("unused")
     public static class Parameters extends BaseBase.Parameters {
 
-        public SampleMecanumDriveCancelable drive;
         public LinearOpMode opMode;
         public Hardware hardware;
 
-
-        public Parameters(OpMode opMode) {
+        public Parameters(OpMode opMode, Hardware hardware) {
             super(opMode);
-        }
-
-
-        private void internalInit() {
-            for (LynxModule module : hardwareMap.getAll(LynxModule.class)) {
-                module.setBulkCachingMode(LynxModule.BulkCachingMode.MANUAL);
-            }
-
-            if (drive == null) drive = new SampleMecanumDriveCancelable(hardwareMap);
-
-
-            dashboard = FtcDashboard.getInstance();
-            telemetry = new MultipleTelemetry(telemetry, dashboard.getTelemetry());
-            telemetry.update();
-            telemetry.clearAll();
+            this.hardware = hardware;
         }
     }
 
@@ -363,7 +351,18 @@ public class UltimateGoalBase extends BaseBase {
             voltageSensor = hardwareMap.voltageSensor.iterator().next();
         }
         public void getIMU() {
+            BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
+            parameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
+            parameters.accelUnit = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
+            parameters.calibrationDataFile = "BNO055IMUCalibration.json"; // see the calibration sample opmode
+            parameters.loggingEnabled = true;
+            parameters.loggingTag = "IMU";
+            parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
 
+            imu = hardwareMap.get(BNO055IMU.class, "imu");
+            imu.initialize(parameters);
+
+            imu.startAccelerationIntegration(new Position(), new Velocity(), 1000);
         }
     }
 }
