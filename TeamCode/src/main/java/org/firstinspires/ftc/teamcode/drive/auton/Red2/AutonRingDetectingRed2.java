@@ -87,8 +87,8 @@ public class AutonRingDetectingRed2 extends LinearOpMode {
     public static PIDFCoefficients MOTOR_VELO_PID = new PIDFCoefficients(45,0,0,21.5);
     public static PIDFCoefficients MOTOR_VELO_PID_2 = new PIDFCoefficients(45,0,0,21.5);
 
-    public static double lastKf = 16.45;
-    public static double lastKf_2 = 16.45;
+    public static double lastKf = 17.05;
+    public static double lastKf_2 = 17.05;
 
     /********************************************************************************************************************
      *
@@ -261,11 +261,11 @@ public class AutonRingDetectingRed2 extends LinearOpMode {
                 Trajectory traj1_4 = drive.trajectoryBuilder(startPose)
                         .addTemporalMarker(0, () -> {
                             flap.setPosition(.4);
-                            turret.setPosition(.2);
-                            setVelocity(frontShoot, 2580);
-                            setVelocity2(backShoot, 2580);
+                            turret.setPosition(.17);
+                            setVelocity(frontShoot, 2615);
+                            setVelocity2(backShoot, 2615);
                         })
-                        .lineToLinearHeading(new Pose2d(-1, -10, Math.toRadians(12)))
+                        .lineToLinearHeading(new Pose2d(-1, -10, Math.toRadians(15)))
                         .addDisplacementMarker(() -> {
                             shooterStopper.setPosition(.4);
                         })
@@ -337,9 +337,9 @@ public class AutonRingDetectingRed2 extends LinearOpMode {
                 Trajectory traj1_1 = drive.trajectoryBuilder(startPose)
                         .addTemporalMarker(0, () -> {
                             flap.setPosition(.4);
-                            turret.setPosition(.2);
-                            setVelocity(frontShoot, 2580);
-                            setVelocity2(backShoot, 2580);
+                            turret.setPosition(.17);
+                            setVelocity(frontShoot, 2615);
+                            setVelocity2(backShoot, 2615);
                         })
                         .lineToLinearHeading(new Pose2d(-1, -10, Math.toRadians(15)))
                         .addDisplacementMarker(() -> {
@@ -356,26 +356,6 @@ public class AutonRingDetectingRed2 extends LinearOpMode {
                         .build();
 
                 Trajectory traj3_1 = drive.trajectoryBuilder(traj2_1.end())
-                        .addTemporalMarker(0, () -> {
-                            intake.setPower(.8);
-                            bottomRoller.setPower(-.7);
-                        })
-                        .lineToLinearHeading(new Pose2d(-40, 10, Math.toRadians(180)))
-                        .build();
-
-                Trajectory traj3PointOh_1 = drive.trajectoryBuilder(traj3_1.end())
-                        .addTemporalMarker(0, () -> {
-                            flap.setPosition(.4);
-                            setVelocity(frontShoot, 2580);
-                            setVelocity2(backShoot, 2580);
-                        })
-                        .lineToLinearHeading(new Pose2d(-1, -10, Math.toRadians(10)))
-                        .addDisplacementMarker(() -> {
-                            shooterStopper.setPosition(.4);
-                        })
-                        .build();
-
-                Trajectory traj4_1 = drive.trajectoryBuilder(traj3PointOh_1.end())
                         .addTemporalMarker(0, () -> {
                             intake.setPower(0);
                             bottomRoller.setPower(0);
@@ -416,15 +396,6 @@ public class AutonRingDetectingRed2 extends LinearOpMode {
 
                 drive.followTrajectory(traj3_1);
 
-                drive.followTrajectory(traj3PointOh_1);
-
-                sleep(1000);
-
-                shoot();
-                sleep(300);
-
-                drive.followTrajectory(traj4_1);
-
                 flap.setPosition(.39);
                 turret.setPosition(.15);
                 shooterStopper.setPosition(.9);
@@ -446,9 +417,9 @@ public class AutonRingDetectingRed2 extends LinearOpMode {
                 Trajectory traj1_0 = drive.trajectoryBuilder(startPose)
                         .addTemporalMarker(0, () -> {
                             flap.setPosition(.4);
-                            turret.setPosition(.2);
-                            setVelocity(frontShoot, 2580);
-                            setVelocity2(backShoot, 2580);
+                            turret.setPosition(.17);
+                            setVelocity(frontShoot, 2615);
+                            setVelocity2(backShoot, 2615);
                         })
                         .lineToLinearHeading(new Pose2d(-1, -10, Math.toRadians(15)))
                         .addDisplacementMarker(() -> {
@@ -638,8 +609,8 @@ public class AutonRingDetectingRed2 extends LinearOpMode {
             private final int REGION_WIDTH = 50;
             private final int REGION_HEIGHT = 200;
 
-            private int FOUR_RING_THRESHOLD = 133;
-            private int ONE_RING_THRESHOLD = 127;
+            private int FOUR_RING_THRESHOLD = 135;
+            private int ONE_RING_THRESHOLD = 126;
 
             Point region1_pointA = new Point(
                     REGION1_TOPLEFT_ANCHOR_POINT.x,

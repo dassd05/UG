@@ -33,8 +33,8 @@ public class  PIDFTrial extends LinearOpMode {
     public static PIDFCoefficients MOTOR_VELO_PID = new PIDFCoefficients(45, 0, 0, 25);
     public static PIDFCoefficients MOTOR_VELO_PID_2 = new PIDFCoefficients(45, 0, 0, 25); // fix this
 
-    public static double lastKf = 16.7;
-    public static double lastKf_2 = 16.7; // fix this
+    public static double lastKf = 16.9;
+    public static double lastKf_2 = 16.9; // fix this
 
     double lastVoltage = 0;
 
