@@ -116,13 +116,6 @@ public class AutonRingDetectingRed1 extends LinearOpMode {
             }
         });
 
-//        webcam.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener() {
-//            @Override
-//            public void onOpened() {
-//                webcam.startStreaming(1280, 960, OpenCvCameraRotation.UPRIGHT);
-//            }
-//        });
-
         batteryVoltageSensor = hardwareMap.voltageSensor.iterator().next();
 
         DcMotorEx frontShoot = hardwareMap.get(DcMotorEx.class, "shooter1");

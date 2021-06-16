@@ -8,6 +8,8 @@ import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.geometry.Vector2d;
 import com.acmerobotics.roadrunner.trajectory.Trajectory;
 import com.acmerobotics.roadrunner.util.Angle;
+import com.qualcomm.hardware.bosch.BNO055IMU;
+import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -20,28 +22,26 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.qualcomm.robotcore.hardware.configuration.typecontainers.MotorConfigurationType;
 import com.qualcomm.robotcore.util.ElapsedTime;
+import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.robotcore.external.navigation.Acceleration;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
+import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
+import org.firstinspires.ftc.robotcore.external.navigation.Position;
+import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
+import org.firstinspires.ftc.teamcode.drive.stuff.GamepadListenerEx;
 
 import java.util.*;
 
-
 @TeleOp(group = "advanced")
 public class TeleOpAugmentedDrivingRed extends LinearOpMode {
-    enum Mode {
-        INTAKING,
-        TELEOP_SHOOTING,
-        ENDGAME
-    }
-
-    Mode currentMode = Mode.INTAKING;
 
     public static double MOTOR_TICKS_PER_REV = 28;
-    public static double MOTOR_MAX_RPM = 5400;
     public static double MOTOR_GEAR_RATIO = 1;
 
-    public static boolean RUN_USING_ENCODER = true;
-    public static boolean DEFAULT_GAINS = false;
 
     private FtcDashboard dashboard = FtcDashboard.getInstance();
 
@@ -52,6 +52,16 @@ public class TeleOpAugmentedDrivingRed extends LinearOpMode {
 
     private DcMotor intake, bottomRoller;
 
+    private DcMotor frontLeft;
+    private DcMotor frontRight;
+    private DcMotor backRight;
+    private DcMotor backLeft;
+
+    public BNO055IMU imu;
+
+    Orientation angles;
+    Acceleration gravity;
+
 
     /********************************************************************************************
      *
@@ -60,8 +70,8 @@ public class TeleOpAugmentedDrivingRed extends LinearOpMode {
     public static PIDFCoefficients MOTOR_VELO_PID = new PIDFCoefficients(45, 0, 0, 25);
     public static PIDFCoefficients MOTOR_VELO_PID_2 = new PIDFCoefficients(45, 0, 0, 25); // fix this
 
-    public static double lastKf = 17;
-    public static double lastKf_2 = 17; // fix this
+    public static double lastKf = 15.9;
+    public static double lastKf_2 = 15.9; // fix this
 
     /********************************************************************************************
      *
@@ -69,34 +79,49 @@ public class TeleOpAugmentedDrivingRed extends LinearOpMode {
 
     double lastVoltage = 0;
 
+
+
+    boolean intakeOn = false;
+    boolean reversed = false;
+
+    double reverse = 1;
+
+    boolean shooterOn = false;
+
     @Override
     public void runOpMode() throws InterruptedException {
+
+        double driveTurn;
+
+        double gamepadXCoordinate;
+        double gamepadYCoordinate;
+        double gamepadHypot;
+        double gamepadXControl;
+        double gamepadYControl;
+        double gamepadDegree;
+        double robotDegree;
+        double movementRadian;
+
         batteryVoltageSensor = hardwareMap.voltageSensor.iterator().next();
 
-        DcMotorEx frontShoot = hardwareMap.get(DcMotorEx.class, "frontShoot");
-        frontShoot.setDirection(DcMotorSimple.Direction.REVERSE);
+        DcMotorEx frontShoot = hardwareMap.get(DcMotorEx.class, "shooter1");
         frontShoot.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 
         MotorConfigurationType motorConfigurationType = frontShoot.getMotorType().clone();
         motorConfigurationType.setAchieveableMaxRPMFraction(1.0);
         frontShoot.setMotorType(motorConfigurationType);
 
-        DcMotorEx backShoot = hardwareMap.get(DcMotorEx.class, "backShoot");
-        backShoot.setDirection(DcMotorSimple.Direction.REVERSE);
+        DcMotorEx backShoot = hardwareMap.get(DcMotorEx.class, "shooter2");
         backShoot.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 
         MotorConfigurationType motorConfigurationType2 = backShoot.getMotorType().clone();
         motorConfigurationType2.setAchieveableMaxRPMFraction(1.0);
         backShoot.setMotorType(motorConfigurationType2);
 
-        if (RUN_USING_ENCODER)
-            frontShoot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        else
-            frontShoot.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        if (RUN_USING_ENCODER)
-            backShoot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        else
-            backShoot.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+        frontShoot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        backShoot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
 
         shootFlicker = hardwareMap.get(Servo.class, "shootFlicker");
 
@@ -124,7 +149,36 @@ public class TeleOpAugmentedDrivingRed extends LinearOpMode {
         intake = hardwareMap.dcMotor.get("intake");
         bottomRoller = hardwareMap.dcMotor.get("bottomRoller");
 
-        bottomRoller.setDirection(DcMotorSimple.Direction.REVERSE);
+        frontLeft = hardwareMap.dcMotor.get("frontLeft");
+        frontRight = hardwareMap.dcMotor.get("frontRight");
+        backRight = hardwareMap.dcMotor.get("backRight");
+        backLeft = hardwareMap.dcMotor.get("backLeft");
+
+        frontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        frontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        frontRight.setDirection(DcMotorSimple.Direction.REVERSE);
+        backRight.setDirection(DcMotorSimple.Direction.REVERSE);
+
+        BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
+        parameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
+        parameters.accelUnit = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
+        parameters.calibrationDataFile = "BNO055IMUCalibration.json"; // see the calibration sample opmode
+        parameters.loggingEnabled = true;
+        parameters.loggingTag = "IMU";
+        parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
+
+
+        imu = hardwareMap.get(BNO055IMU.class, "imu");
+        imu.initialize(parameters);
+
+        composeTelemetry();
+
+
+        imu.startAccelerationIntegration(new Position(), new Velocity(), 1000);
+
 
         telemetry = new MultipleTelemetry(telemetry, dashboard.getTelemetry());
 
@@ -136,148 +190,38 @@ public class TeleOpAugmentedDrivingRed extends LinearOpMode {
 
         drive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-        // Retrieve our pose from the PoseStorage.currentPose static field
-        // See AutoTransferPose.java for further details
         drive.setPoseEstimate(PoseStorage.currentPose);
 
-        boolean intakeOn = false;
-        boolean reversed = false;
 
-        double reverse = 1;
+        GamepadListenerEx gamepadListener1 = new GamepadListenerEx(gamepad1) {
+            @Override
+            public void onButtonPress(Button button) {
+                super.onButtonPress(button);
+                if (button == Button.b) shoot();
+
+                if (button == Button.a) shooterOn = !shooterOn;
+
+            }
+        };
+        GamepadListenerEx gamepadListener2 = new GamepadListenerEx(gamepad2) {
+            @Override
+            public void onButtonPress(Button button) {
+                super.onButtonPress(button);
+
+                if (button == Button.right_bumper) intakeOn = !intakeOn;
+
+                if (button == Button.left_bumper) reversed = !reversed;
+
+            }
+        };
+
+
 
         waitForStart();
 
         if (isStopRequested()) return;
 
         while (opModeIsActive() && !isStopRequested()) {
-
-            if (gamepad2.left_bumper && reversed) {
-                reversed = false;
-            } else if (gamepad2.left_bumper && !reversed) {
-                reversed = true;
-            }
-
-            if (reversed) {
-                reverse = 1;
-            } else if (!reversed) {
-                reverse = -1;
-            }
-
-            if (gamepad2.right_bumper && intakeOn) {
-                intakeOn = false;
-            } else if (gamepad2.right_bumper && !intakeOn) {
-                intakeOn = true;
-            }
-
-            drive.update();
-
-            Pose2d poseEstimate = drive.getPoseEstimate();
-
-            if (intakeOn) {
-                intake.setPower(.8 * reverse);
-                bottomRoller.setPower(-.7 * reverse);
-            } else if (!intakeOn) {
-                intake.setPower(0);
-                bottomRoller.setPower(0);
-            }
-
-            Vector2d input = new Vector2d(
-                    -gamepad1.right_stick_y,
-                    gamepad1.right_stick_x
-            ).rotated(-poseEstimate.getHeading() - Math.toRadians(270));
-
-            drive.setWeightedDrivePower(
-                    new Pose2d(
-                            input.getX() * .7,
-                            input.getY() * .7,
-                            (-gamepad1.left_stick_x * .7)
-                    )
-            );
-
-            telemetry.addData("mode", currentMode);
-            telemetry.addData("x", poseEstimate.getX());
-            telemetry.addData("y", poseEstimate.getY());
-            telemetry.addData("heading", Math.toDegrees(poseEstimate.getHeading()));
-
-            switch (currentMode) {
-                case INTAKING:
-                    frontShoot.setPower(0);
-                    backShoot.setPower(0);
-
-                    /*liftServo.setPosition(.72);
-
-                    intake1.setPower(.75);
-                    intake2.setPower(.75);*/
-                    break;
-                case TELEOP_SHOOTING:
-                    if (gamepad1.x && drive.isBusy() || gamepad1.a && drive.isBusy())
-                        drive.cancelFollowing();
-
-                    Trajectory shooting = drive.trajectoryBuilder(poseEstimate)
-                            .lineToLinearHeading(new Pose2d(-10, -7, Math.toRadians(3))) // need to fix coordinate
-                            .addTemporalMarker(0, () -> {
-                                /*intake1.setPower(0);
-                                intake2.setPower(0);
-                                liftServo.setPosition(.17);*/
-
-                                //runShooterMotors(2700); //need to test shooter power stuff
-                            })
-                            .build(); //need to fix the coordinates
-
-                    drive.followTrajectory(shooting);
-                    //runShooterMotors(1200);
-                    break;
-                case ENDGAME:
-                    if (gamepad1.x && drive.isBusy() || gamepad1.y && drive.isBusy())
-                        drive.cancelFollowing();
-
-                    Trajectory endgame1 = drive.trajectoryBuilder(poseEstimate)
-                            .strafeRight(10) // need to fix coordinate
-                            .addTemporalMarker(0, () -> {
-                                /*intake1.setPower(0);
-                                intake2.setPower(0);
-                                liftServo.setPosition(.17);*/
-
-                                // runShooterMotors(2800); //need to test shooter power stuff
-                            })
-                            .build(); //need to fix the coordinates
-
-                    Trajectory endgame2 = drive.trajectoryBuilder(endgame1.end())
-                            .strafeRight(8) // need to fix coordinate
-                            .addTemporalMarker(0, () -> {
-                            })
-                            .build(); //need to fix the coordinates
-
-                    Trajectory endgame3 = drive.trajectoryBuilder(endgame2.end())
-                            .strafeRight(8) // need to fix coordinate
-                            .addTemporalMarker(0, () -> {
-                            })
-                            .build(); //need to fix the coordinates
-
-                    drive.followTrajectory(endgame1);
-                    sleep(100);
-                    shoot();
-                    sleep(200);
-
-                    drive.followTrajectory(endgame2);
-                    sleep(100);
-                    shoot();
-                    sleep(200);
-
-                    drive.followTrajectory(endgame3);
-                    sleep(100);
-                    shoot();
-                    sleep(200);
-
-                    currentMode = Mode.INTAKING;
-                    break;
-                default:
-                    // this should *NEVER* happen
-                    String errMsg = "LINE 49, 126, 135, switch statement on currentMode reached default case somehow";
-                    telemetry.addData("ERROR", errMsg);
-                    telemetry.update();
-                    throw new InternalError(errMsg);
-            }
 
             if (lastKf_2 != MOTOR_VELO_PID_2.f) {
                 MOTOR_VELO_PID_2.f = lastKf_2 * 12 / batteryVoltageSensor.getVoltage();
@@ -294,110 +238,153 @@ public class TeleOpAugmentedDrivingRed extends LinearOpMode {
 
             lastVoltage = batteryVoltageSensor.getVoltage();
 
-            if (gamepad1.x) currentMode = Mode.INTAKING;
-            if (gamepad1.y) currentMode = Mode.TELEOP_SHOOTING;
-            if (gamepad1.a) currentMode = Mode.ENDGAME;
 
-            if (gamepad1.b) {
-                shoot();
-            }
-
-            // lifting wobble goal
             if (gamepad1.dpad_up) {
                 wobbleUp();
             }
 
-            // setting arm down
             if (gamepad1.dpad_down) {
                 wobbleDown();
             }
 
-            // dropping off wobble goal
             if (gamepad1.dpad_left) {
-                wobbleDeploy();
+                wobbleClaw.setPosition(.6);
             }
-        }
 
+            turret.setPosition(.2);
+            flap.setPosition(.48);
+
+            drive.update();
+
+            Pose2d poseEstimate = drive.getPoseEstimate();
+
+
+            if (reversed) {
+                reverse = 1;
+            } else if (!reversed) {
+                reverse = -1;
+            }
+
+            if (intakeOn) {
+                intake.setPower(.8 * reverse);
+                bottomRoller.setPower(-.7 * reverse);
+            } else if (!intakeOn) {
+                intake.setPower(0);
+                bottomRoller.setPower(0);
+            }
+
+            if (shooterOn) {
+                setVelocity(frontShoot, 2700);
+                setVelocity2(backShoot, 2700);
+                shooterStopper.setPosition(.4);
+            } else if (!shooterOn) {
+                frontShoot.setVelocity(0);
+                backShoot.setVelocity(0);
+                shooterStopper.setPosition(.9);
+            }
+
+
+            driveTurn = -gamepad1.left_stick_x/2;
+
+            gamepadXCoordinate = gamepad1.right_stick_x;
+            gamepadYCoordinate = -gamepad1.right_stick_y;
+            gamepadHypot = Range.clip(Math.hypot(gamepadXCoordinate, gamepadYCoordinate), 0, 1);
+            gamepadDegree = Math.toDegrees(Math.atan2(gamepadYCoordinate, gamepadXCoordinate)) + 90;
+            if (gamepadDegree > 180) {
+                gamepadDegree = -360 + gamepadDegree;
+            }
+            robotDegree = getAngle();
+            movementRadian = Math.toRadians(gamepadDegree - robotDegree);
+            gamepadXControl = gamepadHypot * Math.cos(movementRadian);
+            gamepadYControl = gamepadHypot * Math.sin(movementRadian);
+
+            double fr = (gamepadYControl * Math.abs(gamepadYControl)) - (gamepadXControl * Math.abs(gamepadXControl)) + driveTurn;
+            double fl = (gamepadYControl * Math.abs(gamepadYControl)) + (gamepadXControl * Math.abs(gamepadXControl)) - driveTurn;
+            double bl = (gamepadYControl * Math.abs(gamepadYControl)) - (gamepadXControl * Math.abs(gamepadXControl)) - driveTurn;
+            double br = (gamepadYControl * Math.abs(gamepadYControl)) + (gamepadXControl * Math.abs(gamepadXControl)) + driveTurn;
+
+            if (gamepad1.right_bumper) {
+                frontRight.setPower(fr / 5);
+                frontLeft.setPower(fl / 5);
+                backLeft.setPower(bl / 5);
+                backRight.setPower(br / 5);
+            } else {
+                frontRight.setPower(fr);
+                frontLeft.setPower(fl);
+                backLeft.setPower(bl);
+                backRight.setPower(br);
+            }
+
+            telemetry.addData("x", poseEstimate.getX());
+            telemetry.addData("y", poseEstimate.getY());
+            telemetry.addData("heading", Math.toDegrees(poseEstimate.getHeading()));
             telemetry.update();
+            gamepadListener1.update();
+            gamepadListener2.update();
         }
+    }
+
+
+    void composeTelemetry() {
+        telemetry.addAction(new Runnable() {
+            @Override
+            public void run() {
+                angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+                gravity = imu.getGravity();
+            }
+        });
+    }
+    public double getAngle() {
+        return imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle;
+    }
 
     public void shoot() {
-        shootFlicker.setPosition(0.35);
+        shootFlicker.setPosition(.35);
         sleep(280);
-        shootFlicker.setPosition(0.57);
+        shootFlicker.setPosition(.57);
     }
-    public void wobbleUp () {
-        //wobbleClaw.setPosition(.07); // need to change position and time
-        sleep(700);
+
+    public void wobbleUp() {
+        wobbleClaw.setPosition(.38);
+        sleep(500);
         wobbleArm1.setPosition(.2);
         wobbleArm2.setPosition(.2);
-        sleep(500);
+        sleep(1000);
     }
-    public void wobbleDown () {
+
+    public void wobbleDown() {
         wobbleArm1.setPosition(.54);
         wobbleArm2.setPosition(.54);
         sleep(500);
-        //wobbleClaw.setPosition(.07); // need to change position and time
-        sleep(350);
-    }
-
-    public void wobbleDeploy() {
-
+        wobbleClaw.setPosition(.6);
+        sleep(600);
     }
 
     public static double rpmToTicksPerSecond(double rpm) {
         return rpm * MOTOR_TICKS_PER_REV / MOTOR_GEAR_RATIO / 60;
     }
 
-    private void setVelocity(DcMotorEx motor, double power) {
-        if(RUN_USING_ENCODER) {
-            motor.setVelocity(rpmToTicksPerSecond(power));
-            Log.i("mode", "setting velocity");
-        }
-        else {
-            Log.i("mode", "setting power");
-            motor.setPower(power / MOTOR_MAX_RPM);
-        }
+    public void setVelocity(DcMotorEx motor, double power) {
+        motor.setVelocity(rpmToTicksPerSecond(power));
+        Log.i("mode", "setting velocity");
     }
-    private void setVelocity2(DcMotorEx motor, double power) {
-        if (RUN_USING_ENCODER) {
-            motor.setVelocity(rpmToTicksPerSecond(power));
-            Log.i("mode", "setting velocity");
-        } else {
-            Log.i("mode", "setting power");
-            motor.setPower(power / MOTOR_MAX_RPM);
-        }
+
+    public void setVelocity2(DcMotorEx motor, double power) {
+        motor.setVelocity(rpmToTicksPerSecond(power));
+        Log.i("mode", "setting velocity");
     }
 
     private void setPIDFCoefficients(DcMotorEx motor, PIDFCoefficients coefficients) {
-        if(!RUN_USING_ENCODER) {
-            Log.i("config", "skipping RUE");
-            return;
-        }
-
-        if (!DEFAULT_GAINS) {
-            Log.i("config", "setting custom gains");
-            motor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(
-                    coefficients.p, coefficients.i, coefficients.d, coefficients.f * 12 / batteryVoltageSensor.getVoltage()
-            ));
-        } else {
-            Log.i("config", "setting default gains");
-        }
+        Log.i("config", "setting custom gains");
+        motor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(
+                coefficients.p, coefficients.i, coefficients.d, coefficients.f * 12 / batteryVoltageSensor.getVoltage()
+        ));
     }
-    private void setPIDFCoefficients2(DcMotorEx motor, PIDFCoefficients coefficients) {
-        if(!RUN_USING_ENCODER) {
-            Log.i("config", "skipping RUE");
-            return;
-        }
 
-        if (!DEFAULT_GAINS) {
-            Log.i("config", "setting custom gains");
-            motor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(
-                    coefficients.p, coefficients.i, coefficients.d, coefficients.f * 12 / batteryVoltageSensor.getVoltage()
-            ));
-        } else {
-            Log.i("config", "setting default gains");
-        }
+    private void setPIDFCoefficients2(DcMotorEx motor, PIDFCoefficients coefficients) {
+        Log.i("config", "setting custom gains");
+        motor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(
+                coefficients.p, coefficients.i, coefficients.d, coefficients.f * 12 / batteryVoltageSensor.getVoltage()
+        ));
     }
 }
-
