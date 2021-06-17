@@ -87,8 +87,8 @@ public class AutonRingDetectingRed2 extends LinearOpMode {
     public static PIDFCoefficients MOTOR_VELO_PID = new PIDFCoefficients(45,0,0,21.5);
     public static PIDFCoefficients MOTOR_VELO_PID_2 = new PIDFCoefficients(45,0,0,21.5);
 
-    public static double lastKf = 17.05;
-    public static double lastKf_2 = 17.05;
+    public static double lastKf = 17.3;
+    public static double lastKf_2 = 17.3;
 
     /********************************************************************************************************************
      *

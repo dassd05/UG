@@ -87,8 +87,8 @@ public class AutonRingDetectingRed1 extends LinearOpMode {
     public static PIDFCoefficients MOTOR_VELO_PID = new PIDFCoefficients(45,0,0,21.5);
     public static PIDFCoefficients MOTOR_VELO_PID_2 = new PIDFCoefficients(45,0,0,21.5);
 
-    public static double lastKf = 17.7;
-    public static double lastKf_2 = 17.7;
+    public static double lastKf = 17.85;
+    public static double lastKf_2 = 17.85;
 
     /********************************************************************************************************************
      *
@@ -477,11 +477,11 @@ public class AutonRingDetectingRed1 extends LinearOpMode {
                 Trajectory traj1_0 = drive.trajectoryBuilder(startPose)
                         .addTemporalMarker(0, () -> {
                             flap.setPosition(.4);
-                            turret.setPosition(.26);
+                            turret.setPosition(.22);
                             setVelocity(frontShoot, 2620);
                             setVelocity2(backShoot, 2620);
                         })
-                        .lineToLinearHeading(new Pose2d(-1, 10, Math.toRadians(345)))
+                        .lineToLinearHeading(new Pose2d(-1, 5, Math.toRadians(345)))
                         .addDisplacementMarker(() -> {
                             shooterStopper.setPosition(.4);
                         })
@@ -492,12 +492,12 @@ public class AutonRingDetectingRed1 extends LinearOpMode {
                             frontShoot.setVelocity(0);
                             backShoot.setVelocity(0);
                         })
-                        .lineToLinearHeading(new Pose2d(15,-20, Math.toRadians(90)))
+                        .lineToLinearHeading(new Pose2d(10,-29, Math.toRadians(90)))
                         .build();
 
 
                 Trajectory traj4_0 = drive.trajectoryBuilder(traj2_0.end())
-                        .lineToLinearHeading(new Pose2d(15, 15, Math.toRadians(0)))
+                        .lineToLinearHeading(new Pose2d(15, 10, Math.toRadians(0)))
                         .build();
 
                 droptakeStopper.setPosition(0);

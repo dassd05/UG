@@ -70,8 +70,8 @@ public class TeleOpAugmentedDrivingBlue extends LinearOpMode {
     public static PIDFCoefficients MOTOR_VELO_PID = new PIDFCoefficients(45, 0, 0, 25);
     public static PIDFCoefficients MOTOR_VELO_PID_2 = new PIDFCoefficients(45, 0, 0, 25); // fix this
 
-    public static double lastKf = 17.7;
-    public static double lastKf_2 = 17.7; // fix this
+    public static double lastKf = 16.4;
+    public static double lastKf_2 = 16.4; // fix this
 
     /********************************************************************************************
      *
@@ -87,6 +87,7 @@ public class TeleOpAugmentedDrivingBlue extends LinearOpMode {
     double reverse = 1;
 
     boolean shooterOn = false;
+    boolean highGoal = false;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -201,6 +202,8 @@ public class TeleOpAugmentedDrivingBlue extends LinearOpMode {
 
                 if (button == Button.a) shooterOn = !shooterOn;
 
+                if (button == Button.x) highGoal = !highGoal;
+
             }
         };
         GamepadListenerEx gamepadListener2 = new GamepadListenerEx(gamepad2) {
@@ -215,7 +218,8 @@ public class TeleOpAugmentedDrivingBlue extends LinearOpMode {
             }
         };
 
-
+        turret.setPosition(.2);
+        flap.setPosition(.48);
 
         waitForStart();
 
@@ -256,9 +260,6 @@ public class TeleOpAugmentedDrivingBlue extends LinearOpMode {
                 wobbleClaw.setPosition(.6);
             }
 
-            turret.setPosition(.2);
-            flap.setPosition(.48);
-
             drive.update();
 
             Pose2d poseEstimate = drive.getPoseEstimate();
@@ -273,14 +274,30 @@ public class TeleOpAugmentedDrivingBlue extends LinearOpMode {
             }
 
             if (shooterOn) {
-                setVelocity(frontShoot, 2700);
-                setVelocity2(backShoot, 2700);
+                flap.setPosition(.48);
+                turret.setPosition(.2);
+                setVelocity(frontShoot, 2900);
+                setVelocity2(backShoot, 2900);
                 shooterStopper.setPosition(.4);
             } else if (!shooterOn) {
                 frontShoot.setVelocity(0);
                 backShoot.setVelocity(0);
                 shooterStopper.setPosition(.9);
             }
+
+//            if (highGoal) {
+//                turret.setPosition(.16);
+//                flap.setPosition(.4);
+//                setVelocity(frontShoot, 2590);
+//                setVelocity2(backShoot, 2590);
+//                shooterStopper.setPosition(.4);
+//            } else if (!highGoal) {
+//                flap.setPosition(.48);
+//                frontShoot.setVelocity(0);
+//                backShoot.setVelocity(0);
+//                shooterStopper.setPosition(.9);
+//                turret.setPosition(.2);
+//            }
 
 
             driveTurn = -gamepad1.left_stick_x/2;
@@ -297,10 +314,10 @@ public class TeleOpAugmentedDrivingBlue extends LinearOpMode {
             gamepadXControl = gamepadHypot * Math.cos(movementRadian);
             gamepadYControl = gamepadHypot * Math.sin(movementRadian);
 
-            double fr = (gamepadYControl * Math.abs(gamepadYControl)) - (gamepadXControl * Math.abs(gamepadXControl)) + driveTurn;
-            double fl = (gamepadYControl * Math.abs(gamepadYControl)) + (gamepadXControl * Math.abs(gamepadXControl)) - driveTurn;
-            double bl = (gamepadYControl * Math.abs(gamepadYControl)) - (gamepadXControl * Math.abs(gamepadXControl)) - driveTurn;
-            double br = (gamepadYControl * Math.abs(gamepadYControl)) + (gamepadXControl * Math.abs(gamepadXControl)) + driveTurn;
+            double fr = Range.clip((gamepadYControl * Math.abs(gamepadYControl)) - (gamepadXControl * Math.abs(gamepadXControl)) + driveTurn, -1, 1);
+            double fl = Range.clip((gamepadYControl * Math.abs(gamepadYControl)) + (gamepadXControl * Math.abs(gamepadXControl)) - driveTurn, -1, 1);
+            double bl = Range.clip((gamepadYControl * Math.abs(gamepadYControl)) - (gamepadXControl * Math.abs(gamepadXControl)) - driveTurn, -1, 1);
+            double br = Range.clip((gamepadYControl * Math.abs(gamepadYControl)) + (gamepadXControl * Math.abs(gamepadXControl)) + driveTurn, -1, 1);
 
             if (gamepad1.right_bumper) {
                 frontRight.setPower(fr / 5);

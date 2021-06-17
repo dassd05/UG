@@ -70,8 +70,8 @@ public class TeleOpAugmentedDrivingRed extends LinearOpMode {
     public static PIDFCoefficients MOTOR_VELO_PID = new PIDFCoefficients(45, 0, 0, 25);
     public static PIDFCoefficients MOTOR_VELO_PID_2 = new PIDFCoefficients(45, 0, 0, 25); // fix this
 
-    public static double lastKf = 17.7;
-    public static double lastKf_2 = 17.7; // fix this
+    public static double lastKf = 17.85;
+    public static double lastKf_2 = 17.85; // fix this
 
     /********************************************************************************************
      *
@@ -210,7 +210,7 @@ public class TeleOpAugmentedDrivingRed extends LinearOpMode {
 
                 if (button == Button.right_bumper) intakeOn = !intakeOn;
 
-                if (button == Button.left_bumper) reversed = !reversed;
+                //if (button == Button.left_bumper) reversed = !reversed;
 
             }
         };
@@ -259,16 +259,15 @@ public class TeleOpAugmentedDrivingRed extends LinearOpMode {
             Pose2d poseEstimate = drive.getPoseEstimate();
 
 
-            if (reversed) {
-                reverse = 1;
-            } else if (!reversed) {
-                reverse = -1;
-            }
-
             if (intakeOn) {
-                intake.setPower(.8 * reverse);
-                bottomRoller.setPower(-.7 * reverse);
-            } else if (!intakeOn) {
+                if (gamepad2.left_bumper) {
+                    intake.setPower(-.8);
+                    bottomRoller.setPower(.7);
+                } else {
+                    intake.setPower(.8);
+                    bottomRoller.setPower(-.7);
+                }
+            } else {
                 intake.setPower(0);
                 bottomRoller.setPower(0);
             }
@@ -298,10 +297,10 @@ public class TeleOpAugmentedDrivingRed extends LinearOpMode {
             gamepadXControl = gamepadHypot * Math.cos(movementRadian);
             gamepadYControl = gamepadHypot * Math.sin(movementRadian);
 
-            double fr = (gamepadYControl * Math.abs(gamepadYControl)) - (gamepadXControl * Math.abs(gamepadXControl)) + driveTurn;
-            double fl = (gamepadYControl * Math.abs(gamepadYControl)) + (gamepadXControl * Math.abs(gamepadXControl)) - driveTurn;
-            double bl = (gamepadYControl * Math.abs(gamepadYControl)) - (gamepadXControl * Math.abs(gamepadXControl)) - driveTurn;
-            double br = (gamepadYControl * Math.abs(gamepadYControl)) + (gamepadXControl * Math.abs(gamepadXControl)) + driveTurn;
+            double fr = Range.clip((gamepadYControl * Math.abs(gamepadYControl)) - (gamepadXControl * Math.abs(gamepadXControl)) + driveTurn, -1, 1);
+            double fl = Range.clip((gamepadYControl * Math.abs(gamepadYControl)) + (gamepadXControl * Math.abs(gamepadXControl)) - driveTurn, -1, 1);
+            double bl = Range.clip((gamepadYControl * Math.abs(gamepadYControl)) - (gamepadXControl * Math.abs(gamepadXControl)) - driveTurn, -1, 1);
+            double br = Range.clip((gamepadYControl * Math.abs(gamepadYControl)) + (gamepadXControl * Math.abs(gamepadXControl)) + driveTurn, -1, 1);
 
             if (gamepad1.right_bumper) {
                 frontRight.setPower(fr / 5);
