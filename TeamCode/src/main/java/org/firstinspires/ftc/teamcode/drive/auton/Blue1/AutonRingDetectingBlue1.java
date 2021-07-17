@@ -87,8 +87,8 @@ public class AutonRingDetectingBlue1 extends LinearOpMode {
     public static PIDFCoefficients MOTOR_VELO_PID = new PIDFCoefficients(45,0,0,21.5);
     public static PIDFCoefficients MOTOR_VELO_PID_2 = new PIDFCoefficients(45,0,0,21.5);
 
-    public static double lastKf = 16.4;
-    public static double lastKf_2 = 16.4;
+    public static double lastKf = 17.7;
+    public static double lastKf_2 = 17.7;
 
     /********************************************************************************************************************
      *
@@ -205,7 +205,7 @@ public class AutonRingDetectingBlue1 extends LinearOpMode {
 
         sleep(5000);
 
-        wobbleClaw.setPosition(.38);
+        wobbleClaw.setPosition(.3);
 
 
         while (!opModeIsActive()) {
@@ -310,6 +310,8 @@ public class AutonRingDetectingBlue1 extends LinearOpMode {
                         .build();
 
                 droptakeStopper.setPosition(0);
+
+                sleep(12);
 
                 drive.followTrajectory(traj1_4);
 
@@ -572,7 +574,7 @@ public class AutonRingDetectingBlue1 extends LinearOpMode {
     }
 
     public void wobbleUp() {
-        wobbleClaw.setPosition(.38);
+        wobbleClaw.setPosition(.3);
         sleep(500);
         wobbleArm1.setPosition(.2);
         wobbleArm2.setPosition(.2);

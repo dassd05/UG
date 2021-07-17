@@ -32,7 +32,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.robotcore.external.navigation.Position;
 import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
-import org.firstinspires.ftc.teamcode.drive.stuff.GamepadListenerEx;
+import org.firstinspires.ftc.teamcode.drive.pogcode.GamepadListenerEx;
 
 import java.util.*;
 
@@ -70,8 +70,8 @@ public class TeleOpAugmentedDrivingBlue extends LinearOpMode {
     public static PIDFCoefficients MOTOR_VELO_PID = new PIDFCoefficients(45, 0, 0, 25);
     public static PIDFCoefficients MOTOR_VELO_PID_2 = new PIDFCoefficients(45, 0, 0, 25); // fix this
 
-    public static double lastKf = 16.4;
-    public static double lastKf_2 = 16.4; // fix this
+    public static double lastKf = 17.7;
+    public static double lastKf_2 = 17.7; // fix this
 
     /********************************************************************************************
      *
@@ -88,6 +88,7 @@ public class TeleOpAugmentedDrivingBlue extends LinearOpMode {
 
     boolean shooterOn = false;
     boolean highGoal = false;
+
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -320,10 +321,10 @@ public class TeleOpAugmentedDrivingBlue extends LinearOpMode {
             double br = Range.clip((gamepadYControl * Math.abs(gamepadYControl)) + (gamepadXControl * Math.abs(gamepadXControl)) + driveTurn, -1, 1);
 
             if (gamepad1.right_bumper) {
-                frontRight.setPower(fr / 5);
-                frontLeft.setPower(fl / 5);
-                backLeft.setPower(bl / 5);
-                backRight.setPower(br / 5);
+                frontRight.setPower(fr / 2);
+                frontLeft.setPower(fl / 2);
+                backLeft.setPower(bl / 2);
+                backRight.setPower(br / 2);
             } else {
                 frontRight.setPower(fr);
                 frontLeft.setPower(fl);
@@ -361,7 +362,7 @@ public class TeleOpAugmentedDrivingBlue extends LinearOpMode {
     }
 
     public void wobbleUp() {
-        wobbleClaw.setPosition(.38);
+        wobbleClaw.setPosition(.3);
         sleep(500);
         wobbleArm1.setPosition(.2);
         wobbleArm2.setPosition(.2);

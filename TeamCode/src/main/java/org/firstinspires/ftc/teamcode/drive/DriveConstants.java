@@ -16,6 +16,7 @@ import com.qualcomm.robotcore.hardware.PIDFCoefficients;
  * These are not the only parameters; some are located in the localizer classes, drive base classes,
  * and op modes themselves.
  */
+
 @Config
 public class DriveConstants {
 
@@ -47,7 +48,7 @@ public class DriveConstants {
      */
     public static double WHEEL_RADIUS = 1.8898; // in
     public static double GEAR_RATIO = 1; // output (wheel) speed / input (motor) speed
-    public static double TRACK_WIDTH = 15.8;                                          ;
+    public static double TRACK_WIDTH = 15.9;
 
     /*
      * These are the feedforward parameters used to model the drive motor behavior. If you are using

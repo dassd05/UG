@@ -87,8 +87,8 @@ public class AutonRingDetectingRed1 extends LinearOpMode {
     public static PIDFCoefficients MOTOR_VELO_PID = new PIDFCoefficients(45,0,0,21.5);
     public static PIDFCoefficients MOTOR_VELO_PID_2 = new PIDFCoefficients(45,0,0,21.5);
 
-    public static double lastKf = 17.85;
-    public static double lastKf_2 = 17.85;
+    public static double lastKf = 17.7;
+    public static double lastKf_2 = 17.7;
 
     /********************************************************************************************************************
      *
@@ -206,7 +206,7 @@ public class AutonRingDetectingRed1 extends LinearOpMode {
 
         sleep(5000);
 
-        wobbleClaw.setPosition(.38);
+        wobbleClaw.setPosition(.3);
 
 
         while (!opModeIsActive()) {
@@ -562,7 +562,7 @@ public class AutonRingDetectingRed1 extends LinearOpMode {
     }
 
     public void wobbleUp() {
-        wobbleClaw.setPosition(.19);
+        wobbleClaw.setPosition(.3);
         sleep(500);
         wobbleArm1.setPosition(.2);
         wobbleArm2.setPosition(.2);
