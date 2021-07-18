@@ -12,6 +12,7 @@ public class ServoConstants {
     public static float shootFlickerShot = 0.35f;
 
     public static long flickerRecoveryTime = 200;
+    public static long wobbleClawClampRecovery = 500;
 
     public static float turretStart = 0.0f;
     public static float turretInsert = 1.0f;
