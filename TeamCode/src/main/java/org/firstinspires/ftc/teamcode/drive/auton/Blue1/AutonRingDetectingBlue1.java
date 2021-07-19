@@ -56,7 +56,6 @@ public class AutonRingDetectingBlue1 extends LinearOpMode {
         FourRings,
         OneRing,
         ZeroRings,
-        Default
     }
 
     public volatile ThisManyRings HowManyRings;
@@ -211,7 +210,6 @@ public class AutonRingDetectingBlue1 extends LinearOpMode {
         while (!opModeIsActive()) {
             if (pipeline.position == null) {
                 telemetry.addData("still working on it", "gimme a sec");
-                HowManyRings = ThisManyRings.Default;
             } else if (pipeline.position == RingDetecting.RingPosition.FOUR){
                 telemetry.addData("Four Rings", "Waiting for start");
                 HowManyRings = ThisManyRings.FourRings;
@@ -560,7 +558,8 @@ public class AutonRingDetectingBlue1 extends LinearOpMode {
 
                 break;
 
-            case Default:
+            default:
+                telemetry.addData("uh oh", "something went wrong");
         }
         telemetry.update();
     }
