@@ -16,6 +16,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.qualcomm.robotcore.hardware.configuration.typecontainers.MotorConfigurationType;
 import com.qualcomm.robotcore.util.ElapsedTime;
+import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.Acceleration;
@@ -51,6 +52,8 @@ public class Robot {
     Acceleration gravity = null;
 
     public FtcDashboard dashboard = FtcDashboard.getInstance();
+
+    public static long wgSlowCycleTime;
 
     public Robot() {
 
@@ -138,7 +141,8 @@ public class Robot {
         DOWN,
         LIFT,
         DEPLOY,
-        STOW
+        STOW,
+        SLOW_MODE
     }
 
     public wobbleGoalState wgState;
@@ -150,8 +154,6 @@ public class Robot {
             case DOWN:
                 wobbleClaw.setPosition(wobbleClawOpen);
 
-                wgTimer.reset();
-
                 if (wgTimer.time() > 100) {
                     wobbleArm1.setPosition(wobbleArmDown);
                     wobbleArm2.setPosition(wobbleArmDown);
@@ -160,8 +162,6 @@ public class Robot {
 
             case LIFT:
                 wobbleClaw.setPosition(wobbleClawClose);
-
-                wgTimer.reset();
 
                 if (wgTimer.time() > wobbleClawClampRecovery) {
                     wobbleArm1.setPosition(wobbleArmUp);
@@ -172,8 +172,6 @@ public class Robot {
             case STOW:
                 wobbleClaw.setPosition(wobbleClawClose);
 
-                wgTimer.reset();
-
                 if (wgTimer.time() > wobbleClawClampRecovery) {
                     wobbleArm1.setPosition(wobbleArmRest);
                     wobbleArm2.setPosition(wobbleArmRest);
@@ -183,13 +181,38 @@ public class Robot {
             case DEPLOY:
                 wobbleClaw.setPosition(wobbleClawOpen);
                 break;
+            case SLOW_MODE:
+                //makeWGSlow(wgSlowCycleTime);
+                //see alternate wgSlow() for more details
+                break;
+            default:
         }
     }
 
-    public void wgDown()    {wgState = wobbleGoalState.DOWN;}
-    public void wgStow()    {wgState = wobbleGoalState.STOW;}
-    public void wgLift()    {wgState = wobbleGoalState.LIFT;}
+    public void makeWGSlow(long wait) {
+        //still working on getting this to work without using for or while cause blocking bad
+        //wish we could use multithreading but rev hub bad
+    }
+
+    public void wgDown() {
+        wgState = wobbleGoalState.DOWN;
+        wgTimer.reset();
+    }
+    public void wgStow() {
+        wgState = wobbleGoalState.STOW;
+        wgTimer.reset();
+    }
+    public void wgLift() {
+        wgState = wobbleGoalState.LIFT;
+        wgTimer.reset();
+    }
     public void wgDeploy()  {wgState = wobbleGoalState.DEPLOY;}
+    public void wgSlow()    {wgState = wobbleGoalState.SLOW_MODE;}
+    // alternate way in which i have slow mode as blank
+    // public void wgSlow(double pauseCycle) {
+    // wgState = wobbleGoalState.SLOW_MODE;
+    // makeWGSlow(pauseCycle);
+    // }
 
 
     public enum ShootState {
@@ -206,8 +229,6 @@ public class Robot {
             case FLICK:
                 shootFlicker.setPosition(shootFlickerShot);
 
-                shooterTimer.reset();
-
                 if (shooterTimer.time() > flickerRecoveryTime) {
                     shootState = ShootState.REST;
                 }
@@ -219,7 +240,10 @@ public class Robot {
         }
     }
 
-    public void flick() {shootState = ShootState.FLICK;}
+    public void flick() {
+        shootState = ShootState.FLICK;
+        shooterTimer.reset();
+    }
 
 
     public enum IntakeState {
@@ -349,5 +373,39 @@ public class Robot {
         frontRight.setPower(fr);
         backLeft.setPower(bl);
         backRight.setPower(br);
+    }
+
+    public void setCorrectedPIDF() {
+        if (lastKf_2 != MOTOR_VELO_PID_2.f) {
+            MOTOR_VELO_PID_2.f = lastKf_2 * 12 / batteryVoltageSensor.getVoltage();
+            lastKf_2 = MOTOR_VELO_PID_2.f;
+        }
+
+        if (lastKf != MOTOR_VELO_PID.f) {
+            MOTOR_VELO_PID.f = lastKf * 12 / batteryVoltageSensor.getVoltage();
+            lastKf = MOTOR_VELO_PID.f;
+        }
+
+        setPIDFCoefficients2(shooter2, MOTOR_VELO_PID_2);
+        setPIDFCoefficients(shooter1, MOTOR_VELO_PID);
+    }
+
+    public void fieldCentricDrive(double driveTurn, double gamepadXCoordinate, double gamepadYCoordinate) {
+        double gamepadHypot = Range.clip(Math.hypot(gamepadXCoordinate, gamepadYCoordinate), 0, 1);
+        double gamepadDegree = Math.toDegrees(Math.atan2(gamepadYCoordinate, gamepadXCoordinate)) + 90;
+        if (gamepadDegree > 180) {
+            gamepadDegree = -360 + gamepadDegree;
+        }
+        double robotDegree = getAngle();
+        double movementRadian = Math.toRadians(gamepadDegree - robotDegree);
+        double gamepadXControl = gamepadHypot * Math.cos(movementRadian);
+        double gamepadYControl = gamepadHypot * Math.sin(movementRadian);
+
+        double fr = Range.clip((gamepadYControl * Math.abs(gamepadYControl)) - (gamepadXControl * Math.abs(gamepadXControl)) + driveTurn, -1, 1);
+        double fl = Range.clip((gamepadYControl * Math.abs(gamepadYControl)) + (gamepadXControl * Math.abs(gamepadXControl)) - driveTurn, -1, 1);
+        double bl = Range.clip((gamepadYControl * Math.abs(gamepadYControl)) - (gamepadXControl * Math.abs(gamepadXControl)) - driveTurn, -1, 1);
+        double br = Range.clip((gamepadYControl * Math.abs(gamepadYControl)) + (gamepadXControl * Math.abs(gamepadXControl)) + driveTurn, -1, 1);
+
+        setMecanumPowers(fl, fr, bl, br);
     }
 }
