@@ -24,8 +24,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
-import org.firstinspires.ftc.teamcode.drive.advanced.NewTeleOp;
-import org.firstinspires.ftc.teamcode.drive.advanced.SampleMecanumDriveCancelable;
+import org.firstinspires.ftc.robotcore.external.navigation.Position;
+import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
 
 import static org.firstinspires.ftc.teamcode.drive.OtherConstants.*;
 import static org.firstinspires.ftc.teamcode.drive.ServoConstants.*;
@@ -47,13 +47,10 @@ public class Robot {
     HardwareMap hwMap = null;
     public Telemetry telemetry = null;
 
-    //might need to change null here idk
     Orientation angles = null;
     Acceleration gravity = null;
 
     public FtcDashboard dashboard = FtcDashboard.getInstance();
-
-    public static long wgSlowCycleTime;
 
     public Robot() {
 
@@ -124,6 +121,8 @@ public class Robot {
 
         composeTelemetry();
 
+        imu.startAccelerationIntegration(new Position(), new Velocity(), 1000);
+
         telemetry = new MultipleTelemetry(telemetry, dashboard.getTelemetry());
 
         telemetry.update();
@@ -188,6 +187,8 @@ public class Robot {
             default:
         }
     }
+
+    public static long wgSlowCycleTime = 0;
 
     public void makeWGSlow(long wait) {
         //still working on getting this to work without using for or while cause blocking bad
@@ -285,36 +286,36 @@ public class Robot {
 
     public ShooterState whatShootState;
 
-    //will change all the numbers to constants in OtherConstants later
+    //todo: change all the numbers to constants in OtherConstants later
     public void updateShooterState() {
         switch (whatShootState) {
             case HIGH:
-                shooterStopper.setPosition(.4);
+                shooterStopper.setPosition(shootStopperDown);
+                flap.setPosition(flapHG);
                 turret.setPosition(.16);
-                flap.setPosition(.4);
                 setVelocity(shooter1, 2590);
                 setVelocity2(shooter2, 2590);
                 break;
             case MIDDLE:
-                shooterStopper.setPosition(.4);
-                flap.setPosition(.48);
+                shooterStopper.setPosition(shootStopperDown);
+                flap.setPosition(flapMG);
                 turret.setPosition(.2);
                 setVelocity(shooter1, 2900);
                 setVelocity2(shooter2, 2900);
                 break;
             case OFF_HIGH:
-                flap.setPosition(.48);
-                shooterStopper.setPosition(.9);
+                shooterStopper.setPosition(shootStopperUp);
+                flap.setPosition(flapHG);
                 turret.setPosition(.2);
-                shooter1.setVelocity(0);
-                shooter2.setVelocity(0);
+                shooter1.setVelocity(shooterOff);
+                shooter2.setVelocity(shooterOff);
                 break;
             case OFF_MIDDLE:
-                shooterStopper.setPosition(.9);
+                shooterStopper.setPosition(shootStopperUp);
+                flap.setPosition(flapMG);
                 turret.setPosition(.16);
-                flap.setPosition(.4);
-                shooter1.setVelocity(0);
-                shooter2.setVelocity(0);
+                shooter1.setVelocity(shooterOff);
+                shooter2.setVelocity(shooterOff);
                 break;
             default:
 

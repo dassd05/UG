@@ -35,7 +35,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
 import org.firstinspires.ftc.teamcode.drive.pogcode.GamepadListenerEx;
 
 import java.util.*;
-
+@Deprecated
 @TeleOp(group = "advanced")
 public class TeleOpAugmentedDrivingRed extends LinearOpMode {
 

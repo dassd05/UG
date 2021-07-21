@@ -5,16 +5,14 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 
-import org.firstinspires.ftc.robotcore.external.navigation.Position;
-import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
 import org.firstinspires.ftc.teamcode.drive.subsystems.Robot;
 import org.firstinspires.ftc.teamcode.drive.pogcode.GamepadListenerEx;
 
 import static org.firstinspires.ftc.teamcode.drive.OtherConstants.*;
 import static org.firstinspires.ftc.teamcode.drive.subsystems.Robot.*;
 
-@TeleOp(group = "advanced")
-public class NewTeleOp extends LinearOpMode {
+@TeleOp(name = "TeleOp Blue", group = "1")
+public class NewTeleOpBlue extends LinearOpMode {
 
     Robot r = new Robot(); //instantiate Robot object
 
@@ -62,13 +60,11 @@ public class NewTeleOp extends LinearOpMode {
 
         waitForStart();
 
-        r.imu.startAccelerationIntegration(new Position(), new Velocity(), 1000);
-
-        while (opModeIsActive() && !isStopRequested()) {
+        while (opModeIsActive()) {
 
             r.setCorrectedPIDF(); //battery compensated feedforward application
 
-            if (gamepad1.dpad_up)
+            if (gamepad1.dpad_up) //wobble controls
                 r.wgLift();
             if (gamepad1.dpad_down)
                 r.wgDown();
@@ -79,7 +75,7 @@ public class NewTeleOp extends LinearOpMode {
 
             r.updateWGState(); //state machine for wobble position
 
-            if (gamepad1.b)
+            if (gamepad1.b) //b -> shoot
                 r.flick();
 
             r.updateFlickState(); //state machine for flick/rest

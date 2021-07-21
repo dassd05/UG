@@ -36,12 +36,12 @@ import org.firstinspires.ftc.teamcode.drive.pogcode.GamepadListenerEx;
 
 import java.util.*;
 
-@TeleOp(group = "advanced")
+@Deprecated
+@TeleOp(/*preselectTeleOp = "NewTeleOp",*/ group = "advanced")
 public class TeleOpAugmentedDrivingBlue extends LinearOpMode {
 
     public static double MOTOR_TICKS_PER_REV = 28;
     public static double MOTOR_GEAR_RATIO = 1;
-
 
     private FtcDashboard dashboard = FtcDashboard.getInstance();
 
