@@ -73,12 +73,8 @@ public class NewTeleOpBlue extends LinearOpMode {
             if (gamepad1.dpad_left)
                 r.wgStow();
 
-            r.updateWGState(); //state machine for wobble position
-
             if (gamepad1.b) //b -> shoot
                 r.flick();
-
-            r.updateFlickState(); //state machine for flick/rest
 
             //when intake is on, left bumper can be held to reverse direction (can do toggle, but Harish no like)
             if (intakeOn) {
@@ -88,9 +84,7 @@ public class NewTeleOpBlue extends LinearOpMode {
                 r.intakeOff();
             }
 
-            r.updateIntakeState(); //state machine for intake
-
-            r.updateShooterState(); //state machine for shooter (state setting is above in onButtonPress()
+            r.updateAllStates(); // update state machine stuff for wg, intake, shooter, and flicker
 
             //gamepad inputs
             driveTurn = -gamepad1.left_stick_x/2;

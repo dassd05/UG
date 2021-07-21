@@ -134,6 +134,7 @@ public class Robot {
         shootState = ShootState.REST;
         wgState = wobbleGoalState.STOW;
         inState = IntakeState.OFF;
+        updateAllStatesNoShooter();
     }
 
     public enum wobbleGoalState {
@@ -327,6 +328,17 @@ public class Robot {
     public void offMiddle()     {whatShootState = ShooterState.OFF_MIDDLE;}
     public void offHigh()       {whatShootState = ShooterState.OFF_HIGH;}
 
+
+    public void updateAllStates() {
+        updateAllStatesNoShooter();
+        updateShooterState();
+    }
+
+    public void updateAllStatesNoShooter() {
+        updateFlickState();
+        updateIntakeState();
+        updateWGState();
+    }
 
     public void composeTelemetry() {
         telemetry.addAction(new Runnable() {
