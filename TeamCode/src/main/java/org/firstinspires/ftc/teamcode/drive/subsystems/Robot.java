@@ -19,6 +19,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.Acceleration;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
@@ -26,6 +27,10 @@ import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.robotcore.external.navigation.Position;
 import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
+import org.openftc.easyopencv.OpenCvCamera;
+import org.openftc.easyopencv.OpenCvCameraFactory;
+import org.openftc.easyopencv.OpenCvCameraRotation;
+import org.openftc.easyopencv.OpenCvWebcam;
 
 import static org.firstinspires.ftc.teamcode.drive.OtherConstants.*;
 import static org.firstinspires.ftc.teamcode.drive.ServoConstants.*;
@@ -86,6 +91,9 @@ public class Robot {
         backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
+        frontRight.setDirection(DcMotorSimple.Direction.REVERSE);
+        backRight.setDirection(DcMotorSimple.Direction.REVERSE);
+
         shooter1.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         shooter2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 
@@ -135,6 +143,9 @@ public class Robot {
         wgState = wobbleGoalState.STOW;
         inState = IntakeState.OFF;
         updateAllStatesNoShooter();
+
+        droptakeStopper.setPosition(.25);
+        shooterStopper.setPosition(.9);
     }
 
     public enum wobbleGoalState {
@@ -142,6 +153,7 @@ public class Robot {
         LIFT,
         DEPLOY,
         STOW,
+        UP_NO_CLOSE,
         SLOW_MODE
     }
 
@@ -152,11 +164,11 @@ public class Robot {
     public void updateWGState() {
         switch (wgState) {
             case DOWN:
-                wobbleClaw.setPosition(wobbleClawOpen);
+                wobbleArm1.setPosition(wobbleArmDown);
+                wobbleArm2.setPosition(wobbleArmDown);
 
-                if (wgTimer.time() > 100) {
-                    wobbleArm1.setPosition(wobbleArmDown);
-                    wobbleArm2.setPosition(wobbleArmDown);
+                if (wgTimer.time() > 400) {
+                    wobbleClaw.setPosition(wobbleClawOpen);
                 }
                 break;
 
@@ -181,6 +193,16 @@ public class Robot {
             case DEPLOY:
                 wobbleClaw.setPosition(wobbleClawOpen);
                 break;
+
+            case UP_NO_CLOSE:
+                wobbleArm1.setPosition(wobbleArmRest);
+                wobbleArm2.setPosition(wobbleArmRest);
+
+                if (wgTimer.time() > 400) {
+                    wobbleClaw.setPosition(wobbleClawClose);
+                }
+                break;
+
             case SLOW_MODE:
                 //makeWGSlow(wgSlowCycleTime);
                 //see alternate wgSlow() for more details
@@ -208,6 +230,10 @@ public class Robot {
         wgState = wobbleGoalState.LIFT;
         wgTimer.reset();
     }
+    public void wgUpNoClose() {
+        wgState = wobbleGoalState.UP_NO_CLOSE;
+        wgTimer.reset();
+    }
     public void wgDeploy()  {wgState = wobbleGoalState.DEPLOY;}
     public void wgSlow()    {wgState = wobbleGoalState.SLOW_MODE;}
     // alternate way in which i have slow mode as blank
@@ -224,7 +250,7 @@ public class Robot {
 
     public ShootState shootState;
 
-    ElapsedTime shooterTimer = new ElapsedTime(ElapsedTime.Resolution.MILLISECONDS);
+    public ElapsedTime shooterTimer = new ElapsedTime(ElapsedTime.Resolution.MILLISECONDS);
 
     public void updateFlickState() {
         switch (shootState) {
@@ -339,6 +365,67 @@ public class Robot {
         updateIntakeState();
         updateWGState();
     }
+
+    public enum ZeroRings{
+        DROP_STOPPER,
+        TRAJECTORY1,
+        WAIT1,
+        SHOOT_1,
+        SHOOT_2,
+        SHOOT_3,
+        TRAJECTORY2,
+        TRAJECTORY3,
+        WOBBLE,
+        WAIT2,
+        WHITE_LINE,
+        CORRECTION
+    }
+
+    public static ZeroRings ZeroRingState;
+    public ElapsedTime waitTimer = new ElapsedTime(ElapsedTime.Resolution.MILLISECONDS);
+
+    public enum FourRing{
+        DROP_STOPPER,
+        TRAJECTORY1,
+        WAIT1,
+        SHOOT_1,
+        SHOOT_2,
+        SHOOT_3,
+        KNOCK,
+        GO_BACK,
+        INTAKE,
+        SHOOT2_1,
+        SHOOT2_2,
+        SHOOT2_3,
+        INTAKE2,
+        SHOOT3_1,
+        SHOOT3_2,
+        TRAJECTORY6,
+        WOBBLE,
+        WHITE_LINE,
+        CORRECTION
+    }
+
+    public static FourRing FourRingState;
+
+    public enum OneRing{
+        DROP_STOPPER,
+        TRAJECTORY1,
+        WAIT,
+        SHOOT_1,
+        SHOOT_2,
+        SHOOT_3,
+        INTAKE,
+        SHOOT2_1,
+        SHOOT2_2,
+        SHOOT2_3,
+        TRAJECTORY3,
+        WOBBLE,
+        WHITE_LINE,
+        CORRECTION
+    }
+
+    public static OneRing OneRingState;
 
     public void composeTelemetry() {
         telemetry.addAction(new Runnable() {
