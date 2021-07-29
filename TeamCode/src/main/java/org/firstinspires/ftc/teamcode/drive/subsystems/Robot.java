@@ -19,7 +19,6 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
-import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.Acceleration;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
@@ -27,10 +26,6 @@ import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.robotcore.external.navigation.Position;
 import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
-import org.openftc.easyopencv.OpenCvCamera;
-import org.openftc.easyopencv.OpenCvCameraFactory;
-import org.openftc.easyopencv.OpenCvCameraRotation;
-import org.openftc.easyopencv.OpenCvWebcam;
 
 import static org.firstinspires.ftc.teamcode.drive.OtherConstants.*;
 import static org.firstinspires.ftc.teamcode.drive.ServoConstants.*;
@@ -55,7 +50,7 @@ public class Robot {
     Orientation angles = null;
     Acceleration gravity = null;
 
-    public FtcDashboard dashboard = FtcDashboard.getInstance();
+    public FtcDashboard dashboard = null;
 
     public Robot() {
 
@@ -130,8 +125,6 @@ public class Robot {
         composeTelemetry();
 
         imu.startAccelerationIntegration(new Position(), new Velocity(), 1000);
-
-        telemetry = new MultipleTelemetry(telemetry, dashboard.getTelemetry());
 
         telemetry.update();
         telemetry.clearAll();

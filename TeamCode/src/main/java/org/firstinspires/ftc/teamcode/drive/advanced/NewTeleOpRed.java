@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.drive.advanced;
 
+import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -21,10 +23,10 @@ public class NewTeleOpRed extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
 
+        r.telemetry = telemetry;
+        r.dashboard = FtcDashboard.getInstance();
         r.init(hardwareMap); //init hardware
-
-        //gamepad stuff
-        double driveTurn, gamepadXCoordinate, gamepadYCoordinate;
+        telemetry = new MultipleTelemetry(telemetry, r.dashboard.getTelemetry());
 
         SampleMecanumDriveCancelable drive = new SampleMecanumDriveCancelable(hardwareMap);
 
@@ -87,16 +89,16 @@ public class NewTeleOpRed extends LinearOpMode {
             r.updateAllStates(); // update state machine stuff for wg, intake, shooter, and flicker
 
             //gamepad inputs
-            driveTurn = -gamepad1.left_stick_x/2;
-            gamepadXCoordinate = -gamepad1.right_stick_x;
-            gamepadYCoordinate = gamepad1.right_stick_y;
+            double driveTurn = -gamepad1.left_stick_x/2;
+            double gamepadXCoordinate = -gamepad1.right_stick_x;
+            double gamepadYCoordinate = gamepad1.right_stick_y;
 
             if (gamepad1.right_bumper) //holding right bumper -> slow mode
                 r.fieldCentricDrive(driveTurn/2.5, -gamepadXCoordinate/2.5,
                         -gamepadYCoordinate/2.5);
             else
-                r.fieldCentricDrive(driveTurn, -gamepadXCoordinate, -gamepadYCoordinate); //cool little
-            // trick to switch field centric from blue to red is just inversing the x and y values
+                r.fieldCentricDrive(driveTurn, -gamepadXCoordinate, -gamepadYCoordinate);//cool
+            //little trick to switch field centric from blue to red is just inversing the x and y values
 
             //telemetry + general update stuff
             drive.update();

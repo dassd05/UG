@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.drive.auton.Blue1;
 
+import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.trajectory.Trajectory;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
@@ -48,7 +50,10 @@ public class AutonRingDetectingBlue1 extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
 
+        r.telemetry = telemetry;
+        r.dashboard = FtcDashboard.getInstance();
         r.init(hardwareMap);
+        telemetry = new MultipleTelemetry(telemetry, r.dashboard.getTelemetry());
 
         webcamInit();
 
