@@ -44,6 +44,10 @@ import org.openftc.easyopencv.OpenCvWebcam;
 
 import static org.firstinspires.ftc.teamcode.drive.auton.Red1.AutonRingDetectingRed1PowerShots.RingDetecting.pipeline;
 
+@Deprecated // turret just makes getting all 3 powershots hard, but bounceback op :)
+// probs can't use it in comp unless build had made turret more stable
+// averaging 2 powershots + 1 bounceback, so not too shabby
+// keep in mind sleeps present :(, no async, no FSM, etc., so not the best code
 @Autonomous(group = "R1")
 public class AutonRingDetectingRed1PowerShots extends LinearOpMode {
 
@@ -259,9 +263,7 @@ public class AutonRingDetectingRed1PowerShots extends LinearOpMode {
                                     setVelocity2(backShoot,2540);
                                 })
                                 .splineToConstantHeading(new Vector2d(-15, 10), 0)
-                                .addDisplacementMarker(() -> {
-                                    shooterStopper.setPosition(.4);
-                                })
+                                .addDisplacementMarker(() -> shooterStopper.setPosition(.4))
                                 .build();
 
                         Trajectory traj2_4 = drive.trajectoryBuilder(traj1_4.end())
@@ -368,9 +370,7 @@ public class AutonRingDetectingRed1PowerShots extends LinearOpMode {
                                     setVelocity2(backShoot,2540);
                                 })
                                 .splineToConstantHeading(new Vector2d(-15, 10), 0)
-                                .addDisplacementMarker(() -> {
-                                    shooterStopper.setPosition(.4);
-                                })
+                                .addDisplacementMarker(() -> shooterStopper.setPosition(.4))
                                 .build();
 
                         Trajectory traj2_1 = drive.trajectoryBuilder(traj1_1.end())
@@ -484,9 +484,7 @@ public class AutonRingDetectingRed1PowerShots extends LinearOpMode {
                                     setVelocity2(backShoot,2540);
                                 })
                                 .splineToConstantHeading(new Vector2d(-15, 10), 0)
-                                .addDisplacementMarker(() -> {
-                                    shooterStopper.setPosition(.4);
-                                })
+                                .addDisplacementMarker(() -> shooterStopper.setPosition(.4))
                                 .build();
 
                         Trajectory traj2_0 = drive.trajectoryBuilder(traj1_0.end())

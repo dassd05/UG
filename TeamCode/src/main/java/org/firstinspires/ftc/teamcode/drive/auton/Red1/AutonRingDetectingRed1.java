@@ -1,36 +1,15 @@
 package org.firstinspires.ftc.teamcode.drive.auton.Red1;
 
-import android.util.Log;
-
-import com.acmerobotics.dashboard.FtcDashboard;
-import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.acmerobotics.roadrunner.geometry.Pose2d;
-import com.acmerobotics.roadrunner.geometry.Vector2d;
 import com.acmerobotics.roadrunner.trajectory.Trajectory;
-import com.qualcomm.hardware.bosch.BNO055IMU;
-import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
-import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.PIDFCoefficients;
-import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.hardware.VoltageSensor;
-import com.qualcomm.robotcore.hardware.configuration.typecontainers.MotorConfigurationType;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
-import org.firstinspires.ftc.robotcore.external.navigation.Acceleration;
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
-import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
-import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
-import org.firstinspires.ftc.robotcore.external.navigation.Position;
-import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
 import org.firstinspires.ftc.teamcode.drive.DriveConstants;
 import org.firstinspires.ftc.teamcode.drive.advanced.PoseStorage;
 import org.firstinspires.ftc.teamcode.drive.advanced.SampleMecanumDriveCancelable;
+import org.firstinspires.ftc.teamcode.drive.subsystems.Robot;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
@@ -44,10 +23,14 @@ import org.openftc.easyopencv.OpenCvPipeline;
 import org.openftc.easyopencv.OpenCvWebcam;
 
 import static org.firstinspires.ftc.teamcode.drive.auton.Red1.AutonRingDetectingRed1.RingDetecting.pipeline;
-import static org.firstinspires.ftc.teamcode.drive.auton.Red1.AutonRingDetectingRed1.RingDetecting.RingDetection.avg1;
+import static org.firstinspires.ftc.teamcode.drive.OtherConstants.*;
+import static org.firstinspires.ftc.teamcode.drive.ServoConstants.*;
+import static org.firstinspires.ftc.teamcode.drive.subsystems.Robot.*;
 
 @Autonomous(group = "R2")
 public class AutonRingDetectingRed1 extends LinearOpMode {
+
+    Robot r = new Robot();
 
     protected WebcamName webcamName;
     protected OpenCvWebcam webcam;
@@ -56,50 +39,618 @@ public class AutonRingDetectingRed1 extends LinearOpMode {
         FourRings,
         OneRing,
         ZeroRings,
-        Default
     }
 
     public volatile ThisManyRings HowManyRings;
 
-    public BNO055IMU imu;
-
-    Orientation angles;
-    Acceleration gravity;
-
-    public static double MOTOR_TICKS_PER_REV = 28;
-    public static double MOTOR_GEAR_RATIO = 1;
-
-    private FtcDashboard dashboard = FtcDashboard.getInstance();
-
-    private VoltageSensor batteryVoltageSensor;
-
-
-    private Servo wobbleArm1, wobbleArm2, flap, turret, shooterStopper, shootFlicker, droptakeStopper, wobbleClaw;
-
-    private DcMotor intake, bottomRoller;
-
-    private DcMotor frontLeft, backRight, backLeft, frontRight;
-
-    /********************************************************************************************************************
-     *
-     */
-
-    public static PIDFCoefficients MOTOR_VELO_PID = new PIDFCoefficients(45,0,0,21.5);
-    public static PIDFCoefficients MOTOR_VELO_PID_2 = new PIDFCoefficients(45,0,0,21.5);
-
-    public static double lastKf = 17.7;
-    public static double lastKf_2 = 17.7;
-
-    /********************************************************************************************************************
-     *
-     */
-
-    double lastVoltage = 0;
-
 
     @Override
-    public void runOpMode() throws InterruptedException{
+    public void runOpMode() throws InterruptedException {
 
+        r.init(hardwareMap);
+
+        webcamInit();
+
+        SampleMecanumDriveCancelable drive = new SampleMecanumDriveCancelable(hardwareMap);
+
+        Pose2d startPose = new Pose2d(-50, -2, Math.toRadians(0));
+
+        drive.setPoseEstimate(startPose);
+
+        r.turret.setPosition(.15);
+        r.flap.setPosition(.41);
+
+
+        /**
+         *  Four Ring Trajectories
+         *  ------------------------------------------------------------------------------
+         */
+
+        Trajectory traj1_4 = drive.trajectoryBuilder(startPose)
+                .lineToLinearHeading(new Pose2d(-25, -17, 0))
+                .addTemporalMarker(0, () -> {
+                    r.flap.setPosition(.4);
+                    r.turret.setPosition(.18);
+                    r.setVelocity(r.shooter1, shooterAtStack);
+                    r.setVelocity2(r.shooter2, shooterAtStack);
+                })
+                .addDisplacementMarker(() -> r.shooterStopper.setPosition(.4))
+                .build();
+
+        Trajectory traj2_4 = drive.trajectoryBuilder(traj1_4.end())
+                .addTemporalMarker(0, () -> {
+                    r.shooter1.setVelocity(shooterOff);
+                    r.shooter2.setVelocity(shooterOff);
+                })
+                .lineToLinearHeading(new Pose2d(-5, -17, Math.toRadians(0)))
+                .build();
+
+        Trajectory traj3_4 = drive.trajectoryBuilder(traj2_4.end())
+                .lineToLinearHeading(new Pose2d(-14, -17, 0))
+                .addDisplacementMarker(() -> {
+                    r.setVelocity(r.shooter1, shooterAfterIntake);
+                    r.setVelocity2(r.shooter2, shooterAfterIntake);
+                    r.intakeOn();
+                    r.turret.setPosition(.15);
+                })
+                .build();
+
+        Trajectory traj4_4 = drive.trajectoryBuilder(traj3_4.end())
+                .lineToLinearHeading(new Pose2d(-5, -17, 0),
+                        SampleMecanumDriveCancelable.getVelocityConstraint(4, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
+                        SampleMecanumDriveCancelable.getAccelerationConstraint(4))
+                .build();
+
+        Trajectory traj5_4 = drive.trajectoryBuilder(traj4_4.end())
+                .lineToLinearHeading(new Pose2d(0, -17, 0),
+                        SampleMecanumDriveCancelable.getVelocityConstraint(4, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
+                        SampleMecanumDriveCancelable.getAccelerationConstraint(4))
+                .build();
+
+        Trajectory traj6_4 = drive.trajectoryBuilder(traj5_4.end())
+                .addTemporalMarker(0, () -> {
+                    r.intakeOff();
+                    r.shooter1.setVelocity(shooterOff);
+                    r.shooter2.setVelocity(shooterOff);
+                })
+                .lineToLinearHeading(new Pose2d(65,-22, Math.toRadians(90)))
+                .build();
+
+
+        Trajectory traj7_4 = drive.trajectoryBuilder(traj6_4.end())
+                .addTemporalMarker(500, () -> r.wgUpNoClose())
+                .lineToLinearHeading(new Pose2d(15, 10, Math.toRadians(0)))
+                .build();
+
+        /**------------------------------------------------------------------------------
+         *  Four Ring Trajectories
+         */
+
+
+        /**
+         * One Ring Trajectories
+         * ------------------------------------------------------------------------------
+         */
+
+        Trajectory traj1_1 = drive.trajectoryBuilder(startPose)
+                .lineToLinearHeading(new Pose2d(-25, -17, 0))
+                .addTemporalMarker(0, () -> {
+                    r.flap.setPosition(.4);
+                    r.turret.setPosition(.18);
+                    r.setVelocity(r.shooter1, shooterAtStack);
+                    r.setVelocity2(r.shooter2, shooterAtStack);
+                })
+                .addDisplacementMarker(() -> r.shooterStopper.setPosition(.4))
+                .build();
+
+        Trajectory traj2_1 = drive.trajectoryBuilder(traj1_1.end())
+                .addTemporalMarker(0, () -> {
+                    r.setVelocity(r.shooter1, shooterAfterIntake);
+                    r.setVelocity2(r.shooter2, shooterAfterIntake);
+                    r.intakeOn();
+                    r.turret.setPosition(.15);
+                })
+                .lineToLinearHeading(new Pose2d(-5, -17, 0))
+                .build();
+
+        Trajectory traj3_1 = drive.trajectoryBuilder(traj2_1.end())
+                .addTemporalMarker(0, () -> {
+                    r.shooter1.setVelocity(shooterOff);
+                    r.shooter2.setVelocity(shooterOff);
+                    r.intakeOff();
+                })
+                .lineToLinearHeading(new Pose2d(40,0, Math.toRadians(90)))
+                .build();
+
+
+        Trajectory traj4_1 = drive.trajectoryBuilder(traj3_1.end())
+                .addTemporalMarker(500, () -> r.wgUpNoClose())
+                .lineToLinearHeading(new Pose2d(15, 10, Math.toRadians(0)))
+                .build();
+
+        /**------------------------------------------------------------------------------
+         * One Ring Trajectories
+         */
+
+
+        /**
+         * Zero Ring Trajectories
+         * ------------------------------------------------------------------------------
+         */
+
+        Trajectory traj1_0 = drive.trajectoryBuilder(startPose)
+                .addTemporalMarker(0, () -> {
+                    r.flap.setPosition(.4);
+                    r.turret.setPosition(.18);
+                    r.setVelocity(r.shooter1, shooterZeroRing);
+                    r.setVelocity2(r.shooter2, shooterZeroRing);
+                })
+                .lineToLinearHeading(new Pose2d(-1, -5, Math.toRadians(345)))
+                .addDisplacementMarker(() -> r.shooterStopper.setPosition(.4))
+                .build();
+
+        Trajectory traj2_0 = drive.trajectoryBuilder(traj1_0.end())
+                .addTemporalMarker(0, () -> {
+                    r.shooter1.setVelocity(0);
+                    r.shooter2.setVelocity(0);
+                })
+                .lineToLinearHeading(new Pose2d(10,-29, Math.toRadians(90)))
+                .build();
+
+
+        Trajectory traj3_0 = drive.trajectoryBuilder(traj2_0.end())
+                .lineToLinearHeading(new Pose2d(15, 10, Math.toRadians(0)))
+                .build();
+
+        /**------------------------------------------------------------------------------
+         * Zero Ring Trajectories
+         */
+
+
+        while (!opModeIsActive())
+            updateStarterStack();
+
+        waitForStart();
+
+        if (isStopRequested()) return;
+
+        FourRingState = FourRing.DROP_STOPPER;
+        OneRingState = OneRing.DROP_STOPPER;
+        ZeroRingState = ZeroRings.DROP_STOPPER;
+        r.waitTimer.reset();
+
+        while (opModeIsActive()) {
+
+            r.setCorrectedPIDF();
+
+            switch (HowManyRings) {
+                case FourRings:
+                    /**
+                     * Four Ring FSM Following
+                     * ------------------------------------------------------------------------
+                     */
+                    switch (FourRingState) {
+                        case DROP_STOPPER:
+
+                            r.droptakeStopper.setPosition(0);
+
+                            if (r.waitTimer.time() >= 50) {
+                                FourRingState = FourRing.TRAJECTORY1;
+                                drive.followTrajectoryAsync(traj1_4);
+                            }
+                            break;
+
+                        case TRAJECTORY1:
+
+                            if (!drive.isBusy()) {
+                                FourRingState = FourRing.WAIT1;
+                                r.waitTimer.reset();
+                            }
+                            break;
+
+                        case WAIT1:
+
+                            if (r.waitTimer.time() >= 500) {
+                                FourRingState = FourRing.SHOOT_1;
+                                r.waitTimer.reset();
+                            }
+                            break;
+
+                        case SHOOT_1:
+                            r.flick();
+
+                            if (r.waitTimer.time() >= flickerRecoveryTime + 150) {
+                                FourRingState = FourRing.SHOOT_2;
+                                r.waitTimer.reset();
+                            }
+                            break;
+
+                        case SHOOT_2:
+                            r.flick();
+
+                            if (r.waitTimer.time() >= flickerRecoveryTime + 150) {
+                                FourRingState = FourRing.SHOOT_3;
+                                r.waitTimer.reset();
+                            }
+                            break;
+
+                        case SHOOT_3:
+                            r.flick();
+
+                            if (r.waitTimer.time() >= flickerRecoveryTime + 150) {
+                                FourRingState = FourRing.KNOCK;
+                                drive.followTrajectoryAsync(traj2_4);
+                            }
+                            break;
+
+                        case KNOCK:
+
+                            if (!drive.isBusy()) {
+                                FourRingState = FourRing.GO_BACK;
+                                drive.followTrajectoryAsync(traj3_4);
+                            }
+                            break;
+
+                        case GO_BACK:
+
+                            if (!drive.isBusy()) {
+                                FourRingState = FourRing.INTAKE;
+                                drive.followTrajectoryAsync(traj4_4);
+                            }
+                            break;
+
+                        case INTAKE:
+
+                            if (!drive.isBusy()) {
+                                FourRingState = FourRing.SHOOT2_1;
+                                r.waitTimer.reset();
+                            }
+                            break;
+
+                        case SHOOT2_1:
+                            r.flick();
+
+                            if (r.waitTimer.time() >= flickerRecoveryTime + 150) {
+                                FourRingState = FourRing.SHOOT2_2;
+                                r.waitTimer.reset();
+                            }
+                            break;
+
+                        case SHOOT2_2:
+
+                            r.flick();
+
+                            if (r.waitTimer.time() >= flickerRecoveryTime + 150) {
+                                FourRingState = FourRing.SHOOT2_3;
+                                r.waitTimer.reset();
+                            }
+                            break;
+
+                        case SHOOT2_3:
+
+                            r.flick();
+
+                            if (r.waitTimer.time() >= flickerRecoveryTime + 150) {
+                                FourRingState = FourRing.INTAKE2;
+                                drive.followTrajectoryAsync(traj5_4);
+                            }
+                            break;
+
+                        case INTAKE2:
+
+                            if (!drive.isBusy()) {
+                                FourRingState = FourRing.SHOOT3_1;
+                                r.waitTimer.reset();
+                            }
+                            break;
+
+                        case SHOOT3_1:
+
+                            r.flick();
+
+                            if (r.waitTimer.time() >= flickerRecoveryTime + 150) {
+                                FourRingState = FourRing.SHOOT3_2;
+                                r.waitTimer.reset();
+                            }
+                            break;
+
+                        case SHOOT3_2:
+
+                            r.flick();
+
+                            if (r.waitTimer.time() >= flickerRecoveryTime + 150) {
+                                FourRingState = FourRing.TRAJECTORY6;
+                                drive.followTrajectoryAsync(traj6_4);
+                            }
+                            break;
+
+                        case TRAJECTORY6:
+
+                            if (!drive.isBusy()) {
+                                FourRingState = FourRing.WOBBLE;
+                                r.waitTimer.reset();
+                            }
+                            break;
+
+                        case WOBBLE:
+
+                            r.wgDown();
+
+                            if (r.waitTimer.time() >= 600) {
+                                FourRingState = FourRing.WHITE_LINE;
+                                drive.followTrajectoryAsync(traj7_4);
+                            }
+                            break;
+
+                        case WHITE_LINE:
+
+                            if (!drive.isBusy()) {
+                                FourRingState = FourRing.CORRECTION;
+                            }
+                            break;
+
+                        case CORRECTION:
+                            //originally had gyro angle correction, but dont really need it now
+                            r.flap.setPosition(.39);
+                            r.turret.setPosition(.15);
+                            r.shooterStopper.setPosition(.9);
+                            break;
+                    }
+                    break;
+                /**
+                 * ------------------------------------------------------------------------
+                 * Four Ring FSM Following
+                 */
+
+                case OneRing:
+                    /**
+                     * One Ring FSM Following
+                     * ------------------------------------------------------------------------
+                     */
+                    switch (OneRingState) {
+                        case DROP_STOPPER:
+
+                            r.droptakeStopper.setPosition(0);
+
+                            if (r.waitTimer.time() >= 50) {
+                                OneRingState = OneRing.TRAJECTORY1;
+                                drive.followTrajectoryAsync(traj1_1);
+                            }
+                            break;
+
+                        case TRAJECTORY1:
+
+                            if (!drive.isBusy()) {
+                                OneRingState = OneRing.WAIT;
+                                r.waitTimer.reset();
+                            }
+                            break;
+
+                        case WAIT:
+
+                            if (r.waitTimer.time() >= 500) {
+                                OneRingState = OneRing.SHOOT_1;
+                                r.waitTimer.reset();
+                            }
+                            break;
+
+                        case SHOOT_1:
+                            r.flick();
+
+                            if (r.waitTimer.time() >= flickerRecoveryTime + 150) {
+                                OneRingState = OneRing.SHOOT_2;
+                                r.waitTimer.reset();
+                            }
+                            break;
+
+                        case SHOOT_2:
+                            r.flick();
+
+                            if (r.waitTimer.time() >= flickerRecoveryTime + 150) {
+                                OneRingState = OneRing.SHOOT_3;
+                                r.waitTimer.reset();
+                            }
+                            break;
+
+                        case SHOOT_3:
+                            r.flick();
+
+                            if (r.waitTimer.time() >= flickerRecoveryTime + 150) {
+                                OneRingState = OneRing.INTAKE;
+                                drive.followTrajectoryAsync(traj2_1);
+                            }
+                            break;
+
+                        case INTAKE:
+
+                            if (!drive.isBusy()) {
+                                OneRingState = OneRing.SHOOT2_1;
+                                r.waitTimer.reset();
+                            }
+                            break;
+
+                        case SHOOT2_1:
+                            r.flick();
+
+                            if (r.waitTimer.time() >= flickerRecoveryTime + 150) {
+                                OneRingState = OneRing.SHOOT2_2;
+                                r.waitTimer.reset();
+                            }
+                            break;
+
+                        case SHOOT2_2:
+
+                            r.flick();
+
+                            if (r.waitTimer.time() >= flickerRecoveryTime + 150) {
+                                OneRingState = OneRing.SHOOT2_3;
+                                r.waitTimer.reset();
+                            }
+                            break;
+
+                        case SHOOT2_3:
+
+                            r.flick();
+
+                            if (r.waitTimer.time() >= flickerRecoveryTime + 150) {
+                                OneRingState = OneRing.TRAJECTORY3;
+                                drive.followTrajectoryAsync(traj3_1);
+                            }
+                            break;
+
+                        case TRAJECTORY3:
+
+                            if (!drive.isBusy()) {
+                                OneRingState = OneRing.WOBBLE;
+                                r.waitTimer.reset();
+                            }
+                            break;
+
+                        case WOBBLE:
+
+                            r.wgDown();
+
+                            if (r.waitTimer.time() >= 600) {
+                                OneRingState = OneRing.WHITE_LINE;
+                                drive.followTrajectoryAsync(traj4_1);
+                            }
+                            break;
+
+                        case WHITE_LINE:
+
+                            if (!drive.isBusy()) {
+                                OneRingState = OneRing.CORRECTION;
+                            }
+                            break;
+
+                        case CORRECTION:
+                            //originally had gyro angle correction, but dont really need it now
+                            r.flap.setPosition(.39);
+                            r.turret.setPosition(.15);
+                            r.shooterStopper.setPosition(.9);
+                            break;
+                    }
+                    break;
+                /**
+                 * ------------------------------------------------------------------------
+                 * One Ring FSM Following
+                 */
+
+                case ZeroRings:
+                    /**
+                     * Zero Ring FSM Following
+                     * ------------------------------------------------------------------------
+                     */
+                    switch (ZeroRingState) {
+                        case DROP_STOPPER:
+
+                            r.droptakeStopper.setPosition(0);
+
+                            if (r.waitTimer.time() >= 50) {
+                                ZeroRingState = ZeroRings.TRAJECTORY1;
+                                drive.followTrajectoryAsync(traj1_0);
+                            }
+                            break;
+
+                        case TRAJECTORY1:
+
+                            if (!drive.isBusy()) {
+                                ZeroRingState = ZeroRings.WAIT1;
+                                r.waitTimer.reset();
+                            }
+                            break;
+
+                        case WAIT1:
+
+                            if (r.waitTimer.time() >= 500) {
+                                ZeroRingState = ZeroRings.SHOOT_1;
+                                r.waitTimer.reset();
+                            }
+                            break;
+
+                        case SHOOT_1:
+                            r.flick();
+
+                            if (r.waitTimer.time() >= flickerRecoveryTime + 150) {
+                                ZeroRingState = ZeroRings.SHOOT_2;
+                                r.waitTimer.reset();
+                            }
+                            break;
+
+                        case SHOOT_2:
+                            r.flick();
+
+                            if (r.waitTimer.time() >= flickerRecoveryTime + 150) {
+                                ZeroRingState = ZeroRings.SHOOT_3;
+                                r.waitTimer.reset();
+                            }
+                            break;
+
+                        case SHOOT_3:
+                            r.flick();
+
+                            if (r.waitTimer.time() >= flickerRecoveryTime + 150) {
+                                ZeroRingState = ZeroRings.TRAJECTORY2;
+                                drive.followTrajectoryAsync(traj2_0);
+                            }
+                            break;
+
+                        case TRAJECTORY2:
+
+                            if (!drive.isBusy()) {
+                                ZeroRingState = ZeroRings.WOBBLE;
+                                r.waitTimer.reset();
+                            }
+                            break;
+
+                        case WOBBLE:
+
+                            r.wgDown();
+
+                            if (r.waitTimer.time() >= 600) {
+                                r.wgUpNoClose();
+                                if(r.waitTimer.time() >= 1100) {
+                                    ZeroRingState = ZeroRings.WHITE_LINE;
+                                    drive.followTrajectoryAsync(traj3_0);
+                                }
+                            }
+                            break;
+
+                        case WHITE_LINE:
+
+                            if (!drive.isBusy()) {
+                                ZeroRingState = ZeroRings.CORRECTION;
+                            }
+                            break;
+
+                        case CORRECTION:
+                            //originally had gyro angle correction, but dont really need it now
+                            r.flap.setPosition(.39);
+                            r.turret.setPosition(.15);
+                            r.shooterStopper.setPosition(.9);
+                            break;
+                    }
+                    break;
+                /**
+                 * ------------------------------------------------------------------------
+                 * Zero Ring FSM Following
+                 */
+            }
+
+            r.updateAllStatesNoShooter();
+
+            drive.update();
+            Pose2d poseEstimate = drive.getPoseEstimate();
+            PoseStorage.currentPose = poseEstimate;
+
+            telemetry.addData("x", poseEstimate.getX());
+            telemetry.addData("y", poseEstimate.getY());
+            telemetry.addData("heading", poseEstimate.getHeading());
+            telemetry.update();
+        }
+    }
+
+    public void webcamInit() {
         int cameraMonitorViewId = hardwareMap.appContext.getResources().
                 getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
 
@@ -112,519 +663,36 @@ public class AutonRingDetectingRed1 extends LinearOpMode {
             public void onOpened() {
                 webcam.openCameraDevice();
                 webcam.startStreaming(1280, 960, OpenCvCameraRotation.UPRIGHT);
-                FtcDashboard.getInstance().startCameraStream(webcam, 0);
             }
         });
+    }
 
-        batteryVoltageSensor = hardwareMap.voltageSensor.iterator().next();
-
-        DcMotorEx frontShoot = hardwareMap.get(DcMotorEx.class, "shooter1");
-        frontShoot.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-
-        MotorConfigurationType motorConfigurationType = frontShoot.getMotorType().clone();
-        motorConfigurationType.setAchieveableMaxRPMFraction(1.0);
-        frontShoot.setMotorType(motorConfigurationType);
-
-        DcMotorEx backShoot = hardwareMap.get(DcMotorEx.class, "shooter2");
-        backShoot.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-
-        MotorConfigurationType motorConfigurationType2 = backShoot.getMotorType().clone();
-        motorConfigurationType2.setAchieveableMaxRPMFraction(1.0);
-        frontShoot.setMotorType(motorConfigurationType2);
-
-        frontShoot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        backShoot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
-        batteryVoltageSensor = hardwareMap.voltageSensor.iterator().next();
-
-        setPIDFCoefficients(frontShoot, MOTOR_VELO_PID);
-        setPIDFCoefficients2(backShoot, MOTOR_VELO_PID_2);
-
-        for(LynxModule module : hardwareMap.getAll(LynxModule.class)) {
-            module.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
-        }
-
-        turret = hardwareMap.get(Servo.class, "turret");
-        flap = hardwareMap.get(Servo.class, "flap");
-        wobbleArm1 = hardwareMap.get(Servo.class, "wobbleArm1");
-        wobbleArm2 = hardwareMap.get(Servo.class, "wobbleArm2");
-        wobbleClaw = hardwareMap.get(Servo.class, "wobbleClaw");
-        droptakeStopper = hardwareMap.get(Servo.class, "droptakeStopper");
-        shooterStopper = hardwareMap.get(Servo.class, "shooterStopper");
-        shootFlicker = hardwareMap.get(Servo.class, "shootFlicker");
-
-        intake = hardwareMap.get(DcMotor.class, "intake");
-        bottomRoller = hardwareMap.get(DcMotor.class, "bottomRoller");
-
-        frontLeft = hardwareMap.get(DcMotor.class, "frontLeft");
-        backRight = hardwareMap.get(DcMotor.class, "backRight");
-        backLeft = hardwareMap.get(DcMotor.class, "backLeft");
-        frontRight = hardwareMap.get(DcMotor.class, "frontRight");
-
-
-        BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
-        parameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
-        parameters.accelUnit = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
-        parameters.calibrationDataFile = "BNO055IMUCalibration.json"; // see the calibration sample opmode
-        parameters.loggingEnabled = true;
-        parameters.loggingTag = "IMU";
-        parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
-
-
-        imu = hardwareMap.get(BNO055IMU.class, "imu");
-        imu.initialize(parameters);
-
-        composeTelemetry();
-
-        imu.startAccelerationIntegration(new Position(), new Velocity(), 1000);
-
-
-        telemetry = new MultipleTelemetry(telemetry, dashboard.getTelemetry());
-
-        telemetry.update();
-        telemetry.clearAll();
-
-
-        SampleMecanumDriveCancelable drive = new SampleMecanumDriveCancelable(hardwareMap);
-
-        Pose2d startPose = new Pose2d(-50, -2, Math.toRadians(0));
-
-        drive.setPoseEstimate(startPose);
-
-
-        wobbleClaw.setPosition(.6);
-        wobbleArm1.setPosition(0);
-        wobbleArm2.setPosition(0);
-
-        turret.setPosition(.15);
-        flap.setPosition(.41);
-
-        shoot();
-
-        droptakeStopper.setPosition(.25);
-        shooterStopper.setPosition(.9);
-
-        sleep(5000);
-
-        wobbleClaw.setPosition(.3);
-
-
-        while (!opModeIsActive()) {
-            if (pipeline.position == null) {
-                telemetry.addData("still working on it", "gimme a sec");
-                HowManyRings = ThisManyRings.Default;
-            } else if (pipeline.position == RingDetecting.RingPosition.FOUR){
-                telemetry.addData("Four Rings", "Waiting for start");
-                HowManyRings = ThisManyRings.FourRings;
-                telemetry.update();
-            }
-            else if (pipeline.position == RingDetecting.RingPosition.ONE){
-                telemetry.addData("One Ring", "Waiting for start");
-                HowManyRings = ThisManyRings.OneRing;
-            }
-            else if (pipeline.position == RingDetecting.RingPosition.NONE){
-                telemetry.addData("Zero Rings", "Waiting for start");
-                HowManyRings = ThisManyRings.ZeroRings;
-            }
+    public void updateStarterStack() {
+        if (pipeline.position == null) {
+            telemetry.addData("still working on it", "gimme a sec");
+        } else if (pipeline.position == RingDetecting.RingPosition.FOUR){
+            telemetry.addData("Four Rings", "Waiting for start");
+            HowManyRings = ThisManyRings.FourRings;
             telemetry.update();
-        }
-
-        waitForStart();
-
-        if (isStopRequested()) return;
-
-        if (lastKf_2 != MOTOR_VELO_PID_2.f) {
-            MOTOR_VELO_PID_2.f = lastKf_2 * 12 / batteryVoltageSensor.getVoltage();
-            lastKf_2 = MOTOR_VELO_PID_2.f;
-        }
-
-        if (lastKf != MOTOR_VELO_PID.f) {
-            MOTOR_VELO_PID.f = lastKf * 12 / batteryVoltageSensor.getVoltage();
-            lastKf = MOTOR_VELO_PID.f;
-        }
-
-        setPIDFCoefficients2(backShoot, MOTOR_VELO_PID_2);
-        setPIDFCoefficients(frontShoot, MOTOR_VELO_PID);
-
-        boolean gyro = true;
-
-
-        switch (HowManyRings) {
-            case FourRings:
-                Trajectory traj1_4 = drive.trajectoryBuilder(startPose)
-                        .lineToLinearHeading(new Pose2d(-25, -17, 0))
-                        .addTemporalMarker(0, () -> {
-                            flap.setPosition(.4);
-                            turret.setPosition(.14);
-                            setVelocity(frontShoot, 2650);
-                            setVelocity2(backShoot, 2650);
-                        })
-                        .addDisplacementMarker(() -> {
-                            shooterStopper.setPosition(.4);
-                        })
-                        .build();
-
-                Trajectory traj2_4 = drive.trajectoryBuilder(traj1_4.end())
-                        .addTemporalMarker(0, () -> {
-                            frontShoot.setVelocity(0);
-                            backShoot.setVelocity(0);
-                        })
-                        .lineToLinearHeading(new Pose2d(-5,-17, Math.toRadians(0)))
-                        .build();
-
-                Trajectory traj3_4 = drive.trajectoryBuilder(traj2_4.end())
-                        .lineToLinearHeading(new Pose2d(-14, -17, 0))
-                        .addDisplacementMarker(() -> {
-                            setVelocity(frontShoot, 2590);
-                            setVelocity2(backShoot, 2590);
-                            intake.setPower(.8);
-                            bottomRoller.setPower(-.7);
-                        })
-                        .build();
-
-                Trajectory traj4_4 = drive.trajectoryBuilder(traj3_4.end())
-                        .lineToLinearHeading(new Pose2d(-5, -17, 0),
-                                SampleMecanumDriveCancelable.getVelocityConstraint(4, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
-                                SampleMecanumDriveCancelable.getAccelerationConstraint(4))
-                        .build();
-
-                Trajectory traj4PointOh_4 = drive.trajectoryBuilder(traj4_4.end())
-                        .lineToLinearHeading(new Pose2d(0, -17, 0),
-                                SampleMecanumDriveCancelable.getVelocityConstraint(4, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
-                                SampleMecanumDriveCancelable.getAccelerationConstraint(4))
-                        .build();
-
-                Trajectory traj5_4 = drive.trajectoryBuilder(traj4PointOh_4.end())
-                        .addTemporalMarker(0, () -> {
-                            intake.setPower(0);
-                            bottomRoller.setPower(0);
-                            frontShoot.setVelocity(0);
-                            backShoot.setVelocity(0);
-                        })
-                        .lineToLinearHeading(new Pose2d(65,-22, Math.toRadians(90)))
-                        .build();
-
-
-                Trajectory traj6_4 = drive.trajectoryBuilder(traj5_4.end())
-                        .lineToLinearHeading(new Pose2d(15, 10, Math.toRadians(0)))
-                        .build();
-
-                droptakeStopper.setPosition(0);
-
-                drive.followTrajectory(traj1_4);
-
-                sleep(1000);
-
-                shoot();
-                sleep(500);
-                shoot();
-                sleep(500);
-                shoot();
-                sleep(500);
-
-                drive.followTrajectory(traj2_4);
-
-                drive.followTrajectory(traj3_4);
-
-                drive.followTrajectory(traj4_4);
-
-                shoot();
-                sleep(200);
-                shoot();
-                sleep(200);
-                shoot();
-                sleep(200);
-
-                drive.followTrajectory(traj4PointOh_4);
-
-                shoot();
-                sleep(200);
-                shoot();
-
-                drive.followTrajectory(traj5_4);
-
-                while (wobbleArm2.getPosition() < .54) {
-                    wobbleArm1.setPosition(wobbleArm1.getPosition() + .01);
-                    wobbleArm2.setPosition(wobbleArm2.getPosition() + .01);
-                    sleep(20);
-                }
-                wobbleClaw.setPosition(.6);
-                sleep(500);
-
-                while (wobbleArm2.getPosition() > 0) {
-                    wobbleArm1.setPosition(wobbleArm1.getPosition() - .01);
-                    wobbleArm2.setPosition(wobbleArm2.getPosition() - .01);
-                    sleep(25);
-                }
-
-
-                drive.followTrajectory(traj6_4);
-
-                flap.setPosition(.39);
-                turret.setPosition(.15);
-                shooterStopper.setPosition(.9);
-
-                while (!isStopRequested()) {
-                    while (Math.abs(getAngle()) > .5) {
-                        frontRight.setPower(-.04 * getAngle());
-                        backRight.setPower(-.04 * getAngle());
-                        frontLeft.setPower(.04 * getAngle());
-                        backLeft.setPower(.04 * getAngle());
-                    }
-                }
-                PoseStorage.currentPose = drive.getPoseEstimate();
-
-                break;
-
-            case OneRing:
-
-                Trajectory traj1_1 = drive.trajectoryBuilder(startPose)
-                        .lineToLinearHeading(new Pose2d(-25, -17, 0))
-                        .addTemporalMarker(0, () -> {
-                            flap.setPosition(.4);
-                            turret.setPosition(.14);
-                            setVelocity(frontShoot, 2650);
-                            setVelocity2(backShoot, 2650);
-                        })
-                        .build();
-
-
-                Trajectory traj2_1 = drive.trajectoryBuilder(traj1_1.end())
-                        .addTemporalMarker(0, () -> {
-                            setVelocity(frontShoot, 2590);
-                            setVelocity2(backShoot, 2590);
-                            intake.setPower(.8);
-                            bottomRoller.setPower(-.7);
-                        })
-                        .lineToLinearHeading(new Pose2d(-5, -17, 0),
-                                SampleMecanumDriveCancelable.getVelocityConstraint(4, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
-                                SampleMecanumDriveCancelable.getAccelerationConstraint(4))
-                        .build();
-
-                Trajectory traj3_1 = drive.trajectoryBuilder(traj2_1.end())
-                        .addTemporalMarker(0, () -> {
-                            intake.setPower(0);
-                            bottomRoller.setPower(0);
-                            frontShoot.setVelocity(0);
-                            backShoot.setVelocity(0);
-                        })
-                        .lineToLinearHeading(new Pose2d(40,0, Math.toRadians(90)))
-                        .build();
-
-
-                Trajectory traj4_1 = drive.trajectoryBuilder(traj3_1.end())
-                        .lineToLinearHeading(new Pose2d(15, 10, Math.toRadians(0)))
-                        .build();
-
-                droptakeStopper.setPosition(0);
-
-                drive.followTrajectory(traj1_1);
-
-                sleep(1000);
-
-                shoot();
-                sleep(500);
-                shoot();
-                sleep(500);
-                shoot();
-                sleep(500);
-
-                drive.followTrajectory(traj2_1);
-
-                shoot();
-                sleep(200);
-                shoot();
-                sleep(200);
-                shoot();
-                sleep(200);
-
-                drive.followTrajectory(traj3_1);
-
-                while (wobbleArm2.getPosition() < .54) {
-                    wobbleArm1.setPosition(wobbleArm1.getPosition() + .01);
-                    wobbleArm2.setPosition(wobbleArm2.getPosition() + .01);
-                    sleep(20);
-                }
-                wobbleClaw.setPosition(.6);
-                sleep(500);
-
-                while (wobbleArm2.getPosition() > 0) {
-                    wobbleArm1.setPosition(wobbleArm1.getPosition() - .01);
-                    wobbleArm2.setPosition(wobbleArm2.getPosition() - .01);
-                    sleep(25);
-                }
-
-                drive.followTrajectory(traj4_1);
-
-                flap.setPosition(.39);
-                turret.setPosition(.15);
-                shooterStopper.setPosition(.9);
-
-                while (!isStopRequested()) {
-                    while (Math.abs(getAngle()) > .5) {
-                        frontRight.setPower(-.04 * getAngle());
-                        backRight.setPower(-.04 * getAngle());
-                        frontLeft.setPower(.04 * getAngle());
-                        backLeft.setPower(.04 * getAngle());
-                    }
-                }
-                PoseStorage.currentPose = drive.getPoseEstimate();
-
-                break;
-
-            case ZeroRings:
-
-                Trajectory traj1_0 = drive.trajectoryBuilder(startPose)
-                        .addTemporalMarker(0, () -> {
-                            flap.setPosition(.4);
-                            turret.setPosition(.22);
-                            setVelocity(frontShoot, 2620);
-                            setVelocity2(backShoot, 2620);
-                        })
-                        .lineToLinearHeading(new Pose2d(-1, 5, Math.toRadians(345)))
-                        .addDisplacementMarker(() -> {
-                            shooterStopper.setPosition(.4);
-                        })
-                        .build();
-
-                Trajectory traj2_0 = drive.trajectoryBuilder(traj1_0.end())
-                        .addTemporalMarker(0, () -> {
-                            frontShoot.setVelocity(0);
-                            backShoot.setVelocity(0);
-                        })
-                        .lineToLinearHeading(new Pose2d(10,-29, Math.toRadians(90)))
-                        .build();
-
-
-                Trajectory traj4_0 = drive.trajectoryBuilder(traj2_0.end())
-                        .lineToLinearHeading(new Pose2d(15, 10, Math.toRadians(0)))
-                        .build();
-
-                droptakeStopper.setPosition(0);
-
-                drive.followTrajectory(traj1_0);
-
-
-                sleep(1000);
-
-                shoot();
-                sleep(500);
-                shoot();
-                sleep(500);
-                shoot();
-                sleep(500);
-
-                drive.followTrajectory(traj2_0);
-
-                while (wobbleArm2.getPosition() < .54) {
-                    wobbleArm1.setPosition(wobbleArm1.getPosition() + .01);
-                    wobbleArm2.setPosition(wobbleArm2.getPosition() + .01);
-                    sleep(20);
-                }
-                wobbleClaw.setPosition(.6);
-                sleep(500);
-
-                while (wobbleArm2.getPosition() > 0) {
-                    wobbleArm1.setPosition(wobbleArm1.getPosition() - .01);
-                    wobbleArm2.setPosition(wobbleArm2.getPosition() - .01);
-                    sleep(25);
-                }
-
-                drive.followTrajectory(traj4_0);
-
-                flap.setPosition(.39);
-                turret.setPosition(.15);
-                shooterStopper.setPosition(.9);
-
-                while (!isStopRequested()) {
-                    while (Math.abs(getAngle()) > .5) {
-                        frontRight.setPower(-.04 * getAngle());
-                        backRight.setPower(-.04 * getAngle());
-                        frontLeft.setPower(.04 * getAngle());
-                        backLeft.setPower(.04 * getAngle());
-                    }
-                }
-                PoseStorage.currentPose = drive.getPoseEstimate();
-
-                break;
-
-            case Default:
+        } else if (pipeline.position == RingDetecting.RingPosition.ONE){
+            telemetry.addData("One Ring", "Waiting for start");
+            HowManyRings = ThisManyRings.OneRing;
+        } else if (pipeline.position == RingDetecting.RingPosition.NONE){
+            telemetry.addData("Zero Rings", "Waiting for start");
+            HowManyRings = ThisManyRings.ZeroRings;
         }
         telemetry.update();
     }
 
-
-
-    public void shoot() {
-        shootFlicker.setPosition(.35);
-        sleep(280);
-        shootFlicker.setPosition(.57);
-    }
-
-    public void wobbleUp() {
-        wobbleClaw.setPosition(.3);
-        sleep(500);
-        wobbleArm1.setPosition(.2);
-        wobbleArm2.setPosition(.2);
-        sleep(1000);
-    }
-
-    public void wobbleDown() {
-        wobbleArm1.setPosition(.54);
-        wobbleArm2.setPosition(.54);
-        sleep(500);
-        wobbleClaw.setPosition(.6);
-        sleep(600);
-    }
-
-    public static double rpmToTicksPerSecond(double rpm) {
-        return rpm * MOTOR_TICKS_PER_REV / MOTOR_GEAR_RATIO / 60;
-    }
-
-    public void setVelocity(DcMotorEx motor, double power) {
-        motor.setVelocity(rpmToTicksPerSecond(power));
-        Log.i("mode", "setting velocity");
-    }
-
-    public void setVelocity2(DcMotorEx motor, double power) {
-        motor.setVelocity(rpmToTicksPerSecond(power));
-        Log.i("mode", "setting velocity");
-    }
-
-    private void setPIDFCoefficients(DcMotorEx motor, PIDFCoefficients coefficients) {
-        Log.i("config", "setting custom gains");
-        motor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(
-                coefficients.p, coefficients.i, coefficients.d, coefficients.f * 12 / batteryVoltageSensor.getVoltage()
-        ));
-    }
-
-    private void setPIDFCoefficients2(DcMotorEx motor, PIDFCoefficients coefficients) {
-        Log.i("config", "setting custom gains");
-        motor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(
-                coefficients.p, coefficients.i, coefficients.d, coefficients.f * 12 / batteryVoltageSensor.getVoltage()
-        ));
-    }
-    void composeTelemetry() {
-        telemetry.addAction(new Runnable() {
-            @Override
-            public void run() {
-                angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-                gravity = imu.getGravity();
-            }
-        });
-    }
-    public double getAngle() {
-        return imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle;
-    }
-
-    /*************************************************************************************************
-     *************************************************************************************************
-     *************************************************************************************************
+    /**
+     --------------------------------------------------------------------------------------
+     --------------------------------------------------------------------------------------
+     --------------------------------------------------------------------------------------
      */
 
 
-
     public abstract static class RingDetecting extends LinearOpMode {
+
         protected WebcamName webcamName;
         protected OpenCvWebcam webcam;
 
@@ -644,7 +712,6 @@ public class AutonRingDetectingRed1 extends LinearOpMode {
         public int cameraMonitorViewId = hardwareMap.appContext.getResources().
                 getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
 
-
         protected static RingDetection pipeline = new RingDetection();
 
         public enum RingPosition {
@@ -658,20 +725,12 @@ public class AutonRingDetectingRed1 extends LinearOpMode {
             private final Scalar BLUE = new Scalar(0, 0, 255);
             private final Scalar GREEN = new Scalar(0, 255, 0);
 
-            private final Point REGION1_TOPLEFT_ANCHOR_POINT = new Point(1000, 780);
-
-            private final int REGION_WIDTH = 280;
-            private final int REGION_HEIGHT = 180;
-
-            private int FOUR_RING_THRESHOLD = 145;
-            private int ONE_RING_THRESHOLD = 132;
-
             Point region1_pointA = new Point(
-                    REGION1_TOPLEFT_ANCHOR_POINT.x,
-                    REGION1_TOPLEFT_ANCHOR_POINT.y);
+                    LEFT_REGION1_TOPLEFT_ANCHOR_POINT.x,
+                    LEFT_REGION1_TOPLEFT_ANCHOR_POINT.y);
             Point region1_pointB = new Point(
-                    REGION1_TOPLEFT_ANCHOR_POINT.x + REGION_WIDTH,
-                    REGION1_TOPLEFT_ANCHOR_POINT.y + REGION_HEIGHT);
+                    LEFT_REGION1_TOPLEFT_ANCHOR_POINT.x + LEFT_REGION_WIDTH,
+                    LEFT_REGION1_TOPLEFT_ANCHOR_POINT.y + LEFT_REGION_HEIGHT);
 
             Mat region1_Cb;
             Mat YCrCb = new Mat();
@@ -706,9 +765,9 @@ public class AutonRingDetectingRed1 extends LinearOpMode {
                         2); // Thickness of the rectangle lines
 
 
-                if (avg1 > FOUR_RING_THRESHOLD) {
+                if (avg1 > LEFT_4_THRESHOLD) {
                     position = RingPosition.FOUR;
-                } else if (avg1 > ONE_RING_THRESHOLD) {
+                } else if (avg1 > LEFT_1_THRESHOLD) {
                     position = RingPosition.ONE;
                 } else {
                     position = RingPosition.NONE;

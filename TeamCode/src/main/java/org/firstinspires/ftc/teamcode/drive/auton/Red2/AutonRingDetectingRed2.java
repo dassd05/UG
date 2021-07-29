@@ -46,6 +46,8 @@ import org.openftc.easyopencv.OpenCvWebcam;
 import static org.firstinspires.ftc.teamcode.drive.auton.Red2.AutonRingDetectingRed2.RingDetecting.pipeline;
 import static org.firstinspires.ftc.teamcode.drive.auton.Red2.AutonRingDetectingRed2.RingDetecting.RingDetection.avg1;
 
+@Deprecated //too lazy to make good especially cause webcam could barely or even not see
+// rings from this position, so Red1 is just a lot more reliable
 @Autonomous(group = "R2")
 public class AutonRingDetectingRed2 extends LinearOpMode {
 
@@ -266,9 +268,7 @@ public class AutonRingDetectingRed2 extends LinearOpMode {
                             setVelocity2(backShoot, 2615);
                         })
                         .lineToLinearHeading(new Pose2d(-1, -10, Math.toRadians(15)))
-                        .addDisplacementMarker(() -> {
-                            shooterStopper.setPosition(.4);
-                        })
+                        .addDisplacementMarker(() -> shooterStopper.setPosition(.4))
                         .build();
 
                 Trajectory traj2_4 = drive.trajectoryBuilder(traj1_4.end())
@@ -342,9 +342,7 @@ public class AutonRingDetectingRed2 extends LinearOpMode {
                             setVelocity2(backShoot, 2615);
                         })
                         .lineToLinearHeading(new Pose2d(-1, -10, Math.toRadians(15)))
-                        .addDisplacementMarker(() -> {
-                            shooterStopper.setPosition(.4);
-                        })
+                        .addDisplacementMarker(() -> shooterStopper.setPosition(.4))
                         .build();
 
                 Trajectory traj2_1 = drive.trajectoryBuilder(traj1_1.end())
@@ -422,9 +420,7 @@ public class AutonRingDetectingRed2 extends LinearOpMode {
                             setVelocity2(backShoot, 2615);
                         })
                         .lineToLinearHeading(new Pose2d(-1, -10, Math.toRadians(15)))
-                        .addDisplacementMarker(() -> {
-                            shooterStopper.setPosition(.4);
-                        })
+                        .addDisplacementMarker(() -> shooterStopper.setPosition(.4))
                         .build();
 
                 Trajectory traj2_0 = drive.trajectoryBuilder(traj1_0.end())

@@ -712,6 +712,25 @@ public class AutonRingDetectingBlue1 extends LinearOpMode {
 
     public abstract static class RingDetecting extends LinearOpMode {
 
+        protected WebcamName webcamName;
+        protected OpenCvWebcam webcam;
+
+
+        public void webcamInitialize() {
+            webcamName = hardwareMap.get(WebcamName.class, "Webcam 1");
+            webcam = OpenCvCameraFactory.getInstance().createWebcam(webcamName, cameraMonitorViewId);
+            webcam.setPipeline(pipeline);
+            webcam.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener() {
+                @Override
+                public void onOpened() {
+                    webcam.startStreaming(960, 720, OpenCvCameraRotation.UPRIGHT);
+                }
+            });
+        }
+
+        public int cameraMonitorViewId = hardwareMap.appContext.getResources().
+                getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
+
         protected static RingDetection pipeline = new RingDetection();
 
         public enum RingPosition {
