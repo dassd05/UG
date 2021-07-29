@@ -399,6 +399,7 @@ public class AutonRingDetectingRed1 extends LinearOpMode {
                                 r.shooterStopper.setPosition(.9);
                                 firstTime = false;
                             }
+                            r.setMecanumPowers(0, 0, 0, 0);
                             break;
                     }
                     break;
@@ -537,6 +538,7 @@ public class AutonRingDetectingRed1 extends LinearOpMode {
                                 r.shooterStopper.setPosition(.9);
                                 firstTime = false;
                             }
+                            r.setMecanumPowers(0, 0, 0, 0);
                             break;
                     }
                     break;
