@@ -42,14 +42,14 @@ import org.openftc.easyopencv.OpenCvCameraRotation;
 import org.openftc.easyopencv.OpenCvPipeline;
 import org.openftc.easyopencv.OpenCvWebcam;
 
-import static org.firstinspires.ftc.teamcode.drive.auton.Red1.AutonRingDetectingRed1PowerShots.RingDetecting.pipeline;
+import static org.firstinspires.ftc.teamcode.drive.auton.Red1.AutonRingDetectingRed1PowerShotsBounceBack.RingDetecting.pipeline;
 
 @Deprecated // turret just makes getting all 3 powershots hard, but bounceback op :)
 // probs can't use it in comp unless build had made turret more stable
 // averaging 2 powershots + 1 bounceback, so not too shabby
 // keep in mind sleeps present :(, no async, no FSM, etc., so not the best code
 @Autonomous(group = "R1")
-public class AutonRingDetectingRed1PowerShots extends LinearOpMode {
+public class AutonRingDetectingRed1PowerShotsBounceBack extends LinearOpMode {
 
     protected WebcamName webcamName;
     protected OpenCvWebcam webcam;
