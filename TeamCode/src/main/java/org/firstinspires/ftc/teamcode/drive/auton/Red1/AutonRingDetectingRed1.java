@@ -43,6 +43,7 @@ public class AutonRingDetectingRed1 extends LinearOpMode {
 
     public volatile ThisManyRings HowManyRings;
 
+    boolean firstTime = true;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -386,14 +387,18 @@ public class AutonRingDetectingRed1 extends LinearOpMode {
 
                             if (!drive.isBusy()) {
                                 FourRingState = FourRing.CORRECTION;
+                                firstTime = true;
                             }
                             break;
 
                         case CORRECTION:
                             //originally had gyro angle correction, but dont really need it now
-                            r.flap.setPosition(.39);
-                            r.turret.setPosition(.15);
-                            r.shooterStopper.setPosition(.9);
+                            if (firstTime) {
+                                r.flap.setPosition(.39);
+                                r.turret.setPosition(.15);
+                                r.shooterStopper.setPosition(.9);
+                                firstTime = false;
+                            }
                             break;
                     }
                     break;
@@ -520,14 +525,18 @@ public class AutonRingDetectingRed1 extends LinearOpMode {
 
                             if (!drive.isBusy()) {
                                 OneRingState = OneRing.CORRECTION;
+                                firstTime = true;
                             }
                             break;
 
                         case CORRECTION:
                             //originally had gyro angle correction, but dont really need it now
-                            r.flap.setPosition(.39);
-                            r.turret.setPosition(.15);
-                            r.shooterStopper.setPosition(.9);
+                            if (firstTime) {
+                                r.flap.setPosition(.39);
+                                r.turret.setPosition(.15);
+                                r.shooterStopper.setPosition(.9);
+                                firstTime = false;
+                            }
                             break;
                     }
                     break;
@@ -620,14 +629,19 @@ public class AutonRingDetectingRed1 extends LinearOpMode {
 
                             if (!drive.isBusy()) {
                                 ZeroRingState = ZeroRings.CORRECTION;
+                                firstTime = true;
                             }
                             break;
 
                         case CORRECTION:
                             //originally had gyro angle correction, but dont really need it now
-                            r.flap.setPosition(.39);
-                            r.turret.setPosition(.15);
-                            r.shooterStopper.setPosition(.9);
+                            if (firstTime) {
+                                r.flap.setPosition(.39);
+                                r.turret.setPosition(.15);
+                                r.shooterStopper.setPosition(.9);
+                                firstTime = false;
+                            }
+                            r.setMecanumPowers(0, 0, 0, 0);
                             break;
                     }
                     break;
