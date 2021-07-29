@@ -34,21 +34,31 @@ public class NewTeleOpRed extends LinearOpMode {
 
         drive.setPoseEstimate(PoseStorage.currentPose);
 
-        //controls shooter state (a toggle middle & x toggle high) (state machine makes life easy)
         GamepadListenerEx gamepadListener1 = new GamepadListenerEx(gamepad1) {
             @Override
             public void onButtonPress(Button button) {
                 super.onButtonPress(button);
-
+        //controls shooter state (a toggle middle & x toggle high) (state machine makes life easy)
                 if (button == Button.a && r.whatShootState != ShooterState.MIDDLE)
                     r.shootMiddle();
                 else if (button == Button.a)
                     r.offMiddle();
-
                 if (button == Button.x && r.whatShootState != ShooterState.HIGH)
                     r.shootHigh();
                 else if (button == Button.x)
                     r.offHigh();
+
+                if (button == Button.dpad_up) //wobble controls
+                    r.wgLift();
+                if (button == Button.dpad_down)
+                    r.wgDown();
+                if (button == Button.dpad_left)
+                    r.wgDeploy();
+                if (button == Button.dpad_right)
+                    r.wgStow();
+
+                if (button == Button.b) //b -> shoot
+                    r.flick();
             }
         };
         //toggles intake on/off with right bumper
@@ -66,18 +76,6 @@ public class NewTeleOpRed extends LinearOpMode {
 
             r.setCorrectedPIDF(); //battery compensated feedforward application
 
-            if (gamepad1.dpad_up) //wobble controls
-                r.wgLift();
-            if (gamepad1.dpad_down)
-                r.wgDown();
-            if (gamepad1.dpad_left)
-                r.wgDeploy();
-            if (gamepad1.dpad_right)
-                r.wgStow();
-
-            if (gamepad1.b) //b -> shoot
-                r.flick();
-
             //when intake is on, left bumper can be held to reverse direction (can do toggle, but Harish no like)
             if (intakeOn) {
                 if (gamepad2.left_bumper) r.intakeReverse();
@@ -93,7 +91,7 @@ public class NewTeleOpRed extends LinearOpMode {
             double gamepadXCoordinate = -gamepad1.right_stick_x;
             double gamepadYCoordinate = gamepad1.right_stick_y;
 
-            if (gamepad1.right_bumper) //holding right bumper -> slow mode
+            if (gamepad1.right_bumper) //holding right bumper -> slow mode (dont really like toggle here)
                 r.fieldCentricDrive(driveTurn/2.5, -gamepadXCoordinate/2.5,
                         -gamepadYCoordinate/2.5);
             else
