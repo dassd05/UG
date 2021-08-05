@@ -124,7 +124,7 @@ public class AutonRingDetectingBlue1 extends LinearOpMode {
 
 
         Trajectory traj7_4 = drive.trajectoryBuilder(traj6_4.end())
-                .addTemporalMarker(500, () -> r.wgLift())
+                .addTemporalMarker(500, () -> r.wgSlowStow())
                 .lineToLinearHeading(new Pose2d(15, -5, Math.toRadians(0)))
                 .build();
 
@@ -170,7 +170,7 @@ public class AutonRingDetectingBlue1 extends LinearOpMode {
 
 
         Trajectory traj4_1 = drive.trajectoryBuilder(traj3_1.end())
-                .addTemporalMarker(500, () -> r.wgLift())
+                .addTemporalMarker(500, () -> r.wgSlowStow())
                 .lineToLinearHeading(new Pose2d(15, 0, Math.toRadians(0)))
                 .build();
 
@@ -384,7 +384,7 @@ public class AutonRingDetectingBlue1 extends LinearOpMode {
 
                         case WOBBLE:
 
-                            r.wgDown();
+                            r.wgSlowDown();
 
                             if (r.waitTimer.time() >= 600) {
                                 FourRingState = FourRing.WHITE_LINE;
@@ -523,7 +523,7 @@ public class AutonRingDetectingBlue1 extends LinearOpMode {
 
                         case WOBBLE:
 
-                            r.wgDown();
+                            r.wgSlowDown();
 
                             if (r.waitTimer.time() >= 600) {
                                 OneRingState = OneRing.WHITE_LINE;
@@ -633,7 +633,7 @@ public class AutonRingDetectingBlue1 extends LinearOpMode {
 
                         case WOBBLE:
 
-                            r.wgDown();
+                            r.wgSlowDown();
 
                             if (r.waitTimer.time() >= 600) {
                                 ZeroRingState = ZeroRings.WAIT2;
@@ -643,7 +643,7 @@ public class AutonRingDetectingBlue1 extends LinearOpMode {
 
                         case WAIT2:
 
-                            r.wgUpNoClose();
+                            r.wgSlowStow();
 
                             if (r.waitTimer.time() >= 10000) {
                                 ZeroRingState = ZeroRings.WHITE_LINE;

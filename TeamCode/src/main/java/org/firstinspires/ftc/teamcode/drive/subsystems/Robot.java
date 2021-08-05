@@ -145,22 +145,26 @@ public class Robot {
         LIFT,
         DEPLOY,
         STOW,
-        UP_NO_CLOSE,
-        SLOW_MODE
+        SLOW_MODE_DOWN,
+        SLOW_MODE_STOW
     }
 
     public wobbleGoalState wgState;
 
     public ElapsedTime wgTimer = new ElapsedTime(ElapsedTime.Resolution.MILLISECONDS);
 
+    public boolean resetTimer = true;
+    public boolean isPositionReached = false;
+    public double change = 0;
+
     public void updateWGState() {
         switch (wgState) {
             case DOWN:
-                wobbleArm1.setPosition(wobbleArmDown);
-                wobbleArm2.setPosition(wobbleArmDown);
+                wobbleClaw.setPosition(wobbleClawOpen);
 
-                if (wgTimer.time() > 400) {
-                    wobbleClaw.setPosition(wobbleClawOpen);
+                if (wgTimer.time() > 100) {
+                    wobbleArm1.setPosition(wobbleArmDown);
+                    wobbleArm2.setPosition(wobbleArmDown);
                 }
                 break;
 
@@ -186,28 +190,55 @@ public class Robot {
                 wobbleClaw.setPosition(wobbleClawOpen);
                 break;
 
-            case UP_NO_CLOSE:
-                wobbleArm1.setPosition(wobbleArmRest);
-                wobbleArm2.setPosition(wobbleArmRest);
+            case SLOW_MODE_DOWN:
+                makeWGSlow(wobbleArmDown, wgSlowCycleTime);
 
-                if (wgTimer.time() > 400) {
+                if (isPositionReached)
+                    wobbleClaw.setPosition(wobbleClawOpen);
+
+                break;
+
+            case SLOW_MODE_STOW:
+                makeWGSlow(wobbleArmRest, wgSlowCycleTime);
+
+                if (isPositionReached)
                     wobbleClaw.setPosition(wobbleClawClose);
-                }
+
                 break;
 
-            case SLOW_MODE:
-                //makeWGSlow(wgSlowCycleTime);
-                //see alternate wgSlow() for more details
-                break;
             default:
         }
     }
 
-    public static long wgSlowCycleTime = 0;
+    public void makeWGSlow(float position, long cycleTime) {
+        if (!isPositionReached) {
+            if (resetTimer) {
+                if (wgTimer.time() > cycleTime) {
+                    wgTimer.reset();
+                    resetTimer = false;
+                }
+            }
 
-    public void makeWGSlow(long wait) {
-        //still working on getting this to work without using for or while cause blocking bad
-        //wish we could use multithreading but rev hub bad
+            else {
+                if (position > wobbleArm1.getPosition())
+                    change = .01;
+                else if (position < wobbleArm1.getPosition())
+                    change = -.01;
+                else
+                    change = 0;
+
+                double newPos = wobbleArm1.getPosition() + change;
+
+                wobbleArm1.setPosition(newPos);
+                wobbleArm2.setPosition(newPos);
+
+                resetTimer = true;
+            }
+
+            if (wobbleArm1.getPosition() == position)
+                isPositionReached = true;
+            //for letting go and closing claw once arm movement is done
+        }
     }
 
     public void wgDown() {
@@ -222,17 +253,21 @@ public class Robot {
         wgState = wobbleGoalState.LIFT;
         wgTimer.reset();
     }
-    public void wgUpNoClose() {
-        wgState = wobbleGoalState.UP_NO_CLOSE;
-        wgTimer.reset();
-    }
     public void wgDeploy()  {wgState = wobbleGoalState.DEPLOY;}
-    public void wgSlow()    {wgState = wobbleGoalState.SLOW_MODE;}
-    // alternate way in which i have slow mode as blank
-    // public void wgSlow(double pauseCycle) {
-    // wgState = wobbleGoalState.SLOW_MODE;
-    // makeWGSlow(pauseCycle);
-    // }
+
+    public void wgSlowDown() {
+        wgState = wobbleGoalState.SLOW_MODE_DOWN;
+        wgTimer.reset();
+        resetTimer = false;
+        isPositionReached = false;
+    }
+
+    public void wgSlowStow() {
+        wgState = wobbleGoalState.STOW;
+        wgTimer.reset();
+        resetTimer = false;
+        isPositionReached = false;
+    }
 
 
     public enum ShootState {

@@ -42,4 +42,6 @@ public class OtherConstants {
 
     public static double lastKf = 17.7;
     public static double lastKf_2 = 17.7;
+
+    public static long wgSlowCycleTime = 25;
 }

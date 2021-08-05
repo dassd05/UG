@@ -124,7 +124,7 @@ public class AutonRingDetectingRed1 extends LinearOpMode {
 
 
         Trajectory traj7_4 = drive.trajectoryBuilder(traj6_4.end())
-                .addTemporalMarker(500, () -> r.wgUpNoClose())
+                .addTemporalMarker(500, () -> r.wgSlowStow())
                 .lineToLinearHeading(new Pose2d(15, 10, Math.toRadians(0)))
                 .build();
 
@@ -170,7 +170,7 @@ public class AutonRingDetectingRed1 extends LinearOpMode {
 
 
         Trajectory traj4_1 = drive.trajectoryBuilder(traj3_1.end())
-                .addTemporalMarker(500, () -> r.wgUpNoClose())
+                .addTemporalMarker(500, () -> r.wgSlowStow())
                 .lineToLinearHeading(new Pose2d(15, 10, Math.toRadians(0)))
                 .build();
 
@@ -380,7 +380,7 @@ public class AutonRingDetectingRed1 extends LinearOpMode {
 
                         case WOBBLE:
 
-                            r.wgDown();
+                            r.wgSlowDown();
 
                             if (r.waitTimer.time() >= 600) {
                                 FourRingState = FourRing.WHITE_LINE;
@@ -519,7 +519,7 @@ public class AutonRingDetectingRed1 extends LinearOpMode {
 
                         case WOBBLE:
 
-                            r.wgDown();
+                            r.wgSlowDown();
 
                             if (r.waitTimer.time() >= 600) {
                                 OneRingState = OneRing.WHITE_LINE;
@@ -621,11 +621,11 @@ public class AutonRingDetectingRed1 extends LinearOpMode {
 
                         case WOBBLE:
 
-                            r.wgDown();
+                            r.wgSlowDown();
 
                             if (r.waitTimer.time() >= 600) {
-                                r.wgUpNoClose();
-                                if(r.waitTimer.time() >= 1100) {
+                                r.wgSlowStow();
+                                if(r.waitTimer.time() >= 2000) {
                                     ZeroRingState = ZeroRings.WHITE_LINE;
                                     drive.followTrajectoryAsync(traj3_0);
                                 }
