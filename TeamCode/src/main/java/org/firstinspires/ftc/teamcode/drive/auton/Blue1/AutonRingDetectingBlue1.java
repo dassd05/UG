@@ -386,7 +386,7 @@ public class AutonRingDetectingBlue1 extends LinearOpMode {
 
                             r.wgSlowDown();
 
-                            if (r.waitTimer.time() >= 600) {
+                            if (r.waitTimer.time() >= 1500) {
                                 FourRingState = FourRing.WHITE_LINE;
                                 drive.followTrajectoryAsync(traj7_4);
                             }
@@ -525,7 +525,7 @@ public class AutonRingDetectingBlue1 extends LinearOpMode {
 
                             r.wgSlowDown();
 
-                            if (r.waitTimer.time() >= 600) {
+                            if (r.waitTimer.time() >= 1500) {
                                 OneRingState = OneRing.WHITE_LINE;
                                 drive.followTrajectoryAsync(traj4_1);
                             }
@@ -635,7 +635,7 @@ public class AutonRingDetectingBlue1 extends LinearOpMode {
 
                             r.wgSlowDown();
 
-                            if (r.waitTimer.time() >= 600) {
+                            if (r.waitTimer.time() >= 1500) {
                                 ZeroRingState = ZeroRings.WAIT2;
                                 r.waitTimer.reset();
                             }
