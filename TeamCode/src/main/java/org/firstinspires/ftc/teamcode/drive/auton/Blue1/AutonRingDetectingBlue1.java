@@ -46,6 +46,7 @@ public class AutonRingDetectingBlue1 extends LinearOpMode {
     public volatile ThisManyRings HowManyRings;
 
     boolean firstTime = true;
+    boolean runFSM = false; //when you realize that running state machine commands in a loop causes the timer to reset infinitely and causes everything to go crazy...
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -262,30 +263,45 @@ public class AutonRingDetectingBlue1 extends LinearOpMode {
 
                             if (r.waitTimer.time() >= 500) {
                                 FourRingState = FourRing.SHOOT_1;
+                                runFSM = true;
                                 r.waitTimer.reset();
                             }
                             break;
 
                         case SHOOT_1:
-                            r.flick();
+
+                            if (runFSM) {
+                                r.flick();
+                                runFSM = false;
+                            }
 
                             if (r.waitTimer.time() >= flickerRecoveryTime + 150) {
                                 FourRingState = FourRing.SHOOT_2;
+                                runFSM = true;
                                 r.waitTimer.reset();
                             }
                             break;
 
                         case SHOOT_2:
-                            r.flick();
+
+                            if (runFSM) {
+                                r.flick();
+                                runFSM = false;
+                            }
 
                             if (r.waitTimer.time() >= flickerRecoveryTime + 150) {
                                 FourRingState = FourRing.SHOOT_3;
+                                runFSM = true;
                                 r.waitTimer.reset();
                             }
                             break;
 
                         case SHOOT_3:
-                            r.flick();
+
+                            if (runFSM) {
+                                r.flick();
+                                runFSM = false;
+                            }
 
                             if (r.waitTimer.time() >= flickerRecoveryTime + 150) {
                                 FourRingState = FourRing.KNOCK;
@@ -313,32 +329,45 @@ public class AutonRingDetectingBlue1 extends LinearOpMode {
 
                             if (!drive.isBusy()) {
                                 FourRingState = FourRing.SHOOT2_1;
+                                runFSM = true;
                                 r.waitTimer.reset();
                             }
                             break;
 
                         case SHOOT2_1:
-                            r.flick();
+
+                            if (runFSM) {
+                                r.flick();
+                                runFSM = false;
+                            }
 
                             if (r.waitTimer.time() >= flickerRecoveryTime + 150) {
                                 FourRingState = FourRing.SHOOT2_2;
+                                runFSM = true;
                                 r.waitTimer.reset();
                             }
                             break;
 
                         case SHOOT2_2:
 
-                            r.flick();
+                            if (runFSM) {
+                                r.flick();
+                                runFSM = false;
+                            }
 
                             if (r.waitTimer.time() >= flickerRecoveryTime + 150) {
                                 FourRingState = FourRing.SHOOT2_3;
+                                runFSM = true;
                                 r.waitTimer.reset();
                             }
                             break;
 
                         case SHOOT2_3:
 
-                            r.flick();
+                            if (runFSM) {
+                                r.flick();
+                                runFSM = false;
+                            }
 
                             if (r.waitTimer.time() >= flickerRecoveryTime + 150) {
                                 FourRingState = FourRing.INTAKE2;
@@ -350,23 +379,31 @@ public class AutonRingDetectingBlue1 extends LinearOpMode {
 
                             if (!drive.isBusy()) {
                                 FourRingState = FourRing.SHOOT3_1;
+                                runFSM = true;
                                 r.waitTimer.reset();
                             }
                             break;
 
                         case SHOOT3_1:
 
-                            r.flick();
+                            if (runFSM) {
+                                r.flick();
+                                runFSM = false;
+                            }
 
                             if (r.waitTimer.time() >= flickerRecoveryTime + 150) {
                                 FourRingState = FourRing.SHOOT3_2;
+                                runFSM = true;
                                 r.waitTimer.reset();
                             }
                             break;
 
                         case SHOOT3_2:
 
-                            r.flick();
+                            if (runFSM) {
+                                r.flick();
+                                runFSM = false;
+                            }
 
                             if (r.waitTimer.time() >= flickerRecoveryTime + 150) {
                                 FourRingState = FourRing.TRAJECTORY6;
@@ -378,13 +415,17 @@ public class AutonRingDetectingBlue1 extends LinearOpMode {
 
                             if (!drive.isBusy()) {
                                 FourRingState = FourRing.WOBBLE;
+                                runFSM = true;
                                 r.waitTimer.reset();
                             }
                             break;
 
                         case WOBBLE:
 
-                            r.wgSlowDown();
+                            if (runFSM) {
+                                r.wgSlowDown();
+                                runFSM = false;
+                            }
 
                             if (r.waitTimer.time() >= 1500) {
                                 FourRingState = FourRing.WHITE_LINE;
@@ -445,30 +486,45 @@ public class AutonRingDetectingBlue1 extends LinearOpMode {
 
                             if (r.waitTimer.time() >= 500) {
                                 OneRingState = OneRing.SHOOT_1;
+                                runFSM = true;
                                 r.waitTimer.reset();
                             }
                             break;
 
                         case SHOOT_1:
-                            r.flick();
+
+                            if (runFSM) {
+                                r.flick();
+                                runFSM = false;
+                            }
 
                             if (r.waitTimer.time() >= flickerRecoveryTime + 150) {
                                 OneRingState = OneRing.SHOOT_2;
+                                runFSM = true;
                                 r.waitTimer.reset();
                             }
                             break;
 
                         case SHOOT_2:
-                            r.flick();
+
+                            if (runFSM) {
+                                r.flick();
+                                runFSM = false;
+                            }
 
                             if (r.waitTimer.time() >= flickerRecoveryTime + 150) {
                                 OneRingState = OneRing.SHOOT_3;
+                                runFSM = true;
                                 r.waitTimer.reset();
                             }
                             break;
 
                         case SHOOT_3:
-                            r.flick();
+
+                            if (runFSM) {
+                                r.flick();
+                                runFSM = false;
+                            }
 
                             if (r.waitTimer.time() >= flickerRecoveryTime + 150) {
                                 OneRingState = OneRing.INTAKE;
@@ -480,32 +536,45 @@ public class AutonRingDetectingBlue1 extends LinearOpMode {
 
                             if (!drive.isBusy()) {
                                 OneRingState = OneRing.SHOOT2_1;
+                                runFSM = true;
                                 r.waitTimer.reset();
                             }
                             break;
 
                         case SHOOT2_1:
-                            r.flick();
+
+                            if (runFSM) {
+                                r.flick();
+                                runFSM = false;
+                            }
 
                             if (r.waitTimer.time() >= flickerRecoveryTime + 150) {
                                 OneRingState = OneRing.SHOOT2_2;
+                                runFSM = true;
                                 r.waitTimer.reset();
                             }
                             break;
 
                         case SHOOT2_2:
 
-                            r.flick();
+                            if (runFSM) {
+                                r.flick();
+                                runFSM = false;
+                            }
 
                             if (r.waitTimer.time() >= flickerRecoveryTime + 150) {
                                 OneRingState = OneRing.SHOOT2_3;
+                                runFSM = true;
                                 r.waitTimer.reset();
                             }
                             break;
 
                         case SHOOT2_3:
 
-                            r.flick();
+                            if (runFSM) {
+                                r.flick();
+                                runFSM = false;
+                            }
 
                             if (r.waitTimer.time() >= flickerRecoveryTime + 150) {
                                 OneRingState = OneRing.TRAJECTORY3;
@@ -517,13 +586,17 @@ public class AutonRingDetectingBlue1 extends LinearOpMode {
 
                             if (!drive.isBusy()) {
                                 OneRingState = OneRing.WOBBLE;
+                                runFSM = true;
                                 r.waitTimer.reset();
                             }
                             break;
 
                         case WOBBLE:
 
-                            r.wgSlowDown();
+                            if (runFSM) {
+                                r.wgSlowDown();
+                                runFSM = false;
+                            }
 
                             if (r.waitTimer.time() >= 1500) {
                                 OneRingState = OneRing.WHITE_LINE;
@@ -584,30 +657,45 @@ public class AutonRingDetectingBlue1 extends LinearOpMode {
 
                             if (r.waitTimer.time() >= 500) {
                                 ZeroRingState = ZeroRings.SHOOT_1;
+                                runFSM = true;
                                 r.waitTimer.reset();
                             }
                             break;
 
                         case SHOOT_1:
-                            r.flick();
+
+                            if (runFSM) {
+                                r.flick();
+                                runFSM = false;
+                            }
 
                             if (r.waitTimer.time() >= flickerRecoveryTime + 150) {
                                 ZeroRingState = ZeroRings.SHOOT_2;
+                                runFSM = true;
                                 r.waitTimer.reset();
                             }
                             break;
 
                         case SHOOT_2:
-                            r.flick();
+
+                            if (runFSM) {
+                                r.flick();
+                                runFSM = false;
+                            }
 
                             if (r.waitTimer.time() >= flickerRecoveryTime + 150) {
                                 ZeroRingState = ZeroRings.SHOOT_3;
+                                runFSM = true;
                                 r.waitTimer.reset();
                             }
                             break;
 
                         case SHOOT_3:
-                            r.flick();
+
+                            if (runFSM) {
+                                r.flick();
+                                runFSM = false;
+                            }
 
                             if (r.waitTimer.time() >= flickerRecoveryTime + 150) {
                                 ZeroRingState = ZeroRings.TRAJECTORY2;
@@ -627,23 +715,31 @@ public class AutonRingDetectingBlue1 extends LinearOpMode {
 
                             if (!drive.isBusy()) {
                                 ZeroRingState = ZeroRings.WOBBLE;
+                                runFSM = true;
                                 r.waitTimer.reset();
                             }
                             break;
 
                         case WOBBLE:
 
-                            r.wgSlowDown();
+                            if (runFSM) {
+                                r.wgSlowDown();
+                                runFSM = false;
+                            }
 
                             if (r.waitTimer.time() >= 1500) {
                                 ZeroRingState = ZeroRings.WAIT2;
+                                runFSM = true;
                                 r.waitTimer.reset();
                             }
                             break;
 
                         case WAIT2:
 
-                            r.wgSlowStow();
+                            if (runFSM) {
+                                r.wgSlowStow();
+                                runFSM = false;
+                            }
 
                             if (r.waitTimer.time() >= 10000) {
                                 ZeroRingState = ZeroRings.WHITE_LINE;
